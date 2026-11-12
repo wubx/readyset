@@ -1,0 +1,603 @@
+{
+  "root": "/data1/vmbox/readyset-native-validation",
+  "results": "/data1/vmbox/readyset-native-results-20261112-201504",
+  "endpoint": "http://192.168.191.96:8000",
+  "base_commit": "e56d9c067df633d18cf8dabc117b56b5f8240203",
+  "uncommitted_worktree": true,
+  "code_sha256": {
+    "Cargo.toml": "36e9ff284f05f91ff92d2bc6ca07b703dcdadb3511ee97340d38a39d66e97de2",
+    "Cargo.lock": "0c4e58260b8ac2b4f8194da7749f1aa977f256e8f0693744bd1e6eb5ae2a8e0c",
+    "readyset-databend/Cargo.toml": "89c5400354e1c6ee37e5eaa4592c3fb702ae082ea771b69b4617bedbaae2bc44",
+    "readyset-sql/src/ast/expression.rs": "a905165df0831cd1cca56e08b471bad4adc310e29135d4b9872d8810e7ee7c25",
+    "nom-sql/src/expression.rs": "7c86e26532d24dfa0a17d29371c2440f611b286e679798c24e548ae1128a4da7",
+    "readyset-sql-parsing/tests/signed_integer_boundary.rs": "32670c3f6e8c45037f3c60caed82722d963fd6c8f001de7b15ced73a0ff5689d",
+    "replication-offset/src/lib.rs": "193abe3b6545f5c97ec53960801b4f335383bd15064f8732dc0281106c564100",
+    "replication-offset/src/databend.rs": "cc11239fcc96d5afb6d24801a807428f162e38ca2f60a4750a9d96d28e1a1685",
+    "dataflow-state/src/persistent_state/mod.rs": "bc94d0a86b6b8fd552f96cfc59a221af53899d5eda82caa8a6923e3fc06bd436",
+    "readyset-databend/src/bin/m1.rs": "3391996ecf5171f67220e20256095ddf5ab88003c85792cd90eefe6cc05fbc7f",
+    "readyset-databend/src/bin/m2.rs": "4603862033417d2e7188a2e5586208b9dd11d5be0d08260b4a3206ef53a36c8e",
+    "readyset-databend/src/cache_control.rs": "861148cc92a178f2dd745b4d1088121b73ec9054a7d4cf71c4b65ef3bf6b8cc2",
+    "readyset-databend/src/declaration.rs": "5e9388b6aeaa4c41d40d1d1d7da1ddeb64ddda00597a4bd4dea5e28a6aba334a",
+    "readyset-databend/src/lib.rs": "e248d9f623b4a9ed92990ed6688a3b34f6f722c96bfdfa69389637cf570d63c0",
+    "readyset-databend/src/native_query.rs": "81b53b54b81f8a9d7d6ee22bb30fc19179a77c069b58d66f9baa41747c8dc514",
+    "readyset-databend/poc/gateway.py": "947d953f85e732b54218b8ce35ecb9691de9cbe009221e39af39b635b1864c8c",
+    "readyset-databend/poc/gateway_verify.py": "dea7d37f2d703f3943e07eb87581501d7a71b6c16123fe3d13f3dcf9c7a780fb",
+    "readyset-databend/poc/m0.py": "d5b205b7ebf4c20f0ea1f54501d7e5e9091cfa1b76314ba508a10fb917becba0",
+    "readyset-databend/poc/m1_export.py": "bac2e9fe5ba7a01c58306532835de4a80f9afde577987dc6cf88df8b397332cd",
+    "readyset-databend/poc/m2.py": "66a5befac054767399c0ae4b373566bc529f4f6d236efdca4752a019597243d5",
+    "readyset-databend/poc/test_cache_control.py": "119d3e3d7da18cf32cecd8e716701d6e1ce8a85d2447d759a365f55c48edc826",
+    "readyset-databend/poc/test_gateway.py": "bae0c7bf6b6e7625bdf7d60b0fc318113cc59a809f60cdbf58645bad2e7eca0c",
+    "readyset-databend/poc/test_m0.py": "a63035e7be1f115fb651b1697ac5e5082eb24f953cf5a230fe9dc50ac8a410b2",
+    "readyset-databend/poc/test_m1_export.py": "e8c9dd6701e178735d76bf723a6846e865b66be3b15803a9b48c086f7bff0a8a",
+    "readyset-databend/poc/test_m2.py": "4f2e021988cb9500fd9cd76fe10470973c8987ffd600e4a2c567428dbdbf5f6e",
+    "readyset-databend/poc/test_native_queries.py": "342ce6f38096430823cf0b33ea6027290a30676cd4612e4b57d5336f973fd435"
+  },
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "driver": "0.34.0",
+  "steps": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "--bins",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 0.291,
+      "log_sha256": "5604fc8f0c276397a55db4bd7008236712075c0ad37d3b3a0f1fe362b1b85a36",
+      "test_results": []
+    },
+    {
+      "name": "native_regression",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "readyset-sql",
+        "-p",
+        "readyset-sql-passes",
+        "-p",
+        "readyset-sql-parsing",
+        "-p",
+        "nom-sql",
+        "-j",
+        "8",
+        "--",
+        "--skip",
+        "tests::rewrite_equivalence::rewrites_answer_the_same_as_the_query_they_replace"
+      ],
+      "exit_code": 0,
+      "seconds": 6.273,
+      "log_sha256": "ea7019f20a47c2ba52cccdaaa20bc6593b42b8f9994c326edf368d79c2100a42",
+      "test_results": [
+        {
+          "passed": 665,
+          "failed": 0,
+          "ignored": 5,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 63,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 345,
+          "failed": 0,
+          "ignored": 15,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 1688,
+          "failed": 0,
+          "ignored": 2,
+          "measured": 0,
+          "filtered": 2
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        }
+      ]
+    },
+    {
+      "name": "reader_key_mapping",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-client",
+        "--lib",
+        "build_view_query",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 133.883,
+      "log_sha256": "bf0ba7750b77ee3f246837c8c26fd95ae0e3b7a3a2422fc21e764b0402673c4d",
+      "test_results": [
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 141
+        }
+      ]
+    },
+    {
+      "name": "replication_offset",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "replication-offset",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 17.7,
+      "log_sha256": "a3b6c89dc7e102c408fc22474987799d0124b339f84a5f3ce420b82604fbb3df",
+      "test_results": [
+        {
+          "passed": 118,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      ]
+    },
+    {
+      "name": "checkpoint_reopen",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "dataflow-state",
+        "--lib",
+        "replication_offset_databend_rows_and_checkpoint_reopen",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 27.794,
+      "log_sha256": "d9d7221eaf24bf00e0b5f6f9061b575a9522858e695e9ee0ad3b44d07a8c4fa0",
+      "test_results": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 165
+        }
+      ]
+    },
+    {
+      "name": "metadata",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "dataflow-state",
+        "--lib",
+        "meta_",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 0.289,
+      "log_sha256": "45f60a8a221fda93af40330ce5b5c918e64c2e1b10cc0d8f4318ff2e11357547",
+      "test_results": [
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 163
+        }
+      ]
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "readyset-sql",
+        "-p",
+        "readyset-sql-parsing",
+        "-p",
+        "nom-sql",
+        "--all-targets",
+        "--no-deps",
+        "-j",
+        "8",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 0.476,
+      "log_sha256": "bcb74884a78099501f6bfc31de29d15aae4eb48dcd18d5c99bdde44d75b90089",
+      "test_results": []
+    },
+    {
+      "name": "python",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "readyset-databend/poc",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.214,
+      "log_sha256": "40f97c5fad751d1c5e08037fc84b210fe3c857df25ed10b5816e3dc0de9a5920",
+      "test_results": [],
+      "python_tests": 45
+    },
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--check",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "readyset-sql",
+        "-p",
+        "readyset-sql-parsing",
+        "-p",
+        "nom-sql"
+      ],
+      "exit_code": 0,
+      "seconds": 0.397,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_results": []
+    },
+    {
+      "name": "diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.018,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_results": []
+    },
+    {
+      "name": "native_live_1",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create",
+        "--sql-declarations",
+        "--native-queries"
+      ],
+      "exit_code": 0,
+      "seconds": 45.872,
+      "log_sha256": "4f47577e8e459511dbeabb6372796f6d30c5167bb658ad25df12e60297eda641",
+      "test_results": []
+    },
+    {
+      "name": "native_live_2",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create",
+        "--sql-declarations",
+        "--native-queries"
+      ],
+      "exit_code": 0,
+      "seconds": 47.992,
+      "log_sha256": "e148cecfa1ffe01957befa513f2e032f522c5d023c46998f62fb82971c3fd24c",
+      "test_results": []
+    },
+    {
+      "name": "legacy_live",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 17.827,
+      "log_sha256": "0b0a03e2c3076add2bec005aac85148bc7824ec3eebd1686f25af2040b2dc976",
+      "test_results": []
+    },
+    {
+      "name": "m2_live",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/m2.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--rows",
+        "1000",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 12.093,
+      "log_sha256": "e6febf0f056298b0bb25840c938e26a138060f5f4bae59dc66605806e0f4ecf0",
+      "test_results": []
+    }
+  ],
+  "live": [
+    {
+      "name": "native_live_1",
+      "report": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_121811_cc6372ad/report.json",
+      "passed": true,
+      "checks": 459,
+      "database": "readyset_gateway_20261112_121811_cc6372ad",
+      "sha256": "45a51e1a1287efa8285c49a757483c62dd3619e339779d753170a3a248ad11b2",
+      "facts": {
+        "database": "readyset_gateway_20261112_121811_cc6372ad",
+        "gateway": {
+          "origin": "http://127.0.0.1:42375",
+          "database": "readyset_gateway_20261112_121811_cc6372ad",
+          "generation": "rs_4501fcf2e2d34a7a8bc44bd7e9ef6d01",
+          "stream": "readyset_gateway_20261112_121811_cc6372ad.rs_4501fcf2e2d34a7a8bc44bd7e9ef6d01_stream",
+          "outbox": "readyset_gateway_20261112_121811_cc6372ad.rs_4501fcf2e2d34a7a8bc44bd7e9ef6d01_outbox",
+          "meta": "readyset_gateway_20261112_121811_cc6372ad.rs_4501fcf2e2d34a7a8bc44bd7e9ef6d01_meta"
+        },
+        "final_status": {
+          "generation": "rs_4501fcf2e2d34a7a8bc44bd7e9ef6d01",
+          "checkpoint": 31,
+          "ready": false,
+          "failed": "engine query failure: [Errno 32] Broken pipe",
+          "uncertain_upstream": false,
+          "inflight": 0,
+          "rows": 100,
+          "counters": {
+            "readyset": 166,
+            "databend": 21,
+            "empty_local": 9,
+            "sync_batches": 31,
+            "cache_ddl": 46
+          },
+          "engine_pid": 42267
+        },
+        "upstream_page_requests": 8,
+        "native_reordered_route": "databend"
+      }
+    },
+    {
+      "name": "native_live_2",
+      "report": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_121857_18789b74/report.json",
+      "passed": true,
+      "checks": 459,
+      "database": "readyset_gateway_20261112_121857_18789b74",
+      "sha256": "405f3656651015ac9a06d9afdb99f3c7e19ec1479867d7c7dca1d01fb3c0f9aa",
+      "facts": {
+        "database": "readyset_gateway_20261112_121857_18789b74",
+        "gateway": {
+          "origin": "http://127.0.0.1:45599",
+          "database": "readyset_gateway_20261112_121857_18789b74",
+          "generation": "rs_264de788b99a4f108824764f5e8e5a76",
+          "stream": "readyset_gateway_20261112_121857_18789b74.rs_264de788b99a4f108824764f5e8e5a76_stream",
+          "outbox": "readyset_gateway_20261112_121857_18789b74.rs_264de788b99a4f108824764f5e8e5a76_outbox",
+          "meta": "readyset_gateway_20261112_121857_18789b74.rs_264de788b99a4f108824764f5e8e5a76_meta"
+        },
+        "final_status": {
+          "generation": "rs_264de788b99a4f108824764f5e8e5a76",
+          "checkpoint": 32,
+          "ready": false,
+          "failed": "engine query failure: [Errno 32] Broken pipe",
+          "uncertain_upstream": false,
+          "inflight": 0,
+          "rows": 100,
+          "counters": {
+            "readyset": 166,
+            "databend": 21,
+            "empty_local": 9,
+            "sync_batches": 32,
+            "cache_ddl": 46
+          },
+          "engine_pid": 47246
+        },
+        "upstream_page_requests": 8,
+        "native_reordered_route": "databend"
+      }
+    },
+    {
+      "name": "legacy_live",
+      "report": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_121945_60c71359/report.json",
+      "passed": true,
+      "checks": 259,
+      "database": "readyset_gateway_20261112_121945_60c71359",
+      "sha256": "e7f6a531107b1c51920429a7cab025d954977d25eb777cc9d89289e517d6afdb",
+      "facts": {
+        "database": "readyset_gateway_20261112_121945_60c71359",
+        "gateway": {
+          "origin": "http://127.0.0.1:38605",
+          "database": "readyset_gateway_20261112_121945_60c71359",
+          "generation": "rs_682881d321424be480eba63f4ae87b26",
+          "stream": "readyset_gateway_20261112_121945_60c71359.rs_682881d321424be480eba63f4ae87b26_stream",
+          "outbox": "readyset_gateway_20261112_121945_60c71359.rs_682881d321424be480eba63f4ae87b26_outbox",
+          "meta": "readyset_gateway_20261112_121945_60c71359.rs_682881d321424be480eba63f4ae87b26_meta"
+        },
+        "final_status": {
+          "generation": "rs_682881d321424be480eba63f4ae87b26",
+          "checkpoint": 12,
+          "ready": false,
+          "failed": "engine query failure: [Errno 32] Broken pipe",
+          "uncertain_upstream": false,
+          "inflight": 0,
+          "rows": 100,
+          "counters": {
+            "readyset": 121,
+            "databend": 14,
+            "empty_local": 2,
+            "sync_batches": 12,
+            "cache_ddl": 0
+          },
+          "engine_pid": 52429
+        },
+        "upstream_page_requests": 8,
+        "native_reordered_route": null
+      }
+    },
+    {
+      "name": "m2_live",
+      "report": "/tmp/readyset-databend-m2/readyset_m2_20261112_122003_dc7ec017/report.json",
+      "passed": true,
+      "checks": 142,
+      "database": "readyset_m2_20261112_122003_dc7ec017",
+      "sha256": "4ffbc420b7717a0a79698e326485a911b67bbe30b80b896c54aeeb27013ba625",
+      "facts": {
+        "rows": 1000
+      }
+    }
+  ],
+  "passed": true,
+  "excluded_tests": {
+    "prefix": "tests::rewrite_equivalence::rewrites_answer_the_same_as_the_query_they_replace",
+    "count": 2,
+    "reason": "PostgreSQL 13/15 services unavailable. Earlier broad run reported ConnectionRefused; no external services started. Final run explicitly filters these cases. Existing #[ignore] cases remain ignored."
+  },
+  "intentional_fault": "Gateway live tests terminate ONLY their own engine to validate fallback. This is NOT crash recovery validation.",
+  "binaries": {
+    "databend-m1": "a56b29ef1544631321a6ad1124f4150cd3e48037f0b0a7a860c874e8de87af24",
+    "databend-m2": "cf38f98ca6ec7cff53716b53c94cfd6a73795ed4ebe1c123cafcb45a59ea5b01"
+  },
+  "preserved_worktrees": {
+    "/data1/vmbox/readyset": 5928,
+    "/data1/vmbox/readyset-validation": 5936
+  },
+  "snapshot_unchanged": true
+}

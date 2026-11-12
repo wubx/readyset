@@ -28,16 +28,48 @@ Databend 原生 HTTP 客户端
 后台任务：Standard Stream → 原子 outbox/meta → ReadySet 行变更 + checkpoint → reader barrier
 ```
 
-全量同步由入口管理，不需要应用逐 key 填充。匹配模板中的任意 BIGINT key，包括从未查询过的 key，
+全量同步由入口管理，不需要应用逐 key 填充。匹配声明的任意等值参数组合，包括从未查询过的组合，
 都可本地查询；**查不到返回本地空结果，不会把空结果当作 miss 回源**。
 
-### SQL 声明入口（第一阶段）
+### 原生查询链路（第二阶段）
+
+普通 SELECT 和缓存声明都使用 ReadySet 原生 AST、`adapter_rewrites::rewrite_query`、
+`DfQueryParameters` 及查询身份；应用读取通过 `readyset_client::read::read_cache`，复用
+`View` 的参数到物理索引键映射、结果投影和返回 schema。不再扩展原来的手写 `id` matcher。
+`src/native_query.rs` 仅提供固定源表 catalog、授权关系映射、允许的语法/类型边界和 HTTP schema 适配。
+原始 sqlparser AST 只用于防止锁/时间旅行等语义在转换时被丢弃，不承担查询参数化或身份匹配。
+
+```sql
+CREATE CACHE by_score FROM
+SELECT id, payload, score, note FROM readyset_gateway_example.source_rows WHERE score = ?;
+CREATE CACHE by_score_note FROM
+SELECT id, payload FROM readyset_gateway_example.source_rows WHERE score = ? AND note = ?;
+CREATE CACHE by_three_fields FROM
+SELECT note FROM readyset_gateway_example.source_rows WHERE payload = ? AND score = ? AND id = ?;
+```
+
+- 允许固定四列上 1..4 个**不同字段**的 `column = ?`，用 `AND` 连接；投影仍为普通列列表。
+- 读取允许 `id/score` 的精确 Int64 字面值、`payload/note` 的单引号字符串；不做隐式字符串/数字转换。
+  `note` 为 NULL 的行不会进入 `note = <string>` 的结果。`= NULL`、`IS NULL` 仍回源。
+- 创建时要求每个条件为 `?`，不开放固定常量、编号占位符或 HTTP prepared bind 协议。
+- 本地文本列和复制行值显式使用 `utf8mb4_0900_bin` / `Collation::Utf8Binary`，避免 MySQL 默认
+  ai_ci 混同大小写、重音或 Unicode 组合形式。Databend 语义仍需逐项 live 对照，不声称通用方言兼容。
+- 只匹配原生重写产生的相同查询形状；不自写 AND 排序、交换操作数、语义蕴含或子集索引匹配。
+  条件顺序/投影不同的查询不保证复用已有声明；未命中安全回源，不自动创建缓存。
+- 多行结果按**无序多重集**校验，不去重。barrier 检查当前、历史和 Reader 枚举出的额外查询键，
+  因而能发现 UPDATE 后旧键未撤销、最后一行 DELETE 后残留等问题。每个 reader 历史验证键最多 20,000 个。
+- 原生转换器的负整数字面值修复保留 `i64::MIN` 的精确整数类型，避免通用 Number → Double → BIGINT 溢出；
+  两个后端 `readyset-sql/src/ast/expression.rs` / `nom-sql/src/expression.rs` 一致修复，
+  并通过双 parser 边界回归；不是在网关自己解析整数。
+
+### SQL 声明入口
 
 启动只绑定一个已授权的独立 POC 源表，缓存可以从零开始，无需 JSON 查询配置：
 
 ```bash
 python3 -B readyset-databend/poc/gateway.py \
-  --endpoint http://192.168.1.100:8000 --user root \
+  --endpoint http://192.168.191.96:8000 --user root \
+  --binary /data1/vmbox/readyset/target/debug/databend-m2 \
   --database readyset_gateway_example --table source_rows \
   --output /tmp/readyset-gateway-sql-unique --port 8001 --confirm-create
 ```
@@ -59,17 +91,18 @@ DROP CACHE payload_by_id;
 ```
 
 - 复用 `readyset-sql-parsing::parse_query_with_config` / `CreateCacheStatement`，不自建 CREATE CACHE 语法。
-- 先检查原始 AST 的选项和源表、再复用 `ChangeList::from_strings` → `extend_recipe` → `ReaderHandle`。
+- 先检查原始 AST 的选项和源表，再以原生重写后的 AST 调用 `Change::create_cache` → `extend_recipe` → `View`。
   **不能只将原始 SQL 交给 ChangeList**：它会丢掉一些 adapter 选项，可能把不支持的语义静默忽略。
-- 仍只支持固定四列的普通投影、`WHERE id = ?`。只允许绑定的源表；无前缀表名要求 session database 正确。
+- 支持固定四列的普通投影和上述多字段 AND 等值子集。只允许绑定的源表；无前缀表名要求 session database 正确。
 - 每次请求一条语句，显式简单 cache name；最多 8 个公共缓存，名称冲突（含大小写冲突）或同形重复模板报错，
   不自动覆盖。`DROP CACHE` 后可以重建；`m2_source` / `m2_by_id` 为保留内部名称。
 - 普通 `CREATE CACHE` 与 `CREATE DEEP CACHE` 均走 deep/full 路径。SHALLOW、CONCURRENTLY、ALWAYS、
   AUTOPARAM、TTL/policy 等非默认选项、query ID 声明、注释/hint、多语句及 `DROP ALL CACHES` 明确拒绝。
 - 新 reader 使用最近一次成功复制 barrier 的固定 oracle（初始 snapshot + 已提交批次）逐 key 验证，
   包含已删除 key；全部通过才发布路由。迁移或 barrier 结果不确定时关闭本地服务，不自动重试。
-- 全列模板直接复用既有内部 full-row reader，而非新建其别名：ReadySet 的 DROP 会删除同一查询的所有别名，
-  不能让公共 DROP 误删内部复制 barrier。其他投影正常创建独立查询视图，底表和源端捕获任务始终共享。
+- 仅与内部 full-row/id 查询**完整原生身份相同**的模板直接复用其 reader，不创建可删除别名：
+  ReadySet 的 DROP 会删除同一查询的所有别名，不能让公共 DROP 误删内部复制 barrier。
+  全列投影但按 score 等其他条件查询的缓存正常创建视图；底表和源端捕获始终共享。
 - `SHOW CACHES` / `SHOW DEEP CACHES` 返回公共目录三列 `name / query / state`，不是原生 adapter SHOW 输出的全字段兼容；
   内部验证 reader 不显示。CREATE/DROP 成功也返回当前目录。删除最后一个公共缓存仍保留底表及增量任务。
 - 控制请求需要 safe autocommit session、允许的 headers、就绪且未过期的副本。事务/权限/未知状态拒绝，
@@ -108,7 +141,7 @@ DROP CACHE payload_by_id;
 ```
 
 源端需要唯一的 `id`。初始化扫描和每次增量都校验该前提。模板投影支持上述列的普通列列表，
-过滤固定为 `WHERE id = ?`。这不是通用 schema inference、任意索引字段或任意 SQL 支持。
+过滤允许上述四列上的不同字段 AND 等值条件。这不是通用 schema inference、任意类型或任意 SQL 支持。
 
 为防止误操作业务对象，入口只允许明确授权的 `readyset_gateway_*` POC 数据库，
 需要 `--confirm-create`，为每次启动生成全新 Stream/outbox/meta 名称。不会替换既有对象，
@@ -122,7 +155,7 @@ DROP CACHE payload_by_id;
 
 | 输入/状态 | 路径 |
 | --- | --- |
-| 相同 SELECT 投影、同一源表、`id = <Int64 literal>` | 就绪时本地 |
+| 原生重写后与声明同形的投影、源表和有类型 AND 等值条件 | 就绪时本地 |
 | SQL 关键字大小写/空白/结尾分号变化 | AST 相同则本地 |
 | 不带数据库的表名 | session database 正确且模板匹配时本地 |
 | 参数值换成全新 key 或不存在 key | 本地，不按访问热度判断 |
@@ -133,8 +166,8 @@ DROP CACHE payload_by_id;
 | 副本未就绪、超时未同步、同步失败、engine 不可用 | 透传 |
 | ReadySet 命中但结果为空 | 本地返回空，不回源 |
 
-匹配器在 Rust `src/declaration.rs`，使用工作区 `sqlparser` 完整 AST 比较，
-仅将右侧精确 Int64 字面值归一化成 `?`，并在正确 database 下解析无前缀表名。
+声明管理在 `src/declaration.rs`，实际匹配与读路径在 `src/native_query.rs`：ReadySet 原生重写后同时比较
+`QueryId` 和 AST；参数交给原生 `DfQueryParameters`，键映射和结果交给 `read_cache`。
 **不是正则删 SQL 子句后匹配**，不能把 `LIMIT 0`、`OR true`、另一张表或另一数据库误路由成本地查询。
 不识别的 Databend 方言直接透传原始 body，而不是先用 MySQL AST 重写后发给源端。
 
@@ -144,8 +177,12 @@ DROP CACHE payload_by_id;
 - `GET /v1/query/<id>`、`GET .../page/<n>`、`GET .../final`、`POST .../kill`：源端查询继续代理生命周期，
   不重新提交 SQL。只接受本 origin 下的受限相对路径；不跟随 HTTP redirect。
 - 本地查询返回 Databend 风格 `id/schema/data/state/error/stats/*_uri`，数字使用十进制字符串，NULL 为 JSON null。
-  单 key 最多一行，不需要继续分页；提供 stats/final/kill 路径。完成查询的 kill 是已完成状态的 no-op。
-- 本地结果保留 60 秒，registry 最多 2,048 项；final 后保留临时 tombstone，避免把本地 query ID 转发到源端。
+  同一查询键可返回多行。分页遵守 `max_rows_per_page` 和 `max_rows_in_buffer` 中较小的行数限制，默认 1,000。
+  页面固定在首次读取的结果上，可重复获取，不在续页时重查 engine/source；不保证无 ORDER BY 结果的顺序。
+- 本地结果保留 60 秒，registry 最多 2,048 项；final/kill 后释放结果并保留临时 tombstone，避免把本地 ID 转发到源端。
+- Rust 本地结果最多 10,000 行 / 4 MiB data JSON，HTTP 每查询最多 8 MiB、总保留 JSON payload 最多 64 MiB。
+  这是 JSON 大小预算，不是进程 RSS 保证；超限普通 SELECT 在返回任何本地页面前回源，不截断成功结果。
+  控制操作预留 2 MiB 响应预算，容量不足时在变更前拒绝，绝不回源。
 - 原生 `X-Databend-Query-ID` 本地保留；route hint 和无事务的 sticky node 不改变查询语义。
 - `X-ReadySet-Route: readyset|databend` 用于观察实际执行路径，本地还有 `X-ReadySet-Template`。
 - `GET /health` 返回 checkpoint、行数、ready、failed、inflight、uncertain_upstream 和路由计数。
@@ -191,7 +228,10 @@ DROP CACHE payload_by_id;
 开发分支必须为 `poc/databend-stream-m0`；本地开发和提交，Rust 编译/测试及 live 联调放在远端独立验证目录。
 
 ```bash
+# 在 wu@192.168.191.96:/data1/vmbox/readyset-native-validation 执行
+export PATH="$HOME/.cargo/bin:$PATH"
 export LIBCLANG_PATH=/tmp/readyset-m1-libclang
+export CARGO_TARGET_DIR=/data1/vmbox/readyset/target
 cargo build --locked -p readyset-databend --bin databend-m2 -j 8
 cargo test --locked -p readyset-databend -j 8
 cargo clippy --locked -p readyset-databend --all-targets --no-deps -- -D warnings
@@ -202,16 +242,17 @@ python3 -B -m unittest discover -s readyset-databend/poc -p 'test_*.py' -v
 
 ```bash
 python3 -B readyset-databend/poc/gateway_verify.py \
-  --endpoint http://192.168.1.100:8000 --user root --confirm-create
+  --endpoint http://192.168.191.96:8000 --user root \
+  --binary /data1/vmbox/readyset/target/debug/databend-m2 --confirm-create
 ```
 
 新增 SQL 声明路径的同表多缓存全链路验证（零配置模板启动、动态增删、重复/容量/会话拒绝、原生 driver、晚建缓存及共享增量）：
 
 ```bash
 python3 -B readyset-databend/poc/gateway_verify.py \
-  --endpoint http://192.168.1.100:8000 --user root \
+  --endpoint http://192.168.191.96:8000 --user root \
   --binary /data1/vmbox/readyset/target/debug/databend-m2 \
-  --sql-declarations --confirm-create
+  --sql-declarations --native-queries --confirm-create
 ```
 
 若构建设置了外部 `CARGO_TARGET_DIR`，所有 live 命令都要显式指定该目录下的新 binary，不能误用 checkout 内旧产物。
@@ -225,7 +266,8 @@ python3 -B readyset-databend/poc/gateway_verify.py \
 
 ```bash
 python3 -B readyset-databend/poc/gateway.py \
-  --endpoint http://192.168.1.100:8000 --user root \
+  --endpoint http://192.168.191.96:8000 --user root \
+  --binary /data1/vmbox/readyset/target/debug/databend-m2 \
   --declarations /path/to/declarations.json \
   --output /tmp/readyset-gateway-new-run \
   --port 8001 --interval 1 --max-staleness 10 --confirm-create
@@ -243,7 +285,40 @@ curl -u root: -H 'Content-Type: application/json' \
 每次重启使用新 generation 重新全量初始化；旧的 outbox 和本地状态保留，但**不恢复旧 controller/authority 状态**。
 若上次结果不确定，不要把重新启动当作已经验证的恢复协议，更不能自动清除旧 outbox。
 
-## 第一阶段验证：SQL 动态声明
+## 第二阶段验证：原生 AND 等值链路
+
+精选证据见 [`evidence/native_query_20261112/`](evidence/native_query_20261112/)。
+本轮所有构建、测试、格式化和 live 均在 `wu@192.168.191.96:/data1/vmbox/readyset-native-validation`。
+原始命令、退出码、日志哈希、26 个代码文件哈希、两个 binary 哈希及环境版本见 `report.json`；
+完整日志保留在 `/data1/vmbox/readyset-native-results-20261112-201504/`。
+
+| 检查 | 本轮结果 |
+| --- | --- |
+| 两个 binary locked build / 严格 Clippy / 格式 | 通过 |
+| `readyset-databend` | 15 library + 4 M1 通过 |
+| `nom-sql` / `readyset-sql` | 676 + 5 doctest / 65 + 3 doctest 通过 |
+| `readyset-sql-parsing` | 363 项通过，包含新增双 parser 边界一致性 |
+| `readyset-sql-passes` | 1,688 项通过；2 项 PostgreSQL 依赖测试明确排除 |
+| 原生 Reader 键映射定向测试 | 8 项通过 |
+| 位点 / 存储重开 / metadata | 118 + 3 doctest / 1 / 3 通过 |
+| Python 离线回归 | 45 项通过 |
+| SQL + 原生多条件 live | 两个新数据库，各 459/459 |
+| 旧 JSON / M2 增量回归 | 259/259 / 142/142 |
+
+原生 rewrite 的两项 `rewrite_equivalence` 测试需要 PostgreSQL 13/15；首次广泛回归因环境未提供而连接拒绝，
+最终命令显式 `--skip tests::rewrite_equivalence::rewrites_answer_the_same_as_the_query_they_replace`。
+未启动服务或更换依赖端点；已有 `#[ignore]` 项也未运行。不能将这些项算作通过，详细计数见 `offline_summary.json`。
+
+两轮 live 对照源端结果，覆盖：非唯一 score、多条件 2/3/4 字段、重复投影行的多重集、分页不重读、
+Int64 两端、字符串大小写/Unicode 组合/尾空格/引号/反斜杠、NULL 成员迁移、旧键撤销、最后一行删除、
+晚建缓存、全列 score 缓存 DROP 后 id barrier 仍有效、原生 driver 组合查询，以及唯一 Stream/不重启 engine。
+条件顺序互换在本版本实际回源，但结果正确；不会为命中率自行重排条件。另有纯本地 engine 补查，确认两种
+AND 顺序分别声明后可共存，DROP 一方不破坏另一方及内部 reader，见 `alternate_order_drop.json`。
+
+两个保留工作树的全部 tracked/非忽略 untracked 文件校验未变：原仓库 5,928 文件、第一阶段验证目录 5,936 文件。
+网关 live 最后仅终止本轮拥有的 engine 验证失败关闭，`ready=false` 是预期故障注入，不是崩溃恢复验证。
+
+## 第一阶段验证：SQL 动态声明（历史基线）
 
 精选报告见 [`evidence/sql_cache_20261112/`](evidence/sql_cache_20261112/)，源码/binary 哈希、
 实际工具链、原始报告路径和每项命令退出码在该目录 `report.json`。
@@ -297,7 +372,7 @@ live 测试覆盖：100 个 sparse key 首次触达、多个投影模板、空�
 
 ## 还没有完成
 
-- 多表/通用 schema、多索引字段、任意 SQL 模板、声明持久化恢复与启动文件热更新。
+- 多表/通用 schema、更多类型、OR/范围/IN/固定过滤等 SQL 形状、声明持久化恢复与启动文件热更新。
 - 完整 Databend client/login/auth/session/function/HTTP endpoint 兼容性。
 - 自动恢复、消费者 fencing、安全 outbox GC、版本升级/降级协议。
 - source 表 DDL/schema 演进；源表结构必须固定，不能运行中改 schema。

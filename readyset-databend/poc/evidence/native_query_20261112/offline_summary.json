@@ -1,0 +1,112 @@
+{
+  "passed": true,
+  "excluded_tests": {
+    "prefix": "tests::rewrite_equivalence::rewrites_answer_the_same_as_the_query_they_replace",
+    "count": 2,
+    "reason": "PostgreSQL 13/15 services unavailable. Earlier broad run reported ConnectionRefused; no external services started. Final run explicitly filters these cases. Existing #[ignore] cases remain ignored."
+  },
+  "suites": [
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/nom_sql-6515f4d5e927fbba)",
+      "result": "test result: ok. 665 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 0.89s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running tests/lib.rs (/data1/vmbox/readyset/target/debug/deps/lib-9d65805225877574)",
+      "result": "test result: ok. 11 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.08s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_databend-d94b601a2a924848)",
+      "result": "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/bin/m1.rs (/data1/vmbox/readyset/target/debug/deps/databend_m1-c6c19d154e163f4a)",
+      "result": "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/bin/m2.rs (/data1/vmbox/readyset/target/debug/deps/databend_m2-a8ee1071a38e191f)",
+      "result": "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_sql-2f4c862aa3d802f7)",
+      "result": "test result: ok. 63 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running tests/is_write.rs (/data1/vmbox/readyset/target/debug/deps/is_write-79488fe7d65d8850)",
+      "result": "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_sql_parsing-d795b89bdaa8ea73)",
+      "result": "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running tests.rs (/data1/vmbox/readyset/target/debug/deps/tests-548cf1880534dceb)",
+      "result": "test result: ok. 345 passed; 0 failed; 15 ignored; 0 measured; 0 filtered out; finished in 0.66s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_sql_passes-49bb99a3ce589e0b)",
+      "result": "test result: ok. 1688 passed; 0 failed; 2 ignored; 0 measured; 2 filtered out; finished in 0.67s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Doc-tests nom_sql",
+      "result": "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.73s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Doc-tests readyset_databend",
+      "result": "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Doc-tests readyset_sql",
+      "result": "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Doc-tests readyset_sql_parsing",
+      "result": "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "native_regression",
+      "suite": "Doc-tests readyset_sql_passes",
+      "result": "test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "reader_key_mapping",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_client-71778ceeb03ea6a7)",
+      "result": "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 141 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "replication_offset",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/replication_offset-3935cbcb20a11f0a)",
+      "result": "test result: ok. 118 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "replication_offset",
+      "suite": "Doc-tests replication_offset",
+      "result": "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    },
+    {
+      "step": "checkpoint_reopen",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/dataflow_state-d7065ac174bdac7a)",
+      "result": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 165 filtered out; finished in 0.38s"
+    },
+    {
+      "step": "metadata",
+      "suite": "Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/dataflow_state-d7065ac174bdac7a)",
+      "result": "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 163 filtered out; finished in 0.00s"
+    }
+  ],
+  "logs_directory": "/data1/vmbox/readyset-native-results-20261112-201504",
+  "python_tests": 45
+}

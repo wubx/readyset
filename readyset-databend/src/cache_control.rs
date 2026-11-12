@@ -93,7 +93,7 @@ pub fn plan(
             ensure!(
                 !templates
                     .iter()
-                    .any(|t| t.source_sql == template.source_sql),
+                    .any(|t| t.query.same_shape(&template.query)),
                 "query template already cached"
             );
             Ok(CacheControl::Create(Box::new(template)))
@@ -140,18 +140,13 @@ mod tests {
                 panic!()
             };
             assert_eq!(t.name, "full_row");
-            assert_eq!(
-                t.local_sql,
-                "SELECT id, payload, score, note FROM m2_source WHERE id = ?"
-            );
-            assert_eq!(
-                t.match_key(
+            let read = d
+                .read_query(
                     "SELECT id,payload,score,note FROM poc.users WHERE id=12",
                     "poc",
-                    &d
-                ),
-                Some(12)
-            );
+                )
+                .unwrap();
+            assert!(t.query.same_shape(&read));
         }
         assert!(
             plan(
@@ -172,7 +167,7 @@ mod tests {
             "CREATE CACHE CONCURRENTLY c FROM SELECT payload FROM poc.users WHERE id = ?",
             "CREATE CACHE ALWAYS c FROM SELECT payload FROM poc.users WHERE id = ?",
             "CREATE CACHE c WITH (AUTOPARAM OFF) FROM SELECT payload FROM poc.users WHERE id = ?",
-            "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE score = ?",
+            "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE score > ?",
             "CREATE CACHE c FROM SELECT payload FROM other.users WHERE id = ?",
             "CREATE CACHE c FROM SELECT payload FROM poc.other WHERE id = ?",
             "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE id = ? LIMIT 1",

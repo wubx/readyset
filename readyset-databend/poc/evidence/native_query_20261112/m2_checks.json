@@ -1,0 +1,578 @@
+{
+  "passed": true,
+  "error": null,
+  "database": "readyset_m2_20261112_122003_dc7ec017",
+  "checks": [
+    {
+      "name": "initial fixed-boundary export has all rows",
+      "passed": true
+    },
+    {
+      "name": "initial snapshot: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "initial snapshot: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "initial snapshot: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "batch 1 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 1 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "rolled-back capture preserves Stream",
+      "passed": true
+    },
+    {
+      "name": "rolled-back capture leaves no outbox rows",
+      "passed": true
+    },
+    {
+      "name": "rolled-back capture leaves no metadata",
+      "passed": true
+    },
+    {
+      "name": "batch 1 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 1 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "batch 1 capture remains transactional",
+      "passed": true
+    },
+    {
+      "name": "batch 1 committed metadata is unique and complete",
+      "passed": true
+    },
+    {
+      "name": "batch 1 committed outbox matches captured changes",
+      "passed": true
+    },
+    {
+      "name": "batch 1 drained Stream",
+      "passed": true
+    },
+    {
+      "name": "batch 1 includes INSERT and DELETE",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 1 persistent checkpoint",
+      "passed": true
+    },
+    {
+      "name": "batch 1 update delete insert: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "batch 1 update delete insert: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "batch 1 update delete insert: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 1 delivered three times: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "batch 1 delivered three times: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "batch 1 delivered three times: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "batch 2 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 2 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "batch 2 capture remains transactional",
+      "passed": true
+    },
+    {
+      "name": "batch 2 committed metadata is unique and complete",
+      "passed": true
+    },
+    {
+      "name": "batch 2 committed outbox matches captured changes",
+      "passed": true
+    },
+    {
+      "name": "batch 2 drained Stream",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 2 persistent checkpoint",
+      "passed": true
+    },
+    {
+      "name": "batch 2 newer values and moved key: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "batch 2 newer values and moved key: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "batch 2 newer values and moved key: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "old batch cannot overwrite v2 or resurrect deleted keys: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "old batch cannot overwrite v2 or resurrect deleted keys: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "old batch cannot overwrite v2 or resurrect deleted keys: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "new sink/client reads engine checkpoint",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "duplicate after recreating sink and client: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "duplicate after recreating sink and client: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "duplicate after recreating sink and client: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "batch 3 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 3 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "batch 3 capture remains transactional",
+      "passed": true
+    },
+    {
+      "name": "batch 3 committed metadata is unique and complete",
+      "passed": true
+    },
+    {
+      "name": "batch 3 committed outbox matches captured changes",
+      "passed": true
+    },
+    {
+      "name": "batch 3 drained Stream",
+      "passed": true
+    },
+    {
+      "name": "delivery 3 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 3 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 3 persistent checkpoint",
+      "passed": true
+    },
+    {
+      "name": "delete reinserted rows and Int64 minimum: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "delete reinserted rows and Int64 minimum: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "delete reinserted rows and Int64 minimum: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "old insertion batches cannot revive deleted records: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "old insertion batches cannot revive deleted records: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "old insertion batches cannot revive deleted records: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "batch 4 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 4 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "batch 4 capture remains transactional",
+      "passed": true
+    },
+    {
+      "name": "batch 4 committed metadata is unique and complete",
+      "passed": true
+    },
+    {
+      "name": "batch 4 committed outbox matches captured changes",
+      "passed": true
+    },
+    {
+      "name": "batch 4 drained Stream",
+      "passed": true
+    },
+    {
+      "name": "batch 4 is empty",
+      "passed": true
+    },
+    {
+      "name": "delivery 4 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 4 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 4 persistent checkpoint",
+      "passed": true
+    },
+    {
+      "name": "delivery 4 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 4 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "empty batch and its duplicate: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "empty batch and its duplicate: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "empty batch and its duplicate: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "batch 5 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 5 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "batch 5 capture remains transactional",
+      "passed": true
+    },
+    {
+      "name": "batch 5 committed metadata is unique and complete",
+      "passed": true
+    },
+    {
+      "name": "batch 5 committed outbox matches captured changes",
+      "passed": true
+    },
+    {
+      "name": "batch 5 drained Stream",
+      "passed": true
+    },
+    {
+      "name": "delivery 5 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 5 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 5 persistent checkpoint",
+      "passed": true
+    },
+    {
+      "name": "collapsed updates delete-reinsert and key reuse: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "collapsed updates delete-reinsert and key reuse: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "collapsed updates delete-reinsert and key reuse: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "batch 6 has no prior commit",
+      "passed": true
+    },
+    {
+      "name": "batch 6 transaction reads its complete outbox",
+      "passed": true
+    },
+    {
+      "name": "batch 6 capture remains transactional",
+      "passed": true
+    },
+    {
+      "name": "batch 6 committed metadata is unique and complete",
+      "passed": true
+    },
+    {
+      "name": "batch 6 committed outbox matches captured changes",
+      "passed": true
+    },
+    {
+      "name": "batch 6 drained Stream",
+      "passed": true
+    },
+    {
+      "name": "delivery 6 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 6 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "batch 6 persistent checkpoint",
+      "passed": true
+    },
+    {
+      "name": "bulk updates: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "bulk updates: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "bulk updates: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "reread batch 5 checksum unchanged",
+      "passed": true
+    },
+    {
+      "name": "delivery 5 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 5 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "reread batch 3 checksum unchanged",
+      "passed": true
+    },
+    {
+      "name": "delivery 3 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 3 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "reread batch 2 checksum unchanged",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 2 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "reread batch 1 checksum unchanged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 1 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "reread batch 6 checksum unchanged",
+      "passed": true
+    },
+    {
+      "name": "delivery 6 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 6 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "reread batch 4 checksum unchanged",
+      "passed": true
+    },
+    {
+      "name": "delivery 4 acknowledged",
+      "passed": true
+    },
+    {
+      "name": "delivery 4 duplicate classification",
+      "passed": true
+    },
+    {
+      "name": "all historical batches redelivered out of order: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "all historical batches redelivered out of order: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "all historical batches redelivered out of order: all missing keys checked",
+      "passed": true
+    },
+    {
+      "name": "gap batch rejected before mutation",
+      "passed": true
+    },
+    {
+      "name": "gap batch keeps checkpoint",
+      "passed": true
+    },
+    {
+      "name": "generation batch rejected before mutation",
+      "passed": true
+    },
+    {
+      "name": "generation batch keeps checkpoint",
+      "passed": true
+    },
+    {
+      "name": "incomplete batch rejected before mutation",
+      "passed": true
+    },
+    {
+      "name": "incomplete batch keeps checkpoint",
+      "passed": true
+    },
+    {
+      "name": "checksum batch rejected before mutation",
+      "passed": true
+    },
+    {
+      "name": "checksum batch keeps checkpoint",
+      "passed": true
+    },
+    {
+      "name": "after rejected batches: all source rows and deleted keys agree",
+      "passed": true
+    },
+    {
+      "name": "after rejected batches: complete live reader contents",
+      "passed": true
+    },
+    {
+      "name": "after rejected batches: all missing keys checked",
+      "passed": true
+    }
+  ],
+  "source_report": "/tmp/readyset-databend-m2/readyset_m2_20261112_122003_dc7ec017/report.json",
+  "source_sha256": "4ffbc420b7717a0a79698e326485a911b67bbe30b80b896c54aeeb27013ba625",
+  "note": "Derived name/status-only extract. Full row/batch assertions remain in source_report; source_sha256 binds the full JSON."
+}

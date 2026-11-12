@@ -2,13 +2,14 @@
 //! No native Databend SQL frontend and no distributed consumer ownership protocol.
 pub mod cache_control;
 pub mod declaration;
+pub mod native_query;
 
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail, ensure};
 use readyset_client::{PersistencePoint, ReadySetHandle, Table, TableOperation};
-use readyset_data::DfValue;
+use readyset_data::{Collation, DfValue};
 use replication_offset::ReplicationOffset;
 use replication_offset::databend::DatabendPosition;
 use serde::{Deserialize, Serialize};
@@ -27,11 +28,11 @@ impl SourceRow {
     pub fn values(&self) -> Vec<DfValue> {
         vec![
             self.id.into(),
-            self.payload.as_str().into(),
+            DfValue::from_str_and_collation(&self.payload, Collation::Utf8Binary),
             self.score.into(),
             self.note
                 .as_deref()
-                .map(DfValue::from)
+                .map(|s| DfValue::from_str_and_collation(s, Collation::Utf8Binary))
                 .unwrap_or(DfValue::None),
         ]
     }

@@ -113,7 +113,7 @@ class Verification:
             f'CREATE CACHE CONCURRENTLY bad FROM SELECT note FROM {db}.source_rows WHERE id=?',
             f'CREATE CACHE bad FROM SELECT note FROM {db}.other_rows WHERE id=?',
             'CREATE CACHE bad FROM SELECT note FROM another.source_rows WHERE id=?',
-            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE score=?',
+            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE score>?',
             f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=? LIMIT 1',
             f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=?; DROP CACHE gateway_by_id',
             'CREATE CACHE broken FROM', 'DROP CACHE m2_by_id', 'DROP CACHE missing']:
@@ -168,6 +168,115 @@ class Verification:
         self.check('cache DDL reuses generation',now['generation'],info['generation'])
         source_log=[json.loads(line) for line in (self.output/'service/source_queries.jsonl').read_text().splitlines()]
         self.check('one source stream for all caches',sum(r.get('sql','').startswith('CREATE STREAM ') for r in source_log),1)
+
+    @staticmethod
+    def sql_string(value):
+        return "'" + value.replace('\\', '\\\\').replace("'", "''") + "'"
+
+    def native_compare(self, sql, route='readyset', pagination=None):
+        self.wait_ready()
+        expected=self.source.sql(sql)
+        actual,schema,first=self.query(sql,route=route,pagination=pagination)
+        order=lambda rows:sorted(rows,key=lambda row:json.dumps(row,ensure_ascii=False))
+        self.check('native rows agree with Databend: '+sql[:90],order(actual),order(expected))
+        return actual,schema,first
+
+    def verify_native_queries(self, info):
+        db=self.database
+        baseline=self.http('GET','/health')['response']
+        specs=[('native_score','id,payload,score,note','score=?'),
+               ('native_bag','payload,note','score=?'),
+               ('native_pair','id,payload','score=? AND note=?'),
+               ('native_three','note','payload=? AND score=? AND id=?'),
+               ('native_text','id,score','payload=?'),
+               ('native_note','id,payload','note=?')]
+        for name,columns,where in specs:
+            self.query(f'CREATE CACHE {name} FROM SELECT {columns} FROM {db}.source_rows WHERE {where}',route='readyset')
+        self.check('native shapes share bounded catalog',len(self.cache_names()),8)
+        strings=['Case','case','é','e\u0301','中文😀','', 'tail', 'tail ', "O'Reilly", 'back\\slash']
+        records=[(200001,'duplicate',777,'same'),(200002,'duplicate',777,'same'),
+                 (200003,'other',777,None),(200004,'other',777,'different'),(200005,'different',777,'same')]
+        records += [(201000+i,value,888,'matrix') for i,value in enumerate(strings)]
+        records += [(-9223372036854775808,'low',9223372036854775807,None),
+                    (9223372036854775807,'high',-9223372036854775808,'limits')]
+        values=','.join(f'({key},{self.sql_string(payload)},{score},{"NULL" if note is None else self.sql_string(note)})' for key,payload,score,note in records)
+        self.source.sql(f'INSERT INTO {db}.source_rows VALUES {values}')
+        checkpoint=self.http('GET','/health')['response']['checkpoint'];self.wait_ready(after=checkpoint)
+        full=f'SELECT id,payload,score,note FROM {db}.source_rows WHERE score=777'
+        self.native_compare(full)
+        self.native_compare(f'SELECT id,payload,score,note FROM {db}.source_rows WHERE score=-9223372036854775808')
+        self.native_compare(f'SELECT id,payload,score,note FROM {db}.source_rows WHERE score=9223372036854775807')
+        self.point(-9223372036854775808)
+        self.point(9223372036854775807)
+        bag=f'SELECT payload,note FROM {db}.source_rows WHERE score=777'
+        rows,_,first=self.native_compare(bag,pagination={'max_rows_per_page':2,'max_rows_in_buffer':2,'wait_time_secs':1})
+        self.check('duplicate projected rows retain multiplicity',rows.count(['duplicate','same']),2)
+        self.check('local first page honors row bound',len(first['response']['data']),2)
+        self.check('local continuation is a page', '/page/' in first['response']['next_uri'],True)
+        pages=[r for r in self.requests if r['path'].startswith('/v1/query/'+first['response']['id']+'/page/')]
+        self.check('all native continuation pages are local',len(pages)>=2 and all(p['route']=='readyset' for p in pages),True)
+        self.native_compare(f"SELECT id,payload FROM {db}.source_rows WHERE score=777 AND note='same'")
+        self.native_compare(f"SELECT note FROM {db}.source_rows WHERE payload='duplicate' AND score=777 AND id=200001")
+        # Native rewrite alone decides whether alternate predicate order has the same identity.
+        # If not, exact-shape routing must miss safely rather than reorder parameters ourselves.
+        _,_,reordered=self.native_compare(f"SELECT note FROM {db}.source_rows WHERE id=200001 AND score=777 AND payload='duplicate'",route=None)
+        self.native_reordered_route=reordered['route']
+        for value in strings+['not-present']:
+            self.native_compare(f'SELECT id,score FROM {db}.source_rows WHERE payload={self.sql_string(value)}')
+        self.native_compare(f"SELECT id,payload FROM {db}.source_rows WHERE note='same'")
+        self.native_compare(f'SELECT id,payload FROM {db}.source_rows WHERE note=NULL',route='databend')
+        self.native_compare(f'SELECT id,payload FROM {db}.source_rows WHERE note IS NULL',route='databend')
+        self.native_compare(f"SELECT id,payload FROM {db}.source_rows WHERE score='777' AND note='same'",route='databend')
+        # One update changes every component, vacating old simple and composite index keys.
+        self.source.sql(f"UPDATE {db}.source_rows SET payload='moved',score=778,note='new-note' WHERE id=200001")
+        self.source.sql(f'DELETE FROM {db}.source_rows WHERE id=200002')
+        checkpoint=self.http('GET','/health')['response']['checkpoint'];self.wait_ready(after=checkpoint)
+        for sql in [full,bag,
+                    f"SELECT id,payload FROM {db}.source_rows WHERE score=777 AND note='same'",
+                    f"SELECT id,payload FROM {db}.source_rows WHERE score=778 AND note='new-note'",
+                    f"SELECT note FROM {db}.source_rows WHERE payload='duplicate' AND score=777 AND id=200001",
+                    f"SELECT note FROM {db}.source_rows WHERE payload='moved' AND score=778 AND id=200001",
+                    f"SELECT id,score FROM {db}.source_rows WHERE payload='duplicate'",
+                    f"SELECT id,score FROM {db}.source_rows WHERE payload='moved'"]:
+            self.native_compare(sql)
+        self.query('DROP CACHE native_three',route='readyset')
+        self.query(f'CREATE CACHE native_four FROM SELECT payload FROM {db}.source_rows WHERE note=? AND score=? AND id=? AND payload=?',route='readyset')
+        self.native_compare(f"SELECT payload FROM {db}.source_rows WHERE note='new-note' AND score=778 AND id=200001 AND payload='moved'")
+        self.query('DROP CACHE native_four',route='readyset')
+        self.query(f'CREATE CACHE native_late FROM SELECT id FROM {db}.source_rows WHERE score=? AND payload=?',route='readyset')
+        self.native_compare(f"SELECT id FROM {db}.source_rows WHERE score=778 AND payload='moved'")
+        self.native_compare(f"SELECT id FROM {db}.source_rows WHERE score=777 AND payload='duplicate'")
+        # NULL -> non-NULL and the reverse must move equality membership, without NULL = NULL.
+        self.source.sql(f"UPDATE {db}.source_rows SET note='same' WHERE id=200003")
+        self.source.sql(f'UPDATE {db}.source_rows SET note=NULL WHERE id=200005')
+        self.source.sql(f'DELETE FROM {db}.source_rows WHERE id=200001')
+        checkpoint=self.http('GET','/health')['response']['checkpoint'];self.wait_ready(after=checkpoint)
+        self.native_compare(f"SELECT id,payload FROM {db}.source_rows WHERE score=777 AND note='same'")
+        self.native_compare(f"SELECT id FROM {db}.source_rows WHERE score=778 AND payload='moved'")
+        self.native_compare(f"SELECT id,payload FROM {db}.source_rows WHERE note='same'")
+        self.native_compare(f"SELECT id,payload FROM {db}.source_rows WHERE note='new-note'")
+        self.query('DROP CACHE native_score',route='readyset')
+        self.native_compare(bag)
+        self.point(7)  # All-column score DROP must not delete/alias the internal id barrier.
+        self.query(f'CREATE CACHE native_score FROM SELECT id,payload,score,note FROM {db}.source_rows WHERE score=?',route='readyset')
+        self.native_compare(full)
+        import databend_driver
+        port=self.origin.rsplit(':',1)[1]
+        conn=databend_driver.BlockingDatabendClient(f'databend://root@127.0.0.1:{port}/{db}?sslmode=disable').get_conn()
+        before=self.http('GET','/health')['response']['counters']['readyset']
+        driver_rows=[tuple(row.values()) for row in conn.query_all(f"SELECT id,payload FROM {db}.source_rows WHERE score=777 AND note='same'")]
+        self.check('native driver composite lookup',driver_rows,[(200003,'other')])
+        self.check('native driver composite read is local',self.http('GET','/health')['response']['counters']['readyset'],before+1)
+        conn.close()
+        for name in ['native_score','native_bag','native_pair','native_late','native_text','native_note']:
+            self.query('DROP CACHE '+name,route='readyset')
+        self.source.sql(f'DELETE FROM {db}.source_rows WHERE id>=200000 OR id=-9223372036854775808')
+        checkpoint=self.http('GET','/health')['response']['checkpoint'];self.wait_ready(after=checkpoint)
+        now=self.http('GET','/health')['response']
+        self.check('native cache changes preserve engine',now['engine_pid'],baseline['engine_pid'])
+        self.check('native cache changes preserve generation',now['generation'],info['generation'])
+        source_log=[json.loads(line) for line in (self.output/'service/source_queries.jsonl').read_text().splitlines()]
+        self.check('native caches still share one stream',sum(r.get('sql','').startswith('CREATE STREAM ') for r in source_log),1)
 
     def run(self):
         error=None
@@ -269,6 +378,8 @@ class Verification:
             self.wait_ready()
             if self.args.sql_declarations:
                 self.verify_runtime_cache_changes(info)
+            if self.args.native_queries:
+                self.verify_native_queries(info)
             with ThreadPoolExecutor(max_workers=4) as pool:
                 outcomes=list(pool.map(lambda _:self.point(7)[0],range(12)))
             self.check('concurrent local queries correct',outcomes,[[['7','via-gateway','0','']]]*12)
@@ -305,7 +416,7 @@ class Verification:
             final=json.loads((self.output/'service/final_status.json').read_text())
             self.check('injected failure remains fail-closed',final['ready'],False)
             self.check('sync advanced automatically',final['checkpoint']>3,True)
-            self.facts={'database':db,'gateway':info,'final_status':final,'upstream_page_requests':len(pages)}
+            self.facts={'database':db,'gateway':info,'final_status':final,'upstream_page_requests':len(pages),'native_reordered_route':getattr(self,'native_reordered_route',None)}
         except Exception as exc:
             error=f'{type(exc).__name__}: {exc}'
             print(error,flush=True)
@@ -330,6 +441,7 @@ def main():
     p.add_argument('--output',default='/tmp/readyset-databend-gateway')
     p.add_argument('--confirm-create',action='store_true')
     p.add_argument('--sql-declarations',action='store_true',help='start without JSON queries; exercise runtime CREATE/SHOW/DROP CACHE')
+    p.add_argument('--native-queries',action='store_true',help='exercise native multi-column equality, key migration, strings and local pagination')
     args=p.parse_args()
     if not args.confirm_create:p.error('--confirm-create required')
     return Verification(args).run()

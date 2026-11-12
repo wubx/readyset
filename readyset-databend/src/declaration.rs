@@ -1,11 +1,9 @@
-//! Conservative, AST-equality matching for declared single-table BIGINT point lookups.
-//! Not the general ReadySet adapter rewrite pipeline. False negatives go upstream.
-use anyhow::{Context, Result, ensure};
+//! Explicit source binding and public cache declarations using ReadySet's native query pipeline.
+use anyhow::{Result, ensure};
+use readyset_sql::ast::SelectStatement;
 use serde::Deserialize;
-use serde_json::{Value as Json, json};
-use sqlparser::ast::{BinaryOperator, Expr, SelectItem, SetExpr, Statement, UnaryOperator, Value};
-use sqlparser::dialect::MySqlDialect;
-use sqlparser::parser::Parser;
+
+use crate::native_query::{self, Input, NativeQuery};
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -32,64 +30,9 @@ pub fn identifier(value: &str) -> bool {
             .all(|(i, c)| c.is_ascii_alphabetic() || c == b'_' || (i > 0 && c.is_ascii_digit()))
 }
 
-fn parse(sql: &str) -> Option<Statement> {
-    // Refuse hints/versioned comments, rather than silently dropping executable semantics.
-    if sql.len() > 16384 || sql.contains("/*") || sql.contains("--") || sql.contains('#') {
-        return None;
-    }
-    let mut stmts = Parser::parse_sql(&MySqlDialect {}, sql).ok()?;
-    (stmts.len() == 1).then(|| stmts.remove(0))
-}
-
-fn rhs(statement: &mut Statement) -> Option<&mut Expr> {
-    let Statement::Query(q) = statement else {
-        return None;
-    };
-    let SetExpr::Select(s) = q.body.as_mut() else {
-        return None;
-    };
-    let Expr::BinaryOp {
-        left,
-        op: BinaryOperator::Eq,
-        right,
-    } = s.selection.as_mut()?
-    else {
-        return None;
-    };
-    if !matches!(left.as_ref(), Expr::Identifier(id) if id.value == "id" && id.quote_style.is_none())
-    {
-        return None;
-    }
-    Some(right)
-}
-
-fn integer(expr: &Expr) -> Option<i64> {
-    match expr {
-        Expr::Value(v) => match &v.value {
-            Value::Number(s, false) if s.bytes().all(|c| c.is_ascii_digit()) => s.parse().ok(),
-            _ => None,
-        },
-        Expr::UnaryOp {
-            op: UnaryOperator::Minus,
-            expr,
-        } => match expr.as_ref() {
-            Expr::Value(v) => match &v.value {
-                Value::Number(s, false) if s.bytes().all(|c| c.is_ascii_digit()) => {
-                    format!("-{s}").parse().ok()
-                }
-                _ => None,
-            },
-            _ => None,
-        },
-        _ => None,
-    }
-}
-
 pub struct Template {
     pub name: String,
-    ast: Statement,
-    pub projection: Vec<String>,
-    pub local_sql: String,
+    pub query: NativeQuery,
     pub source_sql: String,
 }
 
@@ -101,67 +44,30 @@ impl Declaration {
         );
         ensure!(self.queries.len() <= 8, "declare at most 8 queries");
         let mut templates: Vec<Template> = Vec::new();
-        for q in &self.queries {
+        for query in &self.queries {
             ensure!(
-                identifier(&q.name)
+                identifier(&query.name)
                     && !["m2_source", "m2_by_id"]
                         .iter()
-                        .any(|n| q.name.eq_ignore_ascii_case(n))
+                        .any(|n| query.name.eq_ignore_ascii_case(n))
                     && !templates
                         .iter()
-                        .any(|t| t.name.eq_ignore_ascii_case(&q.name)),
+                        .any(|t| query.name.eq_ignore_ascii_case(&t.name)),
                 "invalid or duplicate cache name"
             );
-            let ast = parse(&q.sql)
-                .context("declaration must be one supported SELECT, without comments")?;
-            let Statement::Query(query) = &ast else {
-                anyhow::bail!("not SELECT");
-            };
-            let SetExpr::Select(select) = query.body.as_ref() else {
-                anyhow::bail!("not single SELECT");
-            };
-            let projection: Vec<String> = select
-                .projection
-                .iter()
-                .map(|item| {
-                    let SelectItem::UnnamedExpr(Expr::Identifier(id)) = item else {
-                        anyhow::bail!("only plain projected columns supported");
-                    };
-                    ensure!(
-                        id.quote_style.is_none()
-                            && ["id", "payload", "score", "note"].contains(&id.value.as_str()),
-                        "unknown projected column"
-                    );
-                    Ok(id.value.clone())
-                })
-                .collect::<Result<_>>()?;
-            ensure!(!projection.is_empty(), "empty projection");
-            let columns = projection.join(", ");
-            let canonical = parse(&format!(
-                "SELECT {columns} FROM {}.{} WHERE id = ?",
-                self.database, self.table
-            ))
-            .unwrap();
+            let template =
+                self.template_for_sql(query.name.clone(), &query.sql, &self.database, local_table)?;
             ensure!(
-                ast == canonical,
-                "template must exactly be SELECT <columns> FROM database.table WHERE id = ?"
+                !templates
+                    .iter()
+                    .any(|t| t.query.same_shape(&template.query)),
+                "duplicate native query shape"
             );
-            ensure!(
-                !templates.iter().any(|t| t.ast == ast),
-                "duplicate query template"
-            );
-            templates.push(Template {
-                name: q.name.clone(),
-                ast,
-                projection,
-                local_sql: format!("SELECT {columns} FROM {local_table} WHERE id = ?"),
-                source_sql: canonical.to_string(),
-            });
+            templates.push(template);
         }
         Ok(templates)
     }
 
-    /// Resolve only the configured source relation, then run the existing restricted AST validator.
     pub fn template_for_sql(
         &self,
         name: String,
@@ -169,141 +75,211 @@ impl Declaration {
         database: &str,
         local_table: &str,
     ) -> Result<Template> {
-        let mut ast = parse(sql).context("unsupported cache SELECT")?;
-        if database == self.database
-            && let Statement::Query(q) = &mut ast
-            && let SetExpr::Select(s) = q.body.as_mut()
-            && s.from.len() == 1
-        {
-            let Statement::Query(bare) =
-                parse(&format!("SELECT id FROM {} WHERE id = ?", self.table)).unwrap()
-            else {
-                unreachable!()
-            };
-            let SetExpr::Select(bare) = bare.body.as_ref() else {
-                unreachable!()
-            };
-            if s.from[0].relation == bare.from[0].relation {
-                let Statement::Query(qualified) = parse(&format!(
-                    "SELECT id FROM {}.{} WHERE id = ?",
-                    self.database, self.table
-                ))
-                .unwrap() else {
-                    unreachable!()
-                };
-                let SetExpr::Select(qualified) = qualified.body.as_ref() else {
-                    unreachable!()
-                };
-                s.from[0].relation = qualified.from[0].relation.clone();
-            }
-        }
-        let single = Declaration {
-            database: self.database.clone(),
-            table: self.table.clone(),
-            queries: vec![QueryDeclaration {
-                name,
-                sql: ast.to_string(),
-            }],
-        };
-        Ok(single.templates(local_table)?.remove(0))
-    }
-}
-
-impl Template {
-    pub fn match_key(&self, sql: &str, database: &str, declared: &Declaration) -> Option<i64> {
-        let mut ast = parse(sql)?;
-        // Resolve only an unqualified reference in the explicitly selected source database.
-        if database == declared.database
-            && let Statement::Query(q) = &mut ast
-            && let SetExpr::Select(s) = q.body.as_mut()
-            && s.from.len() == 1
-            && matches!(
-                &s.from[0].relation,
-                sqlparser::ast::TableFactor::Table { .. }
-            )
-        {
-            let bare = parse(&format!("SELECT id FROM {} WHERE id = ?", declared.table))?;
-            let Statement::Query(b) = bare else {
-                return None;
-            };
-            let SetExpr::Select(bs) = b.body.as_ref() else {
-                return None;
-            };
-            if s.from[0].relation == bs.from[0].relation {
-                let Statement::Query(t) = &self.ast else {
-                    return None;
-                };
-                let SetExpr::Select(ts) = t.body.as_ref() else {
-                    return None;
-                };
-                // No aliases, joins, modifiers or hints are normalized away.
-                s.from[0].relation = ts.from[0].relation.clone();
-            }
-        }
-        let key = integer(rhs(&mut ast)?)?;
-        *rhs(&mut ast)? = Expr::Value(Value::Placeholder("?".into()).into());
-        (ast == self.ast).then_some(key)
+        self.template_for_select(
+            name,
+            native_query::parse_select(sql)?,
+            database,
+            local_table,
+        )
     }
 
-    pub fn schema(&self) -> Vec<Json> {
-        self.projection.iter().map(|name| json!({"name":name,"type": match name.as_str() {
-            "id" | "score" => "Int64", "payload" => "String", "note" => "Nullable(String)", _ => unreachable!(),
-        }})).collect()
+    pub fn template_for_select(
+        &self,
+        name: String,
+        select: SelectStatement,
+        database: &str,
+        local_table: &str,
+    ) -> Result<Template> {
+        use readyset_sql::{Dialect, DialectDisplay};
+        let source_sql = select.display(Dialect::MySQL).to_string();
+        let query = native_query::compile(select, self, database, local_table, Input::Declaration)?;
+        Ok(Template {
+            name,
+            query,
+            source_sql,
+        })
+    }
+
+    /// Unsupported syntax/types are conservative misses, never rewritten by this crate.
+    pub fn read_query(&self, sql: &str, database: &str) -> Option<NativeQuery> {
+        native_query::compile(
+            native_query::parse_select(sql).ok()?,
+            self,
+            database,
+            native_query::LOCAL_TABLE,
+            Input::Read,
+        )
+        .ok()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn declaration() -> Declaration {
-        serde_json::from_value(json!({"database":"poc","table":"source_rows","queries":[
-        {"name":"by_id","sql":"SELECT id, payload, score, note FROM poc.source_rows WHERE id = ?"}
-    ]})).unwrap()
+    use readyset_data::DfValue;
+    fn source() -> Declaration {
+        Declaration {
+            database: "poc".into(),
+            table: "source_rows".into(),
+            queries: vec![],
+        }
     }
+    fn template(sql: &str) -> Template {
+        source()
+            .template_for_sql("cache".into(), sql, "poc", native_query::LOCAL_TABLE)
+            .unwrap()
+    }
+
     #[test]
-    fn normalize_only_key_and_safe_unqualified_relation() {
-        let d = declaration();
-        let t = d.templates("local").unwrap();
-        for (sql, key, db) in [
+    fn native_rewrite_matches_literal_reads_and_builds_composite_keys() {
+        let d = source();
+        for (declaration, read, expected) in [
             (
-                "select id,payload,score,note from poc.source_rows where id=42;",
-                42,
-                "other",
+                "SELECT payload FROM poc.source_rows WHERE score=?",
+                "SELECT payload FROM source_rows WHERE score=-42",
+                vec![DfValue::from(-42i64)],
             ),
             (
-                "SELECT id, payload, score, note FROM source_rows WHERE id = -9223372036854775808",
-                i64::MIN,
+                "SELECT payload FROM poc.source_rows WHERE id=?",
+                "SELECT payload FROM source_rows WHERE id=-9223372036854775808",
+                vec![DfValue::from(i64::MIN)],
+            ),
+            (
+                "SELECT payload,note FROM poc.source_rows WHERE id=? AND score=?",
+                "SELECT payload,note FROM source_rows WHERE id=7 AND score=-100",
+                vec![DfValue::from(7i64), DfValue::from(-100i64)],
+            ),
+            (
+                "SELECT id FROM poc.source_rows WHERE payload=? AND score=? AND note=?",
+                "SELECT id FROM poc.source_rows WHERE payload='中文é' AND score=3 AND note='x'",
+                vec![
+                    DfValue::from("中文é"),
+                    DfValue::from(3i64),
+                    DfValue::from("x"),
+                ],
+            ),
+        ] {
+            let t = template(declaration);
+            let q = d.read_query(read, "poc").unwrap();
+            assert!(t.query.same_shape(&q), "{declaration}: {read}");
+            let keys = q.params.make_keys::<DfValue>(&[]).unwrap();
+            assert_eq!(keys.len(), 1);
+            // Native autoparameterization uses the MySQL literal collation; native read_cache
+            // subsequently coerces text keys to the replica's explicit binary column collation.
+            assert_eq!(keys[0].len(), expected.len());
+            for (actual, expected) in keys[0].iter().zip(&expected) {
+                if let Some(s) = expected.as_str() {
+                    assert_eq!(actual.as_str(), Some(s));
+                } else {
+                    assert_eq!(actual, expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_strings_are_not_stringified_between_parse_and_parameterization() {
+        let d = source();
+        let t = template("SELECT id FROM poc.source_rows WHERE payload=? AND note=?");
+        let q = d
+            .read_query(
+                r"SELECT id FROM poc.source_rows WHERE payload='back\\slash' AND note='O''Reilly'",
                 "poc",
-            ),
-        ] {
-            assert_eq!(t[0].match_key(sql, db, &d), Some(key));
-        }
+            )
+            .unwrap();
+        assert!(t.query.same_shape(&q));
+        let keys = q.params.make_keys::<DfValue>(&[]).unwrap();
+        assert_eq!(keys[0][0].as_str(), Some(r"back\slash"));
+        assert_eq!(keys[0][1].as_str(), Some("O'Reilly"));
     }
+
     #[test]
-    fn unsupported_queries_never_match() {
-        let d = declaration();
-        let t = d.templates("local").unwrap();
+    fn four_equality_parameters_use_native_binding_metadata() {
+        let d = source();
+        let t = template(
+            "SELECT payload FROM poc.source_rows WHERE note=? AND score=? AND id=? AND payload=?",
+        );
+        let q=d.read_query("SELECT payload FROM poc.source_rows WHERE note='n' AND score=-1 AND id=7 AND payload='p'", "poc").unwrap();
+        assert!(t.query.same_shape(&q));
+        let row = crate::SourceRow {
+            id: 7,
+            payload: "p".into(),
+            score: -1,
+            note: Some("n".into()),
+        };
+        let logical = t.query.row_params(&row).unwrap();
+        assert_eq!(logical[0].as_str(), Some("n"));
+        assert_eq!(logical[1], DfValue::from(-1i64));
+        assert_eq!(t.query.params.make_keys(&logical).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn unsafe_shapes_types_and_sessions_are_misses() {
+        let d = source();
         for sql in [
-            "SELECT * FROM poc.source_rows WHERE id = 1",
-            "SELECT id,payload,score,note FROM poc.source_rows WHERE id = '1'",
-            "SELECT id,payload,score,note FROM poc.source_rows WHERE id=1 LIMIT 0",
-            "SELECT id,payload,score,note FROM poc.source_rows WHERE id=1 OR true",
-            "SELECT id,payload,score,note FROM poc.source_rows WHERE id=9223372036854775808",
-            "SELECT id,payload,score,note FROM poc.source_rows WHERE id=1; SELECT 2",
-            "SELECT id,payload,score,note FROM poc.source_rows AT (SNAPSHOT => 'old') WHERE id=1",
-            "SELECT /* hint */ id,payload,score,note FROM poc.source_rows WHERE id=1",
-            "SELECT id,payload,score,note FROM source_rows WHERE id=1",
+            "SELECT * FROM poc.source_rows WHERE id=1",
+            "SELECT payload FROM poc.source_rows WHERE score='1'",
+            "SELECT payload FROM poc.source_rows WHERE payload=1",
+            "SELECT payload FROM poc.source_rows WHERE note=NULL",
+            "SELECT payload FROM poc.source_rows WHERE note IS NULL",
+            "SELECT payload FROM poc.source_rows WHERE score=1 OR id=2",
+            "SELECT payload FROM poc.source_rows WHERE score>1",
+            "SELECT payload FROM poc.source_rows WHERE id=1 LIMIT 0",
+            "SELECT payload FROM poc.source_rows WHERE id=1 ORDER BY payload",
+            "SELECT payload FROM poc.source_rows WHERE id=1; SELECT 2",
+            "SELECT payload FROM poc.source_rows WHERE id=9223372036854775808",
+            "SELECT payload FROM poc.source_rows WHERE id=-(-9223372036854775808)",
+            "SELECT payload FROM poc.source_rows WHERE id=-9223372036854775809",
+            "SELECT payload FROM poc.source_rows WHERE id=?",
+            "SELECT payload FROM poc.source_rows WHERE score=1 AND score=2",
+            "SELECT payload FROM other.source_rows WHERE id=1",
+            "SELECT payload FROM poc.source_rows AT (SNAPSHOT => 'old') WHERE id=1",
+            "SELECT payload FROM poc.source_rows WHERE id=1 FOR UPDATE",
+            "SELECT /* hint */ payload FROM poc.source_rows WHERE id=1",
+            "SELECT payload FROM source_rows WHERE id=1",
         ] {
-            assert_eq!(t[0].match_key(sql, "other", &d), None, "{sql}");
+            assert!(d.read_query(sql, "other").is_none(), "{sql}");
         }
+        assert!(
+            d.read_query(
+                "SELECT payload FROM poc.source_rows WHERE id=-9223372036854775808",
+                "other"
+            )
+            .is_some()
+        );
     }
+
     #[test]
-    fn invalid_declaration_fails_startup() {
-        let mut d = declaration();
-        d.queries[0].sql.push_str(" LIMIT 1");
-        assert!(d.templates("local").is_err());
-        let mut d = declaration();
-        d.queries.push(d.queries[0].clone());
-        assert!(d.templates("local").is_err());
+    fn shape_does_not_ignore_predicates_or_projection() {
+        let d = source();
+        let t = template("SELECT id,payload,score,note FROM poc.source_rows WHERE score=?");
+        let full = d
+            .read_query(
+                "SELECT id,payload,score,note FROM poc.source_rows WHERE id=3",
+                "poc",
+            )
+            .unwrap();
+        assert!(!t.query.same_shape(&full));
+        let other = d
+            .read_query("SELECT payload FROM poc.source_rows WHERE score=3", "poc")
+            .unwrap();
+        assert!(!t.query.same_shape(&other));
+    }
+
+    #[test]
+    fn declaration_requires_placeholders_and_rejects_extra_clauses() {
+        let d = source();
+        for sql in [
+            "SELECT payload FROM poc.source_rows WHERE id=42",
+            "SELECT payload FROM poc.source_rows WHERE score=? AND id=1",
+            "SELECT payload FROM poc.source_rows WHERE score=? AND score=?",
+            "SELECT payload FROM poc.source_rows WHERE score=? LIMIT 1",
+        ] {
+            assert!(
+                d.template_for_sql("c".into(), sql, "poc", native_query::LOCAL_TABLE)
+                    .is_err(),
+                "{sql}"
+            );
+        }
     }
 }

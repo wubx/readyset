@@ -476,14 +476,18 @@ where
         if op == UnaryOperator::Neg {
             match rhs {
                 Expr::Literal(Literal::UnsignedInteger(i)) => {
-                    let literal = i64::try_from(i)
+                    // Narrow after negation so -2^63 remains an exact signed integer.
+                    let literal = i64::try_from(-i128::from(i))
                         .ok()
-                        .and_then(|i| i.checked_neg())
                         .map(Literal::Integer)
                         .unwrap_or_else(|| Literal::Number(format!("-{i}")));
                     Ok(Expr::Literal(literal))
                 }
-                Expr::Literal(Literal::Integer(i)) => Ok(Expr::Literal(Literal::Integer(-i))),
+                Expr::Literal(Literal::Integer(i)) => Ok(Expr::Literal(
+                    i.checked_neg()
+                        .map(Literal::Integer)
+                        .unwrap_or(Literal::UnsignedInteger(1u64 << 63)),
+                )),
                 Expr::Literal(Literal::Number(s)) if !s.starts_with('-') => {
                     Ok(Expr::Literal(Literal::Number(format!("-{s}"))))
                 }

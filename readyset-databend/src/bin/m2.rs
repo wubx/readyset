@@ -1,6 +1,6 @@
 //! JSON-lines experiment driver for a live Databend capture process.
 //! Stdin/out are local test orchestration, NOT an authenticated application protocol.
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -9,13 +9,15 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, ensure};
 use clap::Parser;
 use dataflow_state::{DurabilityMode, PersistenceParameters};
-use readyset_client::recipe::ChangeList;
-use readyset_client::{ReaderHandle, ReadySetHandle};
+use readyset_client::recipe::changelist::{Change, ChangeList};
+use readyset_client::{ReaderHandle, ReadySetHandle, View};
 use readyset_data::{DfValue, Dialect};
 use readyset_databend::cache_control::{self, CacheControl};
 use readyset_databend::declaration::{Declaration, Template};
+use readyset_databend::native_query::{self, NativeQuery};
 use readyset_databend::{Batch, Sink, SourceRow, delivery};
 use readyset_server::{Builder, Handle};
+use readyset_sql::ast::TrxCachePolicy;
 use replication_offset::ReplicationOffset;
 use replication_offset::databend::DatabendPosition;
 use serde::Deserialize;
@@ -154,32 +156,49 @@ async fn verify(
     )
 }
 
-fn full_projection(template: &Template) -> bool {
-    template.projection == ["id", "payload", "score", "note"]
+fn internal_query(declaration: &Declaration) -> Result<NativeQuery> {
+    Ok(declaration
+        .template_for_sql(
+            "barrier".into(),
+            &format!(
+                "SELECT id,payload,score,note FROM {}.{} WHERE id=?",
+                declaration.database, declaration.table
+            ),
+            &declaration.database,
+            TABLE,
+        )?
+        .query)
 }
 
-async fn create_reader(handle: &mut Handle, template: &Template) -> Result<ReaderHandle> {
-    // ReadySet removes ALL aliases of an identical query on DROP. Reuse the internal
-    // full-row reader directly, rather than adding a droppable alias to the barrier query.
-    let name = if full_projection(template) {
+async fn create_reader(
+    handle: &mut Handle,
+    template: &Template,
+    internal: &NativeQuery,
+) -> Result<View> {
+    // Compare FULL native query identity, not merely its projection. All-column score lookups
+    // must never alias the protected id barrier. ReadySet DROP removes identical-query aliases.
+    let name = if template.query.same_shape(internal) {
         QUERY
     } else {
         handle
-            .extend_recipe(ChangeList::from_strings(
-                vec![format!(
-                    "CREATE CACHE {} FROM {}",
-                    template.name, template.local_sql
-                )],
+            .extend_recipe(ChangeList::from_change(
+                Change::create_cache(
+                    template.name.clone(),
+                    template.query.statement.clone(),
+                    TrxCachePolicy::Never,
+                    None,
+                    None,
+                ),
                 Dialect::DEFAULT_MYSQL,
-            )?)
+            ))
             .await?;
         template.name.as_str()
     };
-    let reader = handle
-        .view(name)
-        .await?
-        .into_reader_handle()
-        .context("single declared reader required")?;
+    let view = handle.view(name).await?;
+    ensure!(
+        matches!(&view, View::Single(_)),
+        "single declared reader required"
+    );
     ensure!(
         handle
             .materialization_info()
@@ -188,52 +207,68 @@ async fn create_reader(handle: &mut Handle, template: &Template) -> Result<Reade
             .all(|m| !m.partial),
         "partial query state"
     );
-    Ok(reader)
+    Ok(view)
+}
+
+struct DeclaredReader {
+    view: View,
+    /// Every previously witnessed logical key is checked again, including keys vacated by
+    /// UPDATE/DELETE. Count only live expected rows, but preserve duplicate projected rows.
+    witnessed: HashSet<Vec<DfValue>>,
 }
 
 async fn fence_template(
     template: &Template,
-    reader: &mut ReaderHandle,
+    reader: &mut DeclaredReader,
     rows: &[SourceRow],
-    missing: &[i64],
 ) -> Result<()> {
-    for (id, expected) in rows
-        .iter()
-        .map(|row| {
-            let values = row.values();
-            let projected = template
-                .projection
-                .iter()
-                .map(|c| {
-                    values[match c.as_str() {
-                        "id" => 0,
-                        "payload" => 1,
-                        "score" => 2,
-                        "note" => 3,
-                        _ => unreachable!(),
-                    }]
-                    .clone()
-                })
-                .collect::<Vec<_>>();
-            (row.id, vec![projected])
-        })
-        .chain(missing.iter().map(|&id| (id, vec![])))
-    {
+    let mut expected: HashMap<Vec<DfValue>, Vec<Vec<DfValue>>> = HashMap::new();
+    for row in rows {
+        if let Some(params) = template.query.row_params(row) {
+            expected
+                .entry(params)
+                .or_default()
+                .push(template.query.project(row));
+        }
+    }
+    for bag in expected.values_mut() {
+        bag.sort();
+    }
+    reader.witnessed.extend(expected.keys().cloned());
+    // Also examine unexpected physical keys. Their order comes from the native key_map,
+    // never from predicate order. NULL equality slots cannot contain a matching SQL row.
+    let View::Single(handle) = &mut reader.view else {
+        anyhow::bail!("single reader required")
+    };
+    for key in handle.keys().await? {
+        let params = native_query::params_from_reader_key(
+            &reader.view,
+            &key,
+            template.query.bindings.len(),
+        )?;
+        if !params.iter().any(DfValue::is_none) {
+            reader.witnessed.insert(params);
+        }
+    }
+    ensure!(
+        reader.witnessed.len() <= 20000,
+        "POC oracle key history exceeds 20000; restart required"
+    );
+    for params in &reader.witnessed {
+        let wanted = expected.get(params).cloned().unwrap_or_default();
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
-                if reader
-                    .lookup(&[id.into()], Dialect::DEFAULT_MYSQL)
-                    .await?
-                    .into_vec()
-                    == expected
-                {
+                let (mut actual, _) =
+                    native_query::read(&mut reader.view, &template.query, params).await?;
+                actual.sort();
+                if actual == wanted {
                     return Ok::<_, anyhow::Error>(());
                 }
                 tokio::time::sleep(Duration::from_millis(5)).await;
             }
         })
         .await
-        .context("declared reader barrier timeout")??;
+        .with_context(|| format!("declared reader barrier timeout: {}", template.name))??;
     }
     Ok(())
 }
@@ -257,9 +292,18 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
         .transpose()?
         .unwrap_or_default();
     handle.backend_ready().await;
-    handle.extend_recipe(ChangeList::from_strings(vec![format!(
-        "CREATE TABLE {TABLE} (id BIGINT NOT NULL, payload TEXT NOT NULL, score BIGINT NOT NULL, note TEXT, PRIMARY KEY(id))"
-    )], Dialect::DEFAULT_MYSQL)?).await?;
+    handle
+        .extend_recipe(ChangeList::from_strings(
+            vec![native_query::LOCAL_DDL],
+            Dialect::DEFAULT_MYSQL,
+        )?)
+        .await?;
+    let fallback = Declaration {
+        database: "poc".into(),
+        table: "source_rows".into(),
+        queries: vec![],
+    };
+    let internal = internal_query(declaration.as_ref().unwrap_or(&fallback))?;
     let rows: Vec<SourceRow> = BufReader::new(File::open(&args.input)?)
         .lines()
         .map(|line| Ok(serde_json::from_str(&line?)?))
@@ -286,9 +330,18 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
         .await?;
     let mut sink = Sink::new(args.generation.clone(), TABLE.into())?;
     sink.wait_persisted(handle, 0).await?;
-    handle.extend_recipe(ChangeList::from_strings(vec![format!(
-        "CREATE CACHE {QUERY} FROM SELECT id, payload, score, note FROM {TABLE} WHERE id = ?"
-    )], Dialect::DEFAULT_MYSQL)?).await?;
+    handle
+        .extend_recipe(ChangeList::from_change(
+            Change::create_cache(
+                QUERY,
+                internal.statement.clone(),
+                TrxCachePolicy::Never,
+                None,
+                None,
+            ),
+            Dialect::DEFAULT_MYSQL,
+        ))
+        .await?;
     let mut reader = handle
         .view(QUERY)
         .await?
@@ -305,8 +358,11 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
     );
     let mut declared_readers = Vec::new();
     for template in &templates {
-        let mut r = create_reader(handle, template).await?;
-        fence_template(template, &mut r, &rows, &[]).await?;
+        let mut r = DeclaredReader {
+            view: create_reader(handle, template, &internal).await?,
+            witnessed: HashSet::new(),
+        };
+        fence_template(template, &mut r, &rows).await?;
         declared_readers.push(r);
     }
     let mut barrier_rows = rows;
@@ -346,23 +402,25 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                 missing,
             } => verify(&mut reader, label, rows, missing).await?,
             Command::Query { sql, database } => {
-                let found = declaration.as_ref().and_then(|d| {
-                    templates
-                        .iter()
-                        .enumerate()
-                        .find_map(|(i, t)| t.match_key(&sql, &database, d).map(|key| (i, key)))
-                });
-                if let Some((i, key)) = found {
-                    let t = &templates[i];
-                    let actual = declared_readers[i]
-                        .lookup(&[key.into()], Dialect::DEFAULT_MYSQL)
-                        .await?
-                        .into_vec();
+                let query = declaration
+                    .as_ref()
+                    .and_then(|d| d.read_query(&sql, &database));
+                let found = query
+                    .as_ref()
+                    .and_then(|q| templates.iter().position(|t| t.query.same_shape(q)));
+                if let Some(i) = found {
+                    let q = query.as_ref().unwrap();
+                    let (actual, schema) =
+                        native_query::read(&mut declared_readers[i].view, q, &[]).await?;
                     let data = actual
                         .iter()
                         .map(|row| {
+                            ensure!(
+                                row.len() == q.projection.len(),
+                                "native result arity mismatch"
+                            );
                             row.iter()
-                                .zip(&t.projection)
+                                .zip(&q.projection)
                                 .map(|(v, c)| -> Result<Value> {
                                     Ok(match v {
                                         DfValue::None => Value::Null,
@@ -377,7 +435,12 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                                 .collect::<Result<Vec<_>>>()
                         })
                         .collect::<Result<Vec<_>>>()?;
-                    json!({"ok":true,"matched":true,"template":t.name,"schema":t.schema(),"data":data})
+                    // A conservative pre-response miss, not a truncated success or fatal error.
+                    if data.len() > 10000 || serde_json::to_vec(&data)?.len() > 4 * 1024 * 1024 {
+                        json!({"ok":true,"matched":false,"reason":"local result limit"})
+                    } else {
+                        json!({"ok":true,"matched":true,"template":templates[i].name,"schema":schema,"data":data})
+                    }
                 } else {
                     json!({"ok":true,"matched":false})
                 }
@@ -392,7 +455,7 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                 .await?;
                 // Keep a fenced oracle for runtime cache construction. Never rescan the source.
                 for (t, r) in templates.iter().zip(&mut declared_readers) {
-                    fence_template(t, r, &rows, &missing).await?;
+                    fence_template(t, r, &rows).await?;
                 }
                 barrier_rows = rows;
                 barrier_missing = missing;
@@ -416,15 +479,17 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                         match control {
                             CacheControl::Create(template) => {
                                 sink.wait_persisted(handle, barrier_checkpoint).await?;
-                                let mut r = create_reader(handle, &template).await?;
-                                fence_template(&template, &mut r, &barrier_rows, &barrier_missing)
-                                    .await?;
+                                let mut r = DeclaredReader {
+                                    view: create_reader(handle, &template, &internal).await?,
+                                    witnessed: HashSet::new(),
+                                };
+                                fence_template(&template, &mut r, &barrier_rows).await?;
                                 templates.push(*template);
                                 declared_readers.push(r);
                             }
                             CacheControl::Drop(name) => {
                                 let i = templates.iter().position(|t| t.name == name).unwrap();
-                                if !full_projection(&templates[i]) {
+                                if !templates[i].query.same_shape(&internal) {
                                     ensure!(
                                         handle.remove_query(&name.into()).await? == 1,
                                         "cache missing in controller"
@@ -441,7 +506,7 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                                 )
                                 .await?;
                                 for (t, r) in templates.iter().zip(&mut declared_readers) {
-                                    fence_template(t, r, &barrier_rows, &barrier_missing).await?;
+                                    fence_template(t, r, &barrier_rows).await?;
                                 }
                             }
                             CacheControl::Show => {}

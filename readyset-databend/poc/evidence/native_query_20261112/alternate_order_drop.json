@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "label": "alternate-order declaration outcome is known",
+      "passed": true,
+      "created": true
+    },
+    {
+      "label": "dropping alternate AND shape preserves surviving reader and internal barrier",
+      "passed": true
+    }
+  ],
+  "raw_directory": "/tmp/readyset-native-alias-e9k1w9yn"
+}

@@ -3,7 +3,24 @@
 > 分工：**另一台机器继续开发、审查并提交；本机保留为 Databend 联调和验证环境。**
 > 下文原始交接流程及历史证据保留；接手后的变化见本节。
 
-## 接手后更新：SQL 动态声明第一阶段
+## 当前更新：原生查询链路与 AND 等值（第二阶段）
+
+- 本轮基线 `e56d9c067df633d18cf8dabc117b56b5f8240203`，分支仍为 `poc/databend-stream-m0`。
+- 用户将验证机/授权端点改为 `wu@192.168.191.96` / `http://192.168.191.96:8000`。
+  本轮新建 `/data1/vmbox/readyset-native-validation`；既不覆盖原 `/data1/vmbox/readyset`，
+  也不覆盖保留第一阶段未提交快照的 `/data1/vmbox/readyset-validation`。
+- `src/native_query.rs` 接入 ReadySet 原生 parser、`rewrite_query`、`DfQueryParameters`、QueryId/AST 身份
+  和 `read_cache`；固定表 catalog 与授权/类型白名单是 Databend 适配，不在 POC 重写参数化/索引执行器。
+- 允许四列上 1..4 个不同字段的 AND 等值条件；非唯一键、多行结果、本地 HTTP 分页和结果预算。
+  Reader barrier 比较无序多重集，检查历史/额外键以验证 UPDATE/DELETE 的索引撤销；完整查询身份保护内部 id reader。
+- 文本底表及行值显式使用 Utf8Binary，并 live 对照大小写、Unicode 组合、尾空格、引号和反斜杠。
+- `readyset-sql/src/ast/expression.rs` 和 `nom-sql/src/expression.rs` 一致修正原生负整数边界转换，
+  保留 i64::MIN、防止经 f64 的 BIGINT 溢出；同时处理二次取负不 panic，并补双 parser 一致性回归。
+- 固定 schema/单源表、最多 8 公共缓存、全物化、无崩溃恢复及无 wire frontend 的边界不变；
+  OR/范围/IN/固定常量/NULL 条件/隐式转换仍不开放。未知 SQL 只透传原始请求，不自动建缓存。
+- 历史证据不改写；本轮验证需绑定当前源码/binary 哈希。编译、格式化、单测与 live 均只在远端执行。
+
+## 历史更新：SQL 动态声明第一阶段
 
 - 原始 POC 已提交到 `poc/databend-stream-m0`，基线交付 commit 为 `fe6965a65db7510670b6d0b1d499affe3ed67730`。
 - 本地目录 `/Users/wubx/02-vm/05-Github/readyset` 用于开发/审查/提交；Rust 编译、测试及 live 联调在

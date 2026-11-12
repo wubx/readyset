@@ -28,6 +28,9 @@ IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z_0-9]{0,127}\Z")
 LIFECYCLE = re.compile(r"/v1/query/([A-Za-z_0-9-]+)(?:/(page/[0-9]+|final|kill))?\Z")
 MAX_BODY = 1024 * 1024
 MAX_RESPONSE = 16 * 1024 * 1024
+MAX_LOCAL_QUERY_BYTES = 8 * 1024 * 1024
+MAX_LOCAL_TOTAL_BYTES = 64 * 1024 * 1024
+CONTROL_RESPONSE_RESERVE = 2 * 1024 * 1024
 
 
 def load_declaration(path):
@@ -299,6 +302,19 @@ class Replica:
             raise ValueError('query ID already used locally')
         return qid
 
+    def local_result_bytes(self):
+        # Budget retained JSON payload, not a claim about Python's exact heap usage.
+        return sum(entry.get('_bytes', 0) for _, entry in self.local_results.values() if entry)
+
+    @staticmethod
+    def local_page(stored, prefix, page=0):
+        data = {k: v for k, v in stored.items() if not k.startswith('_')}
+        rows, size = stored['_rows'], stored['_page_size']
+        start = page * size
+        data['data'] = rows[start:start + size]
+        data['next_uri'] = prefix + '/page/' + str(page + 1) if start + size < len(rows) else prefix + '/final'
+        return data
+
     def local_response(self, result, body, qid, now, control=False):
         prefix = '/v1/query/' + qid
         error = None if result.get('ok') else {'code': 1005, 'message': result.get('error', 'cache control failed')}
@@ -309,13 +325,22 @@ class Replica:
                 'stats': {'running_time_ms': 0, 'scan_progress': {'rows': len(rows), 'bytes': 0},
                           'write_progress': {'rows': 0, 'bytes': 0}, 'result_progress': {'rows': len(rows), 'bytes': 0}},
                 'stats_uri': prefix, 'final_uri': prefix + '/final', 'next_uri': prefix + '/final', 'kill_uri': prefix + '/kill'}
+        size = len(json.dumps(data, ensure_ascii=False).encode())
+        if size > MAX_LOCAL_QUERY_BYTES or self.local_result_bytes() + size > MAX_LOCAL_TOTAL_BYTES:
+            if control:
+                raise RuntimeError('cache control response exceeded reserved result budget')
+            return None  # No partial local success: safely proxy this read once instead.
+        pagination = body.get('pagination', {})
+        page_size = min(pagination.get('max_rows_per_page', 1000), pagination.get('max_rows_in_buffer', 1000))
+        data.update(_rows=rows, _page_size=page_size, _bytes=size)
         self.local_results[qid] = (now + 60, data)
+        page = self.local_page(data, prefix)
         if control:
             self.counters['cache_ddl'] = self.counters.get('cache_ddl', 0) + (error is None)
         else:
             self.counters['readyset'] += 1
             self.counters['empty_local'] += not bool(rows)
-        return 200, json.dumps(data, ensure_ascii=False).encode(), {
+        return 200, json.dumps(page, ensure_ascii=False).encode(), {
             'X-ReadySet-Route': 'readyset', 'X-ReadySet-Template': 'cache-control' if control else result['template']}
 
     def handle(self, method, path, raw, headers):
@@ -338,13 +363,20 @@ class Replica:
                 result = self.local_results.get(lifecycle[1])
                 if result is None or result[1] is None:
                     return 404, b'{"error":"local query expired or finalized"}', {}
-                data = dict(result[1])
-                if lifecycle[2] == 'final':
-                    self.local_results[lifecycle[1]] = (result[0], None)  # Tombstone: do not forward a finalized local ID.
+                prefix = '/v1/query/' + lifecycle[1]
+                page = 0
+                if lifecycle[2] and lifecycle[2].startswith('page/'):
+                    number = lifecycle[2].split('/')[1]
+                    if len(number) > 10:
+                        return 404, b'{"error":"local page does not exist"}', {'X-ReadySet-Route': 'readyset'}
+                    page = int(number)
+                    if number != str(page) or page < 1 or page * result[1]['_page_size'] >= len(result[1]['_rows']):
+                        return 404, b'{"error":"local page does not exist"}', {'X-ReadySet-Route': 'readyset'}
+                data = self.local_page(result[1], prefix, page)
+                if lifecycle[2] in ('final', 'kill'):
+                    self.local_results[lifecycle[1]] = (result[0], None)  # Tombstone: never forward finalized local IDs.
                     data['data'] = []
                     data['next_uri'] = None
-                elif lifecycle[2] and lifecycle[2].startswith('page/'):
-                    return 404, b'{"error":"local one-row result has no continuation pages"}', {}
                 return 200, json.dumps(data, ensure_ascii=False).encode(), {'X-ReadySet-Route': 'readyset'}
             if start and cache_control_sql(body['sql']):
                 # DDL never falls back to Databend, even when the replica/engine is unavailable.
@@ -352,7 +384,8 @@ class Replica:
                         or body.get('session', {}).get('database', 'default') not in {'default', self.d['database']}):
                     return 400, b'{"error":"cache control requires a safe autocommit session and configured source"}', {'X-ReadySet-Route': 'readyset'}
                 if (not self.ready or self.failed or self.inflight or self.uncertain
-                        or now - self.last_sync > self.args.max_staleness or len(self.local_results) >= 2048):
+                        or now - self.last_sync > self.args.max_staleness or len(self.local_results) >= 2048
+                        or self.local_result_bytes() > MAX_LOCAL_TOTAL_BYTES - CONTROL_RESPONSE_RESERVE):
                     return 503, b'{"error":"cache control requires a ready replica; statement was not forwarded"}', {'X-ReadySet-Route': 'readyset'}
                 qid = self.local_query_id(headers)  # Validate BEFORE any mutation.
                 try:
@@ -383,7 +416,9 @@ class Replica:
                         except ValueError as exc:
                             status = 409 if str(exc) == 'query ID already used locally' else 400
                             return status, json.dumps({'error': str(exc)}).encode(), {}
-                        return self.local_response(result, body, qid, now)
+                        response = self.local_response(result, body, qid, now)
+                        if response is not None:
+                            return response
                 except Exception as exc:
                     self.ready = False
                     self.failed = f'engine query failure: {exc}'

@@ -2701,14 +2701,19 @@ impl TryFromDialect<sqlparser::ast::Expr> for Expr {
                 expr,
             } => match expr.try_into_dialect(dialect)? {
                 Expr::Literal(Literal::UnsignedInteger(i)) => {
-                    let literal = i64::try_from(i)
+                    // Negate before narrowing: 2^63 does not fit i64, but -2^63 does.
+                    // Keeping MIN as Number would send a BIGINT lookup through f64.
+                    let literal = i64::try_from(-i128::from(i))
                         .ok()
-                        .and_then(|i| i.checked_neg())
                         .map(Literal::Integer)
                         .unwrap_or_else(|| Literal::Number(format!("-{i}")));
                     Ok(Self::Literal(literal))
                 }
-                Expr::Literal(Literal::Integer(i)) => Ok(Self::Literal(Literal::Integer(-i))),
+                Expr::Literal(Literal::Integer(i)) => Ok(Self::Literal(
+                    i.checked_neg()
+                        .map(Literal::Integer)
+                        .unwrap_or(Literal::UnsignedInteger(1u64 << 63)),
+                )),
                 Expr::Literal(Literal::Number(s)) if !s.starts_with('-') => {
                     Ok(Self::Literal(Literal::Number(format!("-{s}"))))
                 }
@@ -3787,6 +3792,32 @@ mod tests {
         sqlparser_expr
             .try_into_dialect(dialect)
             .expect("failed to convert sqlparser Expr to readyset Expr")
+    }
+
+    #[test]
+    fn negative_integer_boundary_remains_exact() {
+        for dialect in [Dialect::MySQL, Dialect::PostgreSQL] {
+            assert_eq!(
+                parse_expr(dialect, "-9223372036854775808"),
+                Expr::Literal(Literal::Integer(i64::MIN))
+            );
+            assert_eq!(
+                parse_expr(dialect, "-9223372036854775807"),
+                Expr::Literal(Literal::Integer(-i64::MAX))
+            );
+            assert_eq!(
+                parse_expr(dialect, "-9223372036854775809"),
+                Expr::Literal(Literal::Number("-9223372036854775809".into()))
+            );
+            assert_eq!(
+                parse_expr(dialect, "-18446744073709551615"),
+                Expr::Literal(Literal::Number("-18446744073709551615".into()))
+            );
+            assert_eq!(
+                parse_expr(dialect, "-(-9223372036854775808)"),
+                Expr::Literal(Literal::UnsignedInteger(1u64 << 63))
+            );
+        }
     }
 
     /// A qualified alias is functional column identity (MIR/dataflow column names and name-based

@@ -1,0 +1,192 @@
+{
+  "base_commit": "e56d9c067df633d18cf8dabc117b56b5f8240203",
+  "binary_sha256": "cf38f98ca6ec7cff53716b53c94cfd6a73795ed4ebe1c123cafcb45a59ea5b01",
+  "generation": "rs_native_alias",
+  "initial_rows": [
+    {
+      "id": 7,
+      "payload": "p",
+      "score": 9,
+      "note": null
+    }
+  ],
+  "source_binding": {
+    "database": "poc",
+    "table": "source_rows",
+    "queries": []
+  },
+  "journal": [
+    {
+      "request": {
+        "op": "cache_ddl",
+        "sql": "CREATE CACHE order_one FROM SELECT payload FROM poc.source_rows WHERE score=? AND id=?",
+        "database": "poc"
+      },
+      "response": {
+        "caches": [
+          "order_one"
+        ],
+        "data": [
+          [
+            "order_one",
+            "SELECT `payload` FROM `poc`.`source_rows` WHERE ((`score` = ?) AND (`id` = ?))",
+            "ready"
+          ]
+        ],
+        "ok": true,
+        "schema": [
+          {
+            "name": "name",
+            "type": "String"
+          },
+          {
+            "name": "query",
+            "type": "String"
+          },
+          {
+            "name": "state",
+            "type": "String"
+          }
+        ]
+      },
+      "roundtrip_ms": 362.0094172656536
+    },
+    {
+      "request": {
+        "op": "cache_ddl",
+        "sql": "CREATE CACHE order_two FROM SELECT payload FROM poc.source_rows WHERE id=? AND score=?",
+        "database": "poc"
+      },
+      "response": {
+        "caches": [
+          "order_one",
+          "order_two"
+        ],
+        "data": [
+          [
+            "order_one",
+            "SELECT `payload` FROM `poc`.`source_rows` WHERE ((`score` = ?) AND (`id` = ?))",
+            "ready"
+          ],
+          [
+            "order_two",
+            "SELECT `payload` FROM `poc`.`source_rows` WHERE ((`id` = ?) AND (`score` = ?))",
+            "ready"
+          ]
+        ],
+        "ok": true,
+        "schema": [
+          {
+            "name": "name",
+            "type": "String"
+          },
+          {
+            "name": "query",
+            "type": "String"
+          },
+          {
+            "name": "state",
+            "type": "String"
+          }
+        ]
+      },
+      "roundtrip_ms": 359.89593900740147
+    },
+    {
+      "request": {
+        "op": "cache_ddl",
+        "sql": "DROP CACHE order_one",
+        "database": "poc"
+      },
+      "response": {
+        "caches": [
+          "order_two"
+        ],
+        "data": [
+          [
+            "order_two",
+            "SELECT `payload` FROM `poc`.`source_rows` WHERE ((`id` = ?) AND (`score` = ?))",
+            "ready"
+          ]
+        ],
+        "ok": true,
+        "schema": [
+          {
+            "name": "name",
+            "type": "String"
+          },
+          {
+            "name": "query",
+            "type": "String"
+          },
+          {
+            "name": "state",
+            "type": "String"
+          }
+        ]
+      },
+      "roundtrip_ms": 4.454264417290688
+    },
+    {
+      "request": {
+        "op": "query",
+        "sql": "SELECT payload FROM poc.source_rows WHERE id=7 AND score=9",
+        "database": "poc"
+      },
+      "response": {
+        "data": [
+          [
+            "p"
+          ]
+        ],
+        "matched": true,
+        "ok": true,
+        "schema": [
+          {
+            "name": "payload",
+            "type": "String"
+          }
+        ],
+        "template": "order_two"
+      },
+      "roundtrip_ms": 3.8980431854724884
+    },
+    {
+      "request": {
+        "op": "cache_ddl",
+        "sql": "DROP CACHE order_two",
+        "database": "poc"
+      },
+      "response": {
+        "caches": [],
+        "data": [],
+        "ok": true,
+        "schema": [
+          {
+            "name": "name",
+            "type": "String"
+          },
+          {
+            "name": "query",
+            "type": "String"
+          },
+          {
+            "name": "state",
+            "type": "String"
+          }
+        ]
+      },
+      "roundtrip_ms": 4.176205024123192
+    },
+    {
+      "request": {
+        "op": "shutdown"
+      },
+      "response": {
+        "ok": true,
+        "shutdown": true
+      },
+      "roundtrip_ms": 0.10664016008377075
+    }
+  ]
+}
