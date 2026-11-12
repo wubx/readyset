@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "endpoint": "http://192.168.1.100:8000",
+  "database": "readyset_m1_20261112_080821_c27444c7",
+  "rows_requested": 100000,
+  "seed": 42,
+  "dataset": "synthetic BIGINT key, UTF-8 payload, signed BIGINT score, nullable UTF-8 note",
+  "version": "Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)",
+  "snapshot_id": "01a1ceccf80773c4924dd432fbedbf92",
+  "rows_exported": 100000,
+  "export_seconds": 4.225825592875481,
+  "data_sha256": "0bcec4cff169a91a20a97272b4fc93e71e9de643e87eb30ad6f3445ecb5e93b3",
+  "data_bytes": 14438097,
+  "page_size": 1000,
+  "databend_uniform_point_lookup": {
+    "queries": 100,
+    "p50_ms": 18.99542845785618,
+    "p95_ms": 22.341420873999596,
+    "p99_ms": 23.674095049500465,
+    "max_ms": 23.778945207595825
+  },
+  "baseline_topology": "Python urllib HTTP to source including query submission, result lifecycle and local journal write; serial random queries",
+  "baseline_limitations": "Not directly protocol/network-equivalent to ReadySet loopback ReaderHandle RPC; not a speedup claim"
+}

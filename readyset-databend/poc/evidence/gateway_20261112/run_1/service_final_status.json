@@ -1,0 +1,16 @@
+{
+  "generation": "rs_c08627188dc34043bc4d818fe29be2c3",
+  "checkpoint": 12,
+  "ready": false,
+  "failed": "engine query failure: [Errno 32] Broken pipe",
+  "uncertain_upstream": false,
+  "inflight": 0,
+  "rows": 100,
+  "counters": {
+    "readyset": 121,
+    "databend": 14,
+    "empty_local": 2,
+    "sync_batches": 12
+  },
+  "engine_pid": 38644
+}

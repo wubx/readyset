@@ -1,0 +1,8 @@
+{
+  "origin": "http://127.0.0.1:38621",
+  "database": "readyset_gateway_20261112_091536_1d85f948",
+  "generation": "rs_f98fa4de9804485cbbc93472aaf1619e",
+  "stream": "readyset_gateway_20261112_091536_1d85f948.rs_f98fa4de9804485cbbc93472aaf1619e_stream",
+  "outbox": "readyset_gateway_20261112_091536_1d85f948.rs_f98fa4de9804485cbbc93472aaf1619e_outbox",
+  "meta": "readyset_gateway_20261112_091536_1d85f948.rs_f98fa4de9804485cbbc93472aaf1619e_meta"
+}

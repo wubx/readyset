@@ -1,0 +1,171 @@
+   Compiling replication-offset v0.1.0 (/data1/vmbox/readyset/replication-offset)
+   Compiling readyset-databend v0.1.0 (/data1/vmbox/readyset/readyset-databend)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.26s
+     Running unittests src/lib.rs (target/debug/deps/readyset_databend-43ec2bd0ca4ac518)
+
+running 6 tests
+test tests::checksum_contract_matches_python_utf8_and_int64 ... ok
+test tests::incomplete_or_tampered_batch_rejected_even_when_old ... ok
+test tests::empty_batch_still_carries_a_checkpoint ... ok
+test tests::update_order_is_delete_then_insert_then_checkpoint ... ok
+test tests::duplicates_and_old_batches_skip_but_gaps_fail ... ok
+test tests::duplicate_source_key_rejected ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/m1.rs (target/debug/deps/databend_m1-e123f3df5771e465)
+
+running 4 tests
+test tests::percentiles_use_nearest_rank ... ok
+test tests::null_and_utf8_survive_mapping ... ok
+test tests::duplicate_keys_rejected_before_engine_start ... ok
+test tests::deterministic_shuffle_is_full_permutation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/m2.rs (target/debug/deps/databend_m2-413ecadafa5893f7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/replication_offset-c1644044012af8fc)
+
+running 118 tests
+test databend::tests::compares_only_within_one_generation ... ok
+test databend::tests::display_json_and_bincode_roundtrip ... ok
+test databend::tests::existing_bincode_variant_numbers_are_unchanged ... ok
+test mysql::test::test_byte_lag_same_file ... ok
+test mysql::test::test_byte_lag_missing_file_size ... ok
+test mysql::test::test_byte_lag_cross_file_with_intermediates ... ok
+test mysql::test::test_mysql_v1 ... ok
+test mysql::test::test_byte_lag_cross_file_adjacent ... ok
+test databend::tests::invalid_text_is_rejected ... ok
+test mysql::test::test_byte_lag_different_base_names ... ok
+test mysql_gtid::tests::gtid_event::advance_event_increments_index ... ok
+test mysql::test::test_partial_ord ... ok
+test mysql::test::test_mysql_position_roundtrip ... ok
+test mysql::test::test_byte_lag_same_position ... ok
+test mysql_gtid::tests::gtid_event::cmp_includes_uuid_and_tag ... ok
+test mysql::test::test_byte_lag_readyset_ahead_returns_zero ... ok
+test mysql_gtid::tests::gtid_event::new_has_zero_event_index ... ok
+test mysql_gtid::tests::gtid_event::display_includes_event_index ... ok
+test mysql_gtid::tests::gtid_event::to_mysql_string_excludes_event_index ... ok
+test mysql_gtid::tests::gtid_event::with_tag_display_includes_event_index ... ok
+test mysql_gtid::tests::gtid_event::with_tag_to_mysql_string ... ok
+test mysql_gtid::tests::gtid_range::contains ... ok
+test mysql_gtid::tests::gtid_range::merge ... ok
+test mysql_gtid::tests::gtid_range::single ... ok
+test mysql_gtid::tests::gtid_range::overlaps_or_touches ... ok
+test mysql_gtid::tests::gtid_set::advance_cascading_merge ... ok
+test mysql_gtid::tests::gtid_set::clear_pending_on_rollback ... ok
+test mysql_gtid::tests::gtid_set::advance_merges_adjacent_ranges ... ok
+test mysql_gtid::tests::gtid_set::comparison_detects_subset ... ok
+test mysql_gtid::tests::gtid_set::comparison_with_pending ... ok
+test mysql_gtid::tests::gtid_set::contains_with_gaps ... ok
+test mysql_gtid::tests::gtid_set::comparison_with_tags ... ok
+test mysql_gtid::tests::gtid_set::contains_with_tag ... ok
+test mysql_gtid::tests::gtid_set::parser_rejects_orphan_tag_group ... ok
+test mysql_gtid::tests::gtid_set::incomparable_sets_return_error ... ok
+test mysql_gtid::tests::gtid_set::parser_accepts_valid_tag_at_max_length ... ok
+test mysql_gtid::tests::gtid_set::parser_rejects_tag_starting_with_digit ... ok
+test mysql_gtid::tests::gtid_set::iter_produces_one_entry_per_key_with_all_ranges ... ok
+test mysql_gtid::tests::gtid_set::parser_accepts_tag_with_underscore_start ... ok
+test mysql_gtid::tests::gtid_set::parser_rejects_tag_too_long ... ok
+test mysql_gtid::tests::gtid_set::parser_rejects_trailing_tag_without_intervals ... ok
+test mysql_gtid::tests::gtid_set::parses_mysql_native_multi_tag_with_multiple_intervals ... ok
+test mysql_gtid::tests::gtid_set::ranges_contained_in_fragmented ... ok
+test mysql_gtid::tests::gtid_set::parses_multiple_tagged_entries_same_uuid ... ok
+test mysql_gtid::tests::gtid_set::pending_with_tag ... ok
+test mysql_gtid::tests::gtid_set::parses_mysql_native_multi_tag_format ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_multi_range_with_tags ... ok
+test mysql_gtid::tests::gtid_set::parser_rejects_uppercase_tag ... ok
+test mysql_gtid::tests::gtid_set::parses_mysql_native_tag_only_format ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_groups_tags_under_uuid ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_canonical_matches_mysql_native_format ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_excludes_pending ... ok
+test mysql_gtid::tests::gtid_set::parses_simple ... ok
+test mysql_gtid::tests::transaction_lag::gaps_in_ranges ... ok
+test mysql_gtid::tests::gtid_set::serialization_roundtrip_with_tagged_pending ... ok
+test mysql_gtid::tests::gtid_set::parses_multiple_entries ... ok
+test mysql_gtid::tests::gtid_set::pending_workflow ... ok
+test mysql_gtid::tests::gtid_set::serialization_roundtrip_without_pending ... ok
+test mysql_gtid::tests::gtid_set::parses_tagged_entry ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_with_tags ... ok
+test mysql_gtid::tests::gtid_set::source_display_with_tag ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_roundtrip_untagged ... ok
+test postgres::tests::test_byte_lag_behind_readyset_ahead ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_tag_only_uuid ... ok
+test mysql_gtid::tests::gtid_set::with_tagged_entries ... ok
+test mysql_gtid::tests::transaction_lag::readyset_behind ... ok
+test mysql_gtid::tests::transaction_lag::readyset_has_extra_source ... ok
+test mysql_gtid::tests::transaction_lag::upstream_has_source_readyset_missing ... ok
+test postgres::tests::test_byte_lag_behind_realistic_lsns ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_roundtrip_multi_uuid_tagged ... ok
+test mysql_gtid::tests::gtid_set::serialization_roundtrip_with_pending ... ok
+test mysql_gtid::tests::transaction_lag::identical_sets ... ok
+test mysql_gtid::tests::gtid_set::to_mysql_string_roundtrip_tagged ... ok
+test postgres::tests::test_lsn_from_str ... ok
+test mysql_gtid::tests::transaction_lag::readyset_empty ... ok
+test postgres::tests::test_byte_lag_behind_same_position ... ok
+test postgres::tests::test_commit_lsn_from_str_leading_zero ... ok
+test postgres::tests::test_byte_lag_behind_upstream_ahead ... ok
+test postgres::tests::test_lsn_from_str_leading_zero ... ok
+test postgres::tests::test_lsn_round_trip ... ok
+test mysql_gtid::tests::transaction_lag::both_empty ... ok
+test postgres::tests::test_commit_lsn_from_str ... ok
+test mysql_gtid::tests::transaction_lag::multiple_sources ... ok
+test postgres::tests::test_commit_lsn_round_trip ... ok
+test postgres::tests::test_postgres_position_partial_ord ... ok
+test tests::max_offset::all_present_and_matching ... ok
+test tests::gtid_offset::gtid_vs_binlog_not_comparable ... ok
+test tests::gtid_offset::max_offset_with_gtid ... ok
+test tests::gtid_offset::gtid_offsets_are_comparable ... ok
+test tests::gtid_offset::try_from_binlog_offset_fails ... ok
+test tests::gtid_offset::gtid_offsets_equal_when_same ... ok
+test tests::gtid_offset::gtid_offset_display ... ok
+test postgres::tests::test_postgres_v1 ... ok
+test tests::max_offset::all_present_not_matching ... ok
+test tests::parse_replication_offset::dialect_mysql_binlog ... ok
+test tests::gtid_offset::from_gtid_set_to_replication_offset ... ok
+test tests::parse_replication_offset::dialect_postgres ... ok
+test tests::max_offset::table_missing ... ok
+test tests::parse_replication_offset::dialect_gtid ... ok
+test tests::parse_replication_offset::mysql_to_postgres_different_dialect ... ok
+test tests::gtid_offset::try_from_gtid_offset_succeeds ... ok
+test tests::max_offset::schema_missing ... ok
+test tests::parse_replication_offset::gtid_to_postgres_different_dialect ... ok
+test tests::parse_replication_offset::parse_gtid_tagged ... ok
+test tests::parse_replication_offset::parse_gtid_untagged ... ok
+test tests::parse_replication_offset::parse_gtid_mixed_tagged_and_untagged ... ok
+test tests::parse_replication_offset::parse_gtid_multiple_uuids_with_tags ... ok
+test tests::parse_replication_offset::parse_gtid_invalid ... ok
+test tests::parse_replication_offset::parse_gtid_multiple_uuids ... ok
+test tests::parse_replication_offset::parse_postgres_lsn_invalid ... ok
+test tests::parse_replication_offset::parse_mysql_binlog_position ... ok
+test tests::parse_replication_offset::binlog_to_gtid_same_dialect ... ok
+test tests::parse_replication_offset::parse_postgres_lsn ... ok
+test tests::transaction_start::postgres_collapses_lsn_to_zero ... ok
+test tests::transaction_start::gtid_returns_self_unchanged ... ok
+test tests::transaction_start::mysql_binlog_returns_self_unchanged ... ok
+test tests::transaction_start::postgres_transaction_start_strictly_less_than_any_event_in_same_commit ... ok
+test tests::parse_replication_offset::parse_mysql_binlog_position_invalid ... ok
+
+test result: ok. 118 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests readyset_databend
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests replication_offset
+
+running 3 tests
+test replication-offset/src/lib.rs - ReplicationOffsets::has_table (line 332) ... ok
+test replication-offset/src/lib.rs - ReplicationOffsets::has_table (line 313) ... ok
+test replication-offset/src/lib.rs - ReplicationOffsets::has_table (line 322) ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 3.54s; merged doctests compilation took 3.49s

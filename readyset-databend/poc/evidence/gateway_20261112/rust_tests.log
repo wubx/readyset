@@ -1,0 +1,39 @@
+   Compiling readyset-databend v0.1.0 (/data1/vmbox/readyset/readyset-databend)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.40s
+     Running unittests src/lib.rs (target/debug/deps/readyset_databend-6bbe0dfa65a7087a)
+
+running 9 tests
+test tests::duplicate_source_key_rejected ... ok
+test tests::checksum_contract_matches_python_utf8_and_int64 ... ok
+test tests::empty_batch_still_carries_a_checkpoint ... ok
+test tests::incomplete_or_tampered_batch_rejected_even_when_old ... ok
+test tests::duplicates_and_old_batches_skip_but_gaps_fail ... ok
+test tests::update_order_is_delete_then_insert_then_checkpoint ... ok
+test declaration::tests::invalid_declaration_fails_startup ... ok
+test declaration::tests::normalize_only_key_and_safe_unqualified_relation ... ok
+test declaration::tests::unsupported_queries_never_match ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/m1.rs (target/debug/deps/databend_m1-b4b3d740c62f0a18)
+
+running 4 tests
+test tests::percentiles_use_nearest_rank ... ok
+test tests::null_and_utf8_survive_mapping ... ok
+test tests::duplicate_keys_rejected_before_engine_start ... ok
+test tests::deterministic_shuffle_is_full_permutation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/m2.rs (target/debug/deps/databend_m2-051ce904368d9de6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests readyset_databend
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

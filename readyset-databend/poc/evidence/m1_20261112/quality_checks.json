@@ -1,0 +1,10 @@
+{
+  "cargo_build": "passed (dev, current source, locked dependencies)",
+  "cargo_test": "passed: 4 tests",
+  "python_unittest": "passed: 9 tests, including 5 M0 client tests",
+  "clippy": "passed: cargo clippy --locked -p readyset-databend --bin databend-m1 --no-deps -j 8 -- -D warnings",
+  "rustfmt": "passed: rustfmt --edition 2024 --check readyset-databend/src/bin/m1.rs",
+  "git_diff_check": "passed",
+  "integration": "passed: two 100000-row loads, 242000 verified lookups total",
+  "source_files_match_tested_evidence": true
+}

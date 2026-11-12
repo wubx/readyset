@@ -1,0 +1,397 @@
+{
+  "checkpoint": 6,
+  "commands": [
+    {
+      "elapsed_ms": 290.071826,
+      "extra_keys_checked": 0,
+      "label": "initial snapshot",
+      "live_rows_verified": 1000,
+      "missing_verified": 1,
+      "ok": true,
+      "reader_key_slots": 1000,
+      "rows_verified": 1000
+    },
+    {
+      "checkpoint": 1,
+      "delivered_sequence": 1,
+      "elapsed_ms": 829.632025,
+      "ok": true,
+      "rows": 470,
+      "skipped": false
+    },
+    {
+      "elapsed_ms": 273.06413000000003,
+      "extra_keys_checked": 50,
+      "label": "batch 1 update delete insert",
+      "live_rows_verified": 970,
+      "missing_verified": 51,
+      "ok": true,
+      "reader_key_slots": 1020,
+      "rows_verified": 970
+    },
+    {
+      "checkpoint": 1,
+      "delivered_sequence": 1,
+      "elapsed_ms": 8.501085,
+      "ok": true,
+      "rows": 470,
+      "skipped": true
+    },
+    {
+      "checkpoint": 1,
+      "delivered_sequence": 1,
+      "elapsed_ms": 8.542463,
+      "ok": true,
+      "rows": 470,
+      "skipped": true
+    },
+    {
+      "elapsed_ms": 271.056573,
+      "extra_keys_checked": 50,
+      "label": "batch 1 delivered three times",
+      "live_rows_verified": 970,
+      "missing_verified": 51,
+      "ok": true,
+      "reader_key_slots": 1020,
+      "rows_verified": 970
+    },
+    {
+      "checkpoint": 2,
+      "delivered_sequence": 2,
+      "elapsed_ms": 510.455019,
+      "ok": true,
+      "rows": 233,
+      "skipped": false
+    },
+    {
+      "elapsed_ms": 287.050547,
+      "extra_keys_checked": 80,
+      "label": "batch 2 newer values and moved key",
+      "live_rows_verified": 941,
+      "missing_verified": 81,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 941
+    },
+    {
+      "checkpoint": 2,
+      "delivered_sequence": 1,
+      "elapsed_ms": 10.01682,
+      "ok": true,
+      "rows": 470,
+      "skipped": true
+    },
+    {
+      "elapsed_ms": 290.60763499999996,
+      "extra_keys_checked": 80,
+      "label": "old batch cannot overwrite v2 or resurrect deleted keys",
+      "live_rows_verified": 941,
+      "missing_verified": 81,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 941
+    },
+    {
+      "checkpoint": 2,
+      "ok": true,
+      "reset_sink": true
+    },
+    {
+      "checkpoint": 2,
+      "delivered_sequence": 2,
+      "elapsed_ms": 8.274858,
+      "ok": true,
+      "rows": 233,
+      "skipped": true
+    },
+    {
+      "elapsed_ms": 295.680347,
+      "extra_keys_checked": 80,
+      "label": "duplicate after recreating sink and client",
+      "live_rows_verified": 941,
+      "missing_verified": 81,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 941
+    },
+    {
+      "checkpoint": 3,
+      "delivered_sequence": 3,
+      "elapsed_ms": 208.34695200000002,
+      "ok": true,
+      "rows": 6,
+      "skipped": false
+    },
+    {
+      "elapsed_ms": 285.20088,
+      "extra_keys_checked": 82,
+      "label": "delete reinserted rows and Int64 minimum",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    },
+    {
+      "checkpoint": 3,
+      "delivered_sequence": 2,
+      "elapsed_ms": 6.29903,
+      "ok": true,
+      "rows": 233,
+      "skipped": true
+    },
+    {
+      "checkpoint": 3,
+      "delivered_sequence": 1,
+      "elapsed_ms": 8.309299,
+      "ok": true,
+      "rows": 470,
+      "skipped": true
+    },
+    {
+      "elapsed_ms": 273.474865,
+      "extra_keys_checked": 82,
+      "label": "old insertion batches cannot revive deleted records",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    },
+    {
+      "checkpoint": 4,
+      "delivered_sequence": 4,
+      "elapsed_ms": 4.727151,
+      "ok": true,
+      "rows": 0,
+      "skipped": false
+    },
+    {
+      "checkpoint": 4,
+      "delivered_sequence": 4,
+      "elapsed_ms": 3.3458099999999997,
+      "ok": true,
+      "rows": 0,
+      "skipped": true
+    },
+    {
+      "elapsed_ms": 280.26116099999996,
+      "extra_keys_checked": 82,
+      "label": "empty batch and its duplicate",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    },
+    {
+      "checkpoint": 5,
+      "delivered_sequence": 5,
+      "elapsed_ms": 958.7013330000001,
+      "ok": true,
+      "rows": 6,
+      "skipped": false
+    },
+    {
+      "elapsed_ms": 305.116968,
+      "extra_keys_checked": 82,
+      "label": "collapsed updates delete-reinsert and key reuse",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 6,
+      "elapsed_ms": 160.98699399999998,
+      "ok": true,
+      "rows": 802,
+      "skipped": false
+    },
+    {
+      "elapsed_ms": 299.35312400000004,
+      "extra_keys_checked": 82,
+      "label": "bulk updates",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 5,
+      "elapsed_ms": 3.628877,
+      "ok": true,
+      "rows": 6,
+      "skipped": true
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 3,
+      "elapsed_ms": 4.285414,
+      "ok": true,
+      "rows": 6,
+      "skipped": true
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 2,
+      "elapsed_ms": 7.412346,
+      "ok": true,
+      "rows": 233,
+      "skipped": true
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 1,
+      "elapsed_ms": 10.276262,
+      "ok": true,
+      "rows": 470,
+      "skipped": true
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 6,
+      "elapsed_ms": 14.107549,
+      "ok": true,
+      "rows": 802,
+      "skipped": true
+    },
+    {
+      "checkpoint": 6,
+      "delivered_sequence": 4,
+      "elapsed_ms": 3.5934690000000002,
+      "ok": true,
+      "rows": 0,
+      "skipped": true
+    },
+    {
+      "elapsed_ms": 294.480591,
+      "extra_keys_checked": 82,
+      "label": "all historical batches redelivered out of order",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    },
+    {
+      "checkpoint": 6,
+      "error": "batch gap: refusing out-of-order delivery",
+      "ok": false,
+      "rejected": true
+    },
+    {
+      "checkpoint": 6,
+      "error": "outbox generation mismatch",
+      "ok": false,
+      "rejected": true
+    },
+    {
+      "checkpoint": 6,
+      "error": "incomplete batch: row_count mismatch",
+      "ok": false,
+      "rejected": true
+    },
+    {
+      "checkpoint": 6,
+      "error": "batch checksum mismatch",
+      "ok": false,
+      "rejected": true
+    },
+    {
+      "elapsed_ms": 290.924425,
+      "extra_keys_checked": 82,
+      "label": "after rejected batches",
+      "live_rows_verified": 939,
+      "missing_verified": 83,
+      "ok": true,
+      "reader_key_slots": 1021,
+      "rows_verified": 939
+    }
+  ],
+  "generation": "readyset_m2_20261112_084247_f3ef221b",
+  "limitations": [
+    "No process/node crash test",
+    "No multi-writer sink",
+    "No SQL wire frontend",
+    "No outbox cleanup"
+  ],
+  "materializations": [
+    {
+      "domain_index": 0,
+      "indexes": [
+        {
+          "columns": [
+            0
+          ],
+          "index_type": "HashMap"
+        }
+      ],
+      "node_description": "B",
+      "node_index": 1,
+      "node_name": {
+        "catalog": null,
+        "name": [
+          109,
+          50,
+          95,
+          115,
+          111,
+          117,
+          114,
+          99,
+          101
+        ],
+        "schema": null
+      },
+      "partial": false,
+      "size": {
+        "bytes": 9050624,
+        "key_count": {
+          "EstimatedRowCount": 939
+        }
+      }
+    },
+    {
+      "domain_index": 1,
+      "indexes": [
+        {
+          "columns": [
+            0
+          ],
+          "index_type": "HashMap"
+        }
+      ],
+      "node_description": "R",
+      "node_index": 2,
+      "node_name": {
+        "catalog": null,
+        "name": [
+          109,
+          50,
+          95,
+          98,
+          121,
+          95,
+          105,
+          100
+        ],
+        "schema": null
+      },
+      "partial": false,
+      "size": {
+        "bytes": 112754,
+        "key_count": {
+          "ExactKeyCount": 1021
+        }
+      }
+    }
+  ],
+  "passed": true,
+  "persistent_base": true,
+  "single_serial_consumer": true
+}

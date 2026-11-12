@@ -1,0 +1,38 @@
+test_dead_engine_broken_pipe_does_not_prevent_cleanup (test_gateway.CleanupTest.test_dead_engine_broken_pipe_does_not_prevent_cleanup) ... ok
+test_declaration_is_frozen_for_capture_and_engine (test_gateway.CleanupTest.test_declaration_is_frozen_for_capture_and_engine) ... ok
+test_external_continuation_urls_rejected (test_gateway.RouterTest.test_external_continuation_urls_rejected) ... ok
+test_final_without_terminal_observation_fails_closed (test_gateway.RouterTest.test_final_without_terminal_observation_fails_closed) ... ok
+test_local_empty_does_not_fallback_and_lifecycle_is_local (test_gateway.RouterTest.test_local_empty_does_not_fallback_and_lifecycle_is_local) ... ok
+test_native_correlation_headers_preserved_for_local_lifecycle (test_gateway.RouterTest.test_native_correlation_headers_preserved_for_local_lifecycle) ... ok
+test_native_upstream_pages_are_forwarded_and_finish_invalidates (test_gateway.RouterTest.test_native_upstream_pages_are_forwarded_and_finish_invalidates) ... ok
+test_proxy_errors_do_not_retry_and_disable_local_reads (test_gateway.RouterTest.test_proxy_errors_do_not_retry_and_disable_local_reads) ... ok
+test_tenant_or_warehouse_headers_never_read_local (test_gateway.RouterTest.test_tenant_or_warehouse_headers_never_read_local) ... ok
+test_unmatched_and_special_session_forward_original_body (test_gateway.RouterTest.test_unmatched_and_special_session_forward_original_body) ... ok
+test_unready_stale_or_inflight_never_calls_engine (test_gateway.RouterTest.test_unready_stale_or_inflight_never_calls_engine) ... ok
+test_invalid_declarations_fail_before_source_calls (test_gateway.SessionTest.test_invalid_declarations_fail_before_source_calls) ... ok
+test_known_default_role_and_routing_metadata_are_safe (test_gateway.SessionTest.test_known_default_role_and_routing_metadata_are_safe) ... ok
+test_malformed_session_fields_never_use_local_results (test_gateway.SessionTest.test_malformed_session_fields_never_use_local_results) ... ok
+test_opaque_state_and_special_options_bypass (test_gateway.SessionTest.test_opaque_state_and_special_options_bypass) ... ok
+test_plain_autocommit_allowed (test_gateway.SessionTest.test_plain_autocommit_allowed) ... ok
+test_foreign_continuation_rejected (test_m0.ClientTests.test_foreign_continuation_rejected) ... ok
+test_incomplete_response_is_not_success (test_m0.ClientTests.test_incomplete_response_is_not_success) ... ok
+test_pagination_and_transaction_session (test_m0.ClientTests.test_pagination_and_transaction_session) ... ok
+test_sql_error_not_retried_and_fail_session_retained (test_m0.ClientTests.test_sql_error_not_retried_and_fail_session_retained) ... ok
+test_transport_error_never_resubmits_sql (test_m0.ClientTests.test_transport_error_never_resubmits_sql) ... ok
+test_bigint_precision_and_null (test_m1_export.ExportTests.test_bigint_precision_and_null) ... ok
+test_empty_string_distinct_from_null (test_m1_export.ExportTests.test_empty_string_distinct_from_null) ... ok
+test_invalid_source_values_rejected (test_m1_export.ExportTests.test_invalid_source_values_rejected) ... ok
+test_percentiles (test_m1_export.ExportTests.test_percentiles) ... ok
+test_failed_rollback_does_not_hide_first_sql_failure_or_commit (test_m2.CaptureTest.test_failed_rollback_does_not_hide_first_sql_failure_or_commit) ... PASS batch 1 has no prior commit
+ok
+test_transaction_outbox_count_mismatch_prevents_commit (test_m2.CaptureTest.test_transaction_outbox_count_mismatch_prevents_commit) ... PASS batch 1 has no prior commit
+FAIL batch 1 transaction reads its complete outbox
+ok
+test_change_parse_preserves_metadata_and_values (test_m2.ChangesTest.test_change_parse_preserves_metadata_and_values) ... ok
+test_unknown_action_and_boolean_fail_closed (test_m2.ChangesTest.test_unknown_action_and_boolean_fail_closed) ... ok
+test_utf8_int64_checksum_contract (test_m2.ChangesTest.test_utf8_int64_checksum_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.119s
+
+OK

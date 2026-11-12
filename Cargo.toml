@@ -41,6 +41,7 @@ members = [
     "readyset-client-test-helpers",
     "readyset-common",
     "readyset-data",
+    "readyset-databend",
     "readyset-dataflow",
     "readyset-decimal",
     "readyset-e2e-tests",

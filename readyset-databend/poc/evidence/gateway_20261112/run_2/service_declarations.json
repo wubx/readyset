@@ -1,0 +1,14 @@
+{
+  "database": "readyset_gateway_20261112_091536_1d85f948",
+  "table": "source_rows",
+  "queries": [
+    {
+      "name": "gateway_by_id",
+      "sql": "SELECT id, payload, score, note FROM readyset_gateway_20261112_091536_1d85f948.source_rows WHERE id = ?"
+    },
+    {
+      "name": "gateway_payload",
+      "sql": "SELECT payload, note FROM readyset_gateway_20261112_091536_1d85f948.source_rows WHERE id = ?"
+    }
+  ]
+}

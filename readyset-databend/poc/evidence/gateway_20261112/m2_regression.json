@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "database": "readyset_m2_20261112_091241_d74da232",
+  "facts": {
+    "version": "Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)",
+    "batch_rows": [
+      470,
+      233,
+      6,
+      0,
+      6,
+      802
+    ],
+    "final_checkpoint": 6,
+    "rows_initial": 1000,
+    "rows_final": 939
+  },
+  "checks_passed": 142,
+  "raw_report": "/tmp/readyset-databend-m2/readyset_m2_20261112_091241_d74da232/report.json",
+  "raw_sha256": "1c543c23708d4bc5e65d6da0d78c3846cd3a758b7cff2c62257c6182d9ca0a21"
+}

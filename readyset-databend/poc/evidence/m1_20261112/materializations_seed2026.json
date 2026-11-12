@@ -1,0 +1,71 @@
+[
+  {
+    "domain_index": 0,
+    "node_index": 1,
+    "node_name": {
+      "catalog": null,
+      "schema": null,
+      "name": [
+        109,
+        49,
+        95,
+        115,
+        111,
+        117,
+        114,
+        99,
+        101
+      ]
+    },
+    "node_description": "B",
+    "size": {
+      "key_count": {
+        "EstimatedRowCount": 100000
+      },
+      "bytes": 24779264
+    },
+    "partial": false,
+    "indexes": [
+      {
+        "index_type": "HashMap",
+        "columns": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "domain_index": 1,
+    "node_index": 2,
+    "node_name": {
+      "catalog": null,
+      "schema": null,
+      "name": [
+        109,
+        49,
+        95,
+        98,
+        121,
+        95,
+        105,
+        100
+      ]
+    },
+    "node_description": "R",
+    "size": {
+      "key_count": {
+        "ExactKeyCount": 100000
+      },
+      "bytes": 20488896
+    },
+    "partial": false,
+    "indexes": [
+      {
+        "index_type": "HashMap",
+        "columns": [
+          0
+        ]
+      }
+    ]
+  }
+]

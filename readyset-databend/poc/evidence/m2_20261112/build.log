@@ -1,0 +1,11 @@
+   Compiling replication-offset v0.1.0 (/data1/vmbox/readyset/replication-offset)
+   Compiling readyset-client v0.7.0 (/data1/vmbox/readyset/readyset-client)
+   Compiling readyset-common v0.7.0 (/data1/vmbox/readyset/readyset-common)
+   Compiling reader-map v0.1.0 (/data1/vmbox/readyset/reader-map)
+   Compiling replicators v0.1.0 (/data1/vmbox/readyset/replicators)
+   Compiling dataflow-state v0.0.1 (/data1/vmbox/readyset/dataflow-state)
+   Compiling readyset-dataflow v0.7.0 (/data1/vmbox/readyset/readyset-dataflow)
+   Compiling readyset-mir v0.7.0 (/data1/vmbox/readyset/readyset-mir)
+   Compiling readyset-server v0.7.0 (/data1/vmbox/readyset/readyset-server)
+   Compiling readyset-databend v0.1.0 (/data1/vmbox/readyset/readyset-databend)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.15s

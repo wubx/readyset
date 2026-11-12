@@ -1,0 +1,8 @@
+{
+  "origin": "http://127.0.0.1:43063",
+  "database": "readyset_gateway_20261112_091519_712fab87",
+  "generation": "rs_c08627188dc34043bc4d818fe29be2c3",
+  "stream": "readyset_gateway_20261112_091519_712fab87.rs_c08627188dc34043bc4d818fe29be2c3_stream",
+  "outbox": "readyset_gateway_20261112_091519_712fab87.rs_c08627188dc34043bc4d818fe29be2c3_outbox",
+  "meta": "readyset_gateway_20261112_091519_712fab87.rs_c08627188dc34043bc4d818fe29be2c3_meta"
+}

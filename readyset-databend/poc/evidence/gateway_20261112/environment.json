@@ -1,0 +1,124 @@
+{
+  "archived_utc": "2026-11-12T09:16:39.631025+00:00",
+  "branch": "poc/databend-stream-m0",
+  "uncommitted_worktree": true,
+  "base_commit": "9d06bba539c654c9f71450b701dec341367c89e1",
+  "databend_endpoint": "http://192.168.1.100:8000",
+  "databend_driver": "0.34.0",
+  "binary": {
+    "path": "/data1/vmbox/readyset/target/debug/databend-m2",
+    "sha256": "b9601207ae6a71d1d1f3ed2a78b1eaee636d6f346b8a906dc5165b5f8be681b8",
+    "profile": "dev, unoptimized + debuginfo"
+  },
+  "code_sha256": {
+    "Cargo.toml": "36e9ff284f05f91ff92d2bc6ca07b703dcdadb3511ee97340d38a39d66e97de2",
+    "Cargo.lock": "0dd43a3bcaf3432d57764a02f3480e4bf21f955436ae4323b7f2fda122db57fa",
+    "readyset-databend/Cargo.toml": "2c754af19f0c32a5a9b2bd48dd0b6189a0b7a5b5b79de540603aca28f47f249e",
+    "readyset-databend/src/bin/m1.rs": "3391996ecf5171f67220e20256095ddf5ab88003c85792cd90eefe6cc05fbc7f",
+    "readyset-databend/src/bin/m2.rs": "8cf655c4225b7439ed94ef70c435d598e8291fba64e20b968d03e4b433adabc7",
+    "readyset-databend/src/declaration.rs": "694f5e13ca1143ce9a93cace7932ae2c5bdfd68bc3833799fed4c5ba15cf80f2",
+    "readyset-databend/src/lib.rs": "e8258d2d122b6458c07dad757252591319a3279374990de746a72e18827e084d",
+    "readyset-databend/poc/gateway.py": "0eacd8ccbd4a69ef08977d8b1bdd3d0d0358f883d63f82fd5acf076b9c1c6b2b",
+    "readyset-databend/poc/gateway_verify.py": "00238c86e698758623e3864fad75ec996011d65302803639f2f48cd1521d772a",
+    "readyset-databend/poc/m0.py": "d5b205b7ebf4c20f0ea1f54501d7e5e9091cfa1b76314ba508a10fb917becba0",
+    "readyset-databend/poc/m1_export.py": "bac2e9fe5ba7a01c58306532835de4a80f9afde577987dc6cf88df8b397332cd",
+    "readyset-databend/poc/m2.py": "66a5befac054767399c0ae4b373566bc529f4f6d236efdca4752a019597243d5",
+    "readyset-databend/poc/test_gateway.py": "bae0c7bf6b6e7625bdf7d60b0fc318113cc59a809f60cdbf58645bad2e7eca0c",
+    "readyset-databend/poc/test_m0.py": "a63035e7be1f115fb651b1697ac5e5082eb24f953cf5a230fe9dc50ac8a410b2",
+    "readyset-databend/poc/test_m1_export.py": "e8c9dd6701e178735d76bf723a6846e865b66be3b15803a9b48c086f7bff0a8a",
+    "readyset-databend/poc/test_m2.py": "4f2e021988cb9500fd9cd76fe10470973c8987ffd600e4a2c567428dbdbf5f6e",
+    "readyset-databend/poc/declarations.example.json": "9bfc38ef2fff70dbe955228a19cf2912eeecebe44b53c38a26a80f22b312435b",
+    "replication-offset/src/databend.rs": "cc11239fcc96d5afb6d24801a807428f162e38ca2f60a4750a9d96d28e1a1685",
+    "replication-offset/src/lib.rs": "193abe3b6545f5c97ec53960801b4f335383bd15064f8732dc0281106c564100",
+    "dataflow-state/src/persistent_state/mod.rs": "bc94d0a86b6b8fd552f96cfc59a221af53899d5eda82caa8a6923e3fc06bd436"
+  },
+  "runs": [
+    {
+      "database": "readyset_gateway_20261112_091519_712fab87",
+      "raw_directory": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_091519_712fab87",
+      "checks_passed": 259,
+      "final_status": {
+        "generation": "rs_c08627188dc34043bc4d818fe29be2c3",
+        "checkpoint": 12,
+        "ready": false,
+        "failed": "engine query failure: [Errno 32] Broken pipe",
+        "uncertain_upstream": false,
+        "inflight": 0,
+        "rows": 100,
+        "counters": {
+          "readyset": 121,
+          "databend": 14,
+          "empty_local": 2,
+          "sync_batches": 12
+        },
+        "engine_pid": 38644
+      },
+      "raw_sha256": {
+        "gateway_stdout.log": "92ed2b2a788f9c4c98144cbf1ec67cfd5f09f225cbe8dab47bb80f70198e1f7f",
+        "declarations.json": "e6d4bc7f9cd56078e3394559cde863c46d92681519a60476b03dce59ee09cce3",
+        "report.json": "25d0c97c42e6be312e81ab9f2b5b53d5c2ddb1ee49e13f932c44731aa412a8ed",
+        "http_requests.jsonl": "26a01e122a0a06c9d0cda944a5227ca009f8d2ce53519e26a32b3deaf0abc9ab",
+        "setup_queries.jsonl": "38c95cb00a6ff064f7d28dc28484a793f26e413e0fb2ccb4b203a37a385fb1ec",
+        "transaction_queries.jsonl": "636128d52d94068515da8379256092e8d1b74c877dc7db59370c0e383e3a9c26",
+        "gateway_stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "service/declarations.json": "e6d4bc7f9cd56078e3394559cde863c46d92681519a60476b03dce59ee09cce3",
+        "service/listening.json": "861255f2542c8883d97efa2c32222a96f722b9ce3b24b4c2dde8551f236a9b57",
+        "service/initial.jsonl": "f6175c6aec9545f2939d05d80f998e55c564d1b860730bd8c7a250ab90e104ec",
+        "service/status.json": "61c7c4c4f1f3df60a22c8e7fd6a22df757194bf966d91a765d5de94ede1def0a",
+        "service/routes.jsonl": "451c9415385ca912b53956042de0b117b9c1382ce61f9d9066d2aaa96b6dec65",
+        "service/engine_stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "service/source_queries.jsonl": "69fa27c97238eb2014cfa6c48e5cf5c2b6cf730cb19b7b4e2517415e7ab75fb4",
+        "service/final_status.json": "592c6a1efc65cc0b74d179e451fe902fb5c53fc9a509c2f32aac1fbd2e4f9d11",
+        "service/engine_commands.jsonl": "cdd45132d00e79bd6cdfebb0e2043ee4b23d8ba22074cc59a41a851adfcb5e49"
+      }
+    },
+    {
+      "database": "readyset_gateway_20261112_091536_1d85f948",
+      "raw_directory": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_091536_1d85f948",
+      "checks_passed": 259,
+      "final_status": {
+        "generation": "rs_f98fa4de9804485cbbc93472aaf1619e",
+        "checkpoint": 12,
+        "ready": false,
+        "failed": "engine query failure: [Errno 32] Broken pipe",
+        "uncertain_upstream": false,
+        "inflight": 0,
+        "rows": 100,
+        "counters": {
+          "readyset": 121,
+          "databend": 14,
+          "empty_local": 2,
+          "sync_batches": 12
+        },
+        "engine_pid": 40532
+      },
+      "raw_sha256": {
+        "gateway_stdout.log": "f2c4ea24eda0289d470033116516023d4e1ff0a41a6813b24d36ea4756b875f4",
+        "declarations.json": "d715cc1e4cfb022a373217aed761539a26ac24d185620a5c882189957e34006e",
+        "report.json": "88949031e14abdae53abcbc222f8b6ca4e8520f2895fd1343fec5cb17692114f",
+        "http_requests.jsonl": "37309d0ad2f12105746fa375ea031b52c7cce0d0a7cb7aac931a0547cc88089e",
+        "setup_queries.jsonl": "499283e770c03ce33f31c99010d313b4f11114e3cd8fb3b359109c50a4247d27",
+        "transaction_queries.jsonl": "150b3a649966f9aaec10f56fed075ab1c6dcd9e8c250aaaa5cdafa74552a5703",
+        "gateway_stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "service/declarations.json": "d715cc1e4cfb022a373217aed761539a26ac24d185620a5c882189957e34006e",
+        "service/listening.json": "f3f53210de0d3870d77439bce68212bcf56053872a070a65d715e9514d7ad119",
+        "service/initial.jsonl": "f6175c6aec9545f2939d05d80f998e55c564d1b860730bd8c7a250ab90e104ec",
+        "service/status.json": "14e8838be8386c563a897310bae504871eb89141ca47fa12e942e9c16ae743a7",
+        "service/routes.jsonl": "20968ac2c1a970d4a64eeb5e29db3d11efb746e6a3df7f07c497722edfd73e85",
+        "service/engine_stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "service/source_queries.jsonl": "8ce35b622a313c82ecd9b52340468c909f504d86d78c343d6f906d967758adac",
+        "service/final_status.json": "7b1f54869ad11c6b0e16f09497d6d0f6da5cfd392f87e9aeb4da8a780d2eab76",
+        "service/engine_commands.jsonl": "ae99b1632bc21a6a6508a5407db8eb18e20b2111cfa73f78371a21189e2edc85"
+      }
+    }
+  ],
+  "intentional_fault": "Only the newly launched test-owned engine child receives SIGTERM, then gateway fallback is verified. This is NOT recovery testing.",
+  "limitations": [
+    "One fixed-schema table; 1..8 id point-lookup templates",
+    "Loopback Basic single principal",
+    "Databend query HTTP subset, no login/token/upload endpoints",
+    "No crash recovery or GC",
+    "Serial full-reader barriers; no production latency claim",
+    "No end-to-end exactly-once"
+  ]
+}

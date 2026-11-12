@@ -1,0 +1,117 @@
+ Downloading crates ...
+  Downloaded ciborium-io v0.2.2
+  Downloaded is-terminal v0.4.17
+  Downloaded cast v0.3.0
+  Downloaded serial_test_derive v4.0.1
+  Downloaded serial_test v4.0.1
+  Downloaded plotters-svg v0.3.7
+  Downloaded plotters-backend v0.3.7
+  Downloaded ciborium-ll v0.2.2
+  Downloaded anes v0.1.6
+  Downloaded criterion-plot v0.5.0
+  Downloaded oorandom v11.1.5
+  Downloaded tinytemplate v1.2.1
+  Downloaded ciborium v0.2.2
+  Downloaded criterion v0.5.1
+  Downloaded plotters v0.3.7
+  Downloaded zerocopy-derive v0.8.63
+   Compiling futures-util v0.3.34
+   Compiling tracing v0.1.44
+   Compiling zerocopy v0.8.63
+   Compiling serde_json v1.0.154
+   Compiling zerocopy-derive v0.8.63
+   Compiling mysql_common v0.37.3
+   Compiling lazy_static v1.5.1
+   Compiling tokio-stream v0.1.19
+   Compiling sharded-slab v0.1.7
+   Compiling h2 v0.4.20
+   Compiling readyset-spatial v0.0.1 (/data1/vmbox/readyset/readyset-spatial)
+   Compiling opentelemetry v0.33.1
+   Compiling ciborium-io v0.2.2
+   Compiling plotters-backend v0.3.7
+   Compiling tracing-futures v0.2.5
+   Compiling serial_test_derive v4.0.1
+   Compiling plotters-svg v0.3.7
+   Compiling itertools v0.10.5
+   Compiling cast v0.3.0
+   Compiling plotters v0.3.7
+   Compiling postgres-types v0.2.14 (https://github.com/readysettech/rust-postgres.git?tag=readyset-20260625#a3aa8241)
+   Compiling tracing-subscriber v0.3.23
+   Compiling pg_interval v0.6.0
+   Compiling criterion-plot v0.5.0
+   Compiling tinytemplate v1.2.1
+   Compiling test-utils-proc-macros v0.0.0 (/data1/vmbox/readyset/test-utils/proc-macros)
+   Compiling is-terminal v0.4.17
+   Compiling futures-executor v0.3.34
+   Compiling tower v0.5.3
+   Compiling tokio-postgres v0.7.18 (https://github.com/readysettech/rust-postgres.git?tag=readyset-20260625#a3aa8241)
+   Compiling hyper v1.12.0
+   Compiling futures v0.3.34
+   Compiling tower-http v0.6.11
+   Compiling readyset-multiplex v0.1.0 (/data1/vmbox/readyset/readyset-multiplex)
+   Compiling tracing-opentelemetry v0.34.0
+   Compiling tracing-appender v0.2.5
+   Compiling serial_test v4.0.1
+   Compiling hyper-util v0.1.21
+   Compiling readyset-decimal v0.1.0 (/data1/vmbox/readyset/readyset-decimal)
+   Compiling mysql_async v0.37.0 (https://github.com/readysettech/mysql_async?branch=rs-v0.37.0#4237721a)
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling deadpool-postgres v0.14.2
+   Compiling postgres-native-tls v0.5.3
+   Compiling test-utils v0.0.0 (/data1/vmbox/readyset/test-utils)
+   Compiling readyset-alloc v0.1.0 (/data1/vmbox/readyset/readyset-alloc)
+   Compiling proptest-stateful v0.1.3 (/data1/vmbox/readyset/proptest-stateful)
+   Compiling hyper-tls v0.6.0
+   Compiling hyper-timeout v0.5.2
+   Compiling reqwest v0.13.5
+   Compiling reqwest v0.12.28
+   Compiling tonic v0.14.6
+   Compiling ppv-lite86 v0.2.21
+   Compiling ahash v0.8.12
+   Compiling half v2.7.1
+   Compiling cached v4.0.2
+   Compiling rand_chacha v0.3.1
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium-ll v0.2.2
+   Compiling rand v0.8.7
+   Compiling rand v0.9.5
+   Compiling ciborium v0.2.2
+   Compiling fail v0.5.1
+   Compiling tonic-prost v0.14.6
+   Compiling opentelemetry_sdk v0.33.1
+   Compiling antithesis_sdk v0.2.6 (https://github.com/antithesishq/antithesis-sdk-rust?branch=spot-artificer#1a03fa45)
+   Compiling readyset-util v0.1.0 (/data1/vmbox/readyset/readyset-util)
+   Compiling names v0.14.0
+   Compiling opentelemetry-http v0.33.1
+   Compiling pyroscope v0.5.8
+   Compiling tonic-types v0.14.6
+   Compiling readyset-sql v0.1.0 (/data1/vmbox/readyset/readyset-sql)
+   Compiling mysql-time v0.1.0 (/data1/vmbox/readyset/mysql-time)
+   Compiling pyroscope_pprofrs v0.2.10
+   Compiling opentelemetry-proto v0.33.1
+   Compiling partial-map v0.1.0 (/data1/vmbox/readyset/partial-map)
+   Compiling criterion v0.5.1
+   Compiling opentelemetry-otlp v0.33.1
+   Compiling readyset-tracing v0.1.0 (/data1/vmbox/readyset/readyset-tracing)
+   Compiling readyset-errors v0.0.1 (/data1/vmbox/readyset/readyset-errors)
+   Compiling nom-sql v0.0.11 (/data1/vmbox/readyset/nom-sql)
+   Compiling readyset-data v0.0.1 (/data1/vmbox/readyset/readyset-data)
+   Compiling replication-offset v0.1.0 (/data1/vmbox/readyset/replication-offset)
+   Compiling database-utils v0.1.0 (/data1/vmbox/readyset/database-utils)
+   Compiling readyset-post-lookup v0.1.0 (/data1/vmbox/readyset/readyset-post-lookup)
+   Compiling dataflow-expression v0.1.0 (/data1/vmbox/readyset/dataflow-expression)
+   Compiling readyset-sql-parsing v0.1.0 (/data1/vmbox/readyset/readyset-sql-parsing)
+   Compiling readyset-sql-passes v0.0.1 (/data1/vmbox/readyset/readyset-sql-passes)
+   Compiling schema-catalog v0.1.0 (/data1/vmbox/readyset/schema-catalog)
+   Compiling readyset-client v0.7.0 (/data1/vmbox/readyset/readyset-client)
+   Compiling readyset-common v0.7.0 (/data1/vmbox/readyset/readyset-common)
+   Compiling dataflow-state v0.0.1 (/data1/vmbox/readyset/dataflow-state)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 41.77s
+     Running unittests src/lib.rs (target/debug/deps/dataflow_state-d7065ac174bdac7a)
+
+running 1 test
+test persistent_state::tests::replication_offset_databend_rows_and_checkpoint_reopen ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 165 filtered out; finished in 0.42s
+

@@ -1,5 +1,6 @@
 //! Data types for implementing snapshot and streaming replication from an upstream database.
 
+pub mod databend;
 pub mod mysql;
 pub mod mysql_gtid;
 pub mod postgres;
@@ -38,6 +39,10 @@ pub enum ReplicationOffset {
     Gtid(GtidSet),
     #[strum(serialize = "postgres")]
     Postgres(PostgresPosition),
+    /// Ordered batches in one external Databend outbox generation.
+    /// Append variants to preserve existing bincode discriminants.
+    #[strum(serialize = "databend")]
+    Databend(databend::DatabendPosition),
 }
 
 impl TryFrom<ReplicationOffset> for MySqlPosition {
@@ -112,6 +117,7 @@ impl fmt::Display for ReplicationOffset {
             Self::MySql(pos) => write!(f, "{pos}"),
             Self::Gtid(gtid) => write!(f, "{gtid}"),
             Self::Postgres(pos) => write!(f, "{pos}"),
+            Self::Databend(pos) => write!(f, "{pos}"),
         }
     }
 }
@@ -122,12 +128,15 @@ impl FromStr for ReplicationOffset {
     /// Parse a replication position string into a [`ReplicationOffset`].
     ///
     /// The format is auto-detected:
+    /// - Starts with `databend:` → Databend outbox generation and batch sequence
     /// - Contains `'/'` → PostgreSQL LSN (e.g. `"0/16B3748"`)
     /// - Contains a UUID prefix → MySQL GTID (e.g.
     ///   `"3E11FA47-71CA-11E1-9E33-C80AA9429562:1-10"`)
     /// - Otherwise → MySQL binlog position (e.g. `"mysql-bin.000003:154"`)
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.contains('/') {
+        if s.starts_with("databend:") {
+            Ok(Self::Databend(s.parse()?))
+        } else if s.contains('/') {
             let commit_lsn: postgres::CommitLsn = s.parse()?;
             Ok(Self::Postgres(PostgresPosition::commit_end(commit_lsn)))
         } else if looks_like_gtid(s) {
@@ -144,6 +153,7 @@ impl PartialOrd for ReplicationOffset {
             (Self::MySql(pos), Self::MySql(other_pos)) => pos.partial_cmp(other_pos),
             (Self::Gtid(gtid), Self::Gtid(other_gtid)) => gtid.partial_cmp(other_gtid),
             (Self::Postgres(pos), Self::Postgres(other_pos)) => pos.partial_cmp(other_pos),
+            (Self::Databend(pos), Self::Databend(other_pos)) => pos.partial_cmp(other_pos),
             _ => None,
         }
     }
@@ -166,7 +176,7 @@ impl ReplicationOffset {
     /// This method compares `self` and `other`, returning an [`Ordering`] if the two replication
     /// offsets are comparable and an error otherwise. Whether two replication offsets are
     /// comparable is an implementation detail of the representation of the log position for the
-    /// underlying database backend.
+    /// underlying database backend. Databend positions in different generations are incomparable.
     pub fn try_partial_cmp(&self, other: &Self) -> ReadySetResult<Ordering> {
         match (self, other) {
             (Self::MySql(offset), Self::MySql(other_offset)) => {
@@ -174,6 +184,11 @@ impl ReplicationOffset {
             }
             (Self::Gtid(offset), Self::Gtid(other_offset)) => offset.try_partial_cmp(other_offset),
             (Self::Postgres(offset), Self::Postgres(other_offset)) => Ok(offset.cmp(other_offset)),
+            (Self::Databend(offset), Self::Databend(other_offset)) => {
+                offset.partial_cmp(other_offset).ok_or_else(|| {
+                    internal_err!("Cannot compare different Databend outbox generations")
+                })
+            }
             _ => Err(internal_err!(
                 "Cannot compare replication offsets from different database backends"
             )),
@@ -183,7 +198,9 @@ impl ReplicationOffset {
     /// Returns the SQL dialect corresponding to this replication offset variant.
     pub fn dialect(&self) -> Dialect {
         match self {
-            Self::MySql(_) | Self::Gtid(_) => Dialect::MySQL,
+            // Databend batches currently target a normalized MySQL-dialect local schema.
+            // This does not imply Databend SQL compatibility.
+            Self::MySql(_) | Self::Gtid(_) | Self::Databend(_) => Dialect::MySQL,
             Self::Postgres(_) => Dialect::PostgreSQL,
         }
     }
@@ -216,7 +233,7 @@ impl ReplicationOffset {
             Self::Postgres(p) => {
                 Self::Postgres(postgres::PostgresPosition::commit_start(p.commit_lsn))
             }
-            Self::MySql(_) | Self::Gtid(_) => self.clone(),
+            Self::MySql(_) | Self::Gtid(_) | Self::Databend(_) => self.clone(),
         }
     }
 

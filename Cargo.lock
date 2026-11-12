@@ -6520,6 +6520,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "readyset-databend"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "database-utils",
+ "dataflow-state",
+ "hex",
+ "readyset-alloc",
+ "readyset-client",
+ "readyset-data",
+ "readyset-server",
+ "readyset-sql",
+ "replication-offset",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "sqlparser 0.63.0",
+ "tokio",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "readyset-dataflow"
 version = "0.7.0"
 dependencies = [

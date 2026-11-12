@@ -1,0 +1,145 @@
+Database: readyset_m2_20261112_091241_d74da232
+Evidence: /tmp/readyset-databend-m2/readyset_m2_20261112_091241_d74da232
+PASS initial fixed-boundary export has all rows
+PASS initial snapshot: all source rows and deleted keys agree
+PASS initial snapshot: complete live reader contents
+PASS initial snapshot: all missing keys checked
+PASS batch 1 has no prior commit
+PASS batch 1 transaction reads its complete outbox
+PASS rolled-back capture preserves Stream
+PASS rolled-back capture leaves no outbox rows
+PASS rolled-back capture leaves no metadata
+PASS batch 1 has no prior commit
+PASS batch 1 transaction reads its complete outbox
+PASS batch 1 capture remains transactional
+PASS batch 1 committed metadata is unique and complete
+PASS batch 1 committed outbox matches captured changes
+PASS batch 1 drained Stream
+PASS batch 1 includes INSERT and DELETE
+PASS delivery 1 acknowledged
+PASS delivery 1 duplicate classification
+PASS batch 1 persistent checkpoint
+PASS batch 1 update delete insert: all source rows and deleted keys agree
+PASS batch 1 update delete insert: complete live reader contents
+PASS batch 1 update delete insert: all missing keys checked
+PASS delivery 1 acknowledged
+PASS delivery 1 duplicate classification
+PASS delivery 1 acknowledged
+PASS delivery 1 duplicate classification
+PASS batch 1 delivered three times: all source rows and deleted keys agree
+PASS batch 1 delivered three times: complete live reader contents
+PASS batch 1 delivered three times: all missing keys checked
+PASS batch 2 has no prior commit
+PASS batch 2 transaction reads its complete outbox
+PASS batch 2 capture remains transactional
+PASS batch 2 committed metadata is unique and complete
+PASS batch 2 committed outbox matches captured changes
+PASS batch 2 drained Stream
+PASS delivery 2 acknowledged
+PASS delivery 2 duplicate classification
+PASS batch 2 persistent checkpoint
+PASS batch 2 newer values and moved key: all source rows and deleted keys agree
+PASS batch 2 newer values and moved key: complete live reader contents
+PASS batch 2 newer values and moved key: all missing keys checked
+PASS delivery 1 acknowledged
+PASS delivery 1 duplicate classification
+PASS old batch cannot overwrite v2 or resurrect deleted keys: all source rows and deleted keys agree
+PASS old batch cannot overwrite v2 or resurrect deleted keys: complete live reader contents
+PASS old batch cannot overwrite v2 or resurrect deleted keys: all missing keys checked
+PASS new sink/client reads engine checkpoint
+PASS delivery 2 acknowledged
+PASS delivery 2 duplicate classification
+PASS duplicate after recreating sink and client: all source rows and deleted keys agree
+PASS duplicate after recreating sink and client: complete live reader contents
+PASS duplicate after recreating sink and client: all missing keys checked
+PASS batch 3 has no prior commit
+PASS batch 3 transaction reads its complete outbox
+PASS batch 3 capture remains transactional
+PASS batch 3 committed metadata is unique and complete
+PASS batch 3 committed outbox matches captured changes
+PASS batch 3 drained Stream
+PASS delivery 3 acknowledged
+PASS delivery 3 duplicate classification
+PASS batch 3 persistent checkpoint
+PASS delete reinserted rows and Int64 minimum: all source rows and deleted keys agree
+PASS delete reinserted rows and Int64 minimum: complete live reader contents
+PASS delete reinserted rows and Int64 minimum: all missing keys checked
+PASS delivery 2 acknowledged
+PASS delivery 2 duplicate classification
+PASS delivery 1 acknowledged
+PASS delivery 1 duplicate classification
+PASS old insertion batches cannot revive deleted records: all source rows and deleted keys agree
+PASS old insertion batches cannot revive deleted records: complete live reader contents
+PASS old insertion batches cannot revive deleted records: all missing keys checked
+PASS batch 4 has no prior commit
+PASS batch 4 transaction reads its complete outbox
+PASS batch 4 capture remains transactional
+PASS batch 4 committed metadata is unique and complete
+PASS batch 4 committed outbox matches captured changes
+PASS batch 4 drained Stream
+PASS batch 4 is empty
+PASS delivery 4 acknowledged
+PASS delivery 4 duplicate classification
+PASS batch 4 persistent checkpoint
+PASS delivery 4 acknowledged
+PASS delivery 4 duplicate classification
+PASS empty batch and its duplicate: all source rows and deleted keys agree
+PASS empty batch and its duplicate: complete live reader contents
+PASS empty batch and its duplicate: all missing keys checked
+PASS batch 5 has no prior commit
+PASS batch 5 transaction reads its complete outbox
+PASS batch 5 capture remains transactional
+PASS batch 5 committed metadata is unique and complete
+PASS batch 5 committed outbox matches captured changes
+PASS batch 5 drained Stream
+PASS delivery 5 acknowledged
+PASS delivery 5 duplicate classification
+PASS batch 5 persistent checkpoint
+PASS collapsed updates delete-reinsert and key reuse: all source rows and deleted keys agree
+PASS collapsed updates delete-reinsert and key reuse: complete live reader contents
+PASS collapsed updates delete-reinsert and key reuse: all missing keys checked
+PASS batch 6 has no prior commit
+PASS batch 6 transaction reads its complete outbox
+PASS batch 6 capture remains transactional
+PASS batch 6 committed metadata is unique and complete
+PASS batch 6 committed outbox matches captured changes
+PASS batch 6 drained Stream
+PASS delivery 6 acknowledged
+PASS delivery 6 duplicate classification
+PASS batch 6 persistent checkpoint
+PASS bulk updates: all source rows and deleted keys agree
+PASS bulk updates: complete live reader contents
+PASS bulk updates: all missing keys checked
+PASS reread batch 5 checksum unchanged
+PASS delivery 5 acknowledged
+PASS delivery 5 duplicate classification
+PASS reread batch 3 checksum unchanged
+PASS delivery 3 acknowledged
+PASS delivery 3 duplicate classification
+PASS reread batch 2 checksum unchanged
+PASS delivery 2 acknowledged
+PASS delivery 2 duplicate classification
+PASS reread batch 1 checksum unchanged
+PASS delivery 1 acknowledged
+PASS delivery 1 duplicate classification
+PASS reread batch 6 checksum unchanged
+PASS delivery 6 acknowledged
+PASS delivery 6 duplicate classification
+PASS reread batch 4 checksum unchanged
+PASS delivery 4 acknowledged
+PASS delivery 4 duplicate classification
+PASS all historical batches redelivered out of order: all source rows and deleted keys agree
+PASS all historical batches redelivered out of order: complete live reader contents
+PASS all historical batches redelivered out of order: all missing keys checked
+PASS gap batch rejected before mutation
+PASS gap batch keeps checkpoint
+PASS generation batch rejected before mutation
+PASS generation batch keeps checkpoint
+PASS incomplete batch rejected before mutation
+PASS incomplete batch keeps checkpoint
+PASS checksum batch rejected before mutation
+PASS checksum batch keeps checkpoint
+PASS after rejected batches: all source rows and deleted keys agree
+PASS after rejected batches: complete live reader contents
+PASS after rejected batches: all missing keys checked
+Report: /tmp/readyset-databend-m2/readyset_m2_20261112_091241_d74da232/report.json

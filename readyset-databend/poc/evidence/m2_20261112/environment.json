@@ -1,0 +1,115 @@
+{
+  "archived_utc": "2026-11-12T08:45:11.575370+00:00",
+  "branch": "poc/databend-stream-m0",
+  "base_commit": "9d06bba539c654c9f71450b701dec341367c89e1",
+  "uncommitted_worktree": true,
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "binary": {
+    "path": "/data1/vmbox/readyset/target/debug/databend-m2",
+    "sha256": "05c38c73e5a664d1f81d83b83b4042a12840140d6b43ec9e800aa1a455e8bb4e",
+    "profile": "dev, unoptimized + debuginfo"
+  },
+  "code_sha256_at_archive": {
+    "Cargo.toml": "36e9ff284f05f91ff92d2bc6ca07b703dcdadb3511ee97340d38a39d66e97de2",
+    "Cargo.lock": "7e6c38df7cb259aa98e7794c09a1f8e9b0edcd72e8882d7978609a85e42e8f51",
+    "replication-offset/src/lib.rs": "193abe3b6545f5c97ec53960801b4f335383bd15064f8732dc0281106c564100",
+    "replication-offset/src/databend.rs": "cc11239fcc96d5afb6d24801a807428f162e38ca2f60a4750a9d96d28e1a1685",
+    "dataflow-state/src/persistent_state/mod.rs": "bc94d0a86b6b8fd552f96cfc59a221af53899d5eda82caa8a6923e3fc06bd436",
+    "readyset-databend/Cargo.toml": "5eca45b34061cc01f80dea2aebec1a55e9f740fe9e52f6ee4dc5e99688632443",
+    "readyset-databend/src/lib.rs": "bf2d1e23331e86e009411577ee0c7c11ed7e9733cc20b9972a2ef320b35289bd",
+    "readyset-databend/src/bin/m1.rs": "3391996ecf5171f67220e20256095ddf5ab88003c85792cd90eefe6cc05fbc7f",
+    "readyset-databend/src/bin/m2.rs": "bcf2f09ae6879958f3e3ee2ecd4835bb2ace9671744c838fb97fc5736ad10d09",
+    "readyset-databend/poc/m0.py": "d5b205b7ebf4c20f0ea1f54501d7e5e9091cfa1b76314ba508a10fb917becba0",
+    "readyset-databend/poc/m1_export.py": "bac2e9fe5ba7a01c58306532835de4a80f9afde577987dc6cf88df8b397332cd",
+    "readyset-databend/poc/m2.py": "95f3392aefc6fc91dd490e77a484e3b868e25b4d7c6b6a93a2407a47576ea3df",
+    "readyset-databend/poc/test_m0.py": "a63035e7be1f115fb651b1697ac5e5082eb24f953cf5a230fe9dc50ac8a410b2",
+    "readyset-databend/poc/test_m1_export.py": "e8c9dd6701e178735d76bf723a6846e865b66be3b15803a9b48c086f7bff0a8a",
+    "readyset-databend/poc/test_m2.py": "4f2e021988cb9500fd9cd76fe10470973c8987ffd600e4a2c567428dbdbf5f6e"
+  },
+  "canonical_json_hash_contract": "UTF-8 JSON, ensure_ascii=False, separators=comma/colon, sorted object keys. Batch changes_sha256 uses FIELD ORDER instead; see Rust/Python tests.",
+  "runs": [
+    {
+      "database": "readyset_m2_20261112_084229_09402b5b",
+      "rows_initial": 2000,
+      "rows_final": 1939,
+      "checks": 142,
+      "verify_phases": 13,
+      "source_row_comparisons": 25336,
+      "missing_key_comparisons": 927,
+      "extra_empty_slot_checks": 914,
+      "applied_batches": 6,
+      "skipped_deliveries": 13,
+      "rejected_deliveries": 4,
+      "raw_directory": "/tmp/readyset-databend-m2/readyset_m2_20261112_084229_09402b5b",
+      "raw_files": {
+        "report.json": "2dcde3ba66985fcf5dda413460871c8e04f57a1691d8d5977ed956934ed8fb02",
+        "engine/report.json": "442a04b60035c65d8b62193d5fc2bbaa463bee5314fee59e71d7b8a3f7881ef0",
+        "initial.jsonl": "c2b1b2a5555a34322d9b89b59515854dac2e4870e0e250053c40e7330bb8a9f6",
+        "queries.jsonl": "f4a9285c4244536b797ae216a1d849ded59fed1f135178ca57b805c26fcb5acb",
+        "deliveries.jsonl": "416ce5faaf04a08a595295b2b88be1e5727ef68f8122f8f6eb9ce34a4f7cdf7d",
+        "engine_stderr.log": "44805283684d7e9b287cc1c3300f10dff81d737c4accaecf069e9339b118e588",
+        "batch_001.json": "42fec1962dca0c74413eef5e3b227a775e60330767f9b64545af6ec7f032939b",
+        "batch_002.json": "a9c2c69176468d9de0ce64e3dbd912c1367287aac70dbb4b4ef743119c7e4f41",
+        "batch_003.json": "d06b963b2fdde025efcc4a62d0920d21b0aae01cfaa954db16e609f71d671fdd",
+        "batch_004.json": "031567eb7e6e0cf06a957bc9ef90bdd62188c9bcdce1061be66a0217278f1870",
+        "batch_005.json": "375b9b571958f94c0bfddedebdda7bf1cfe6f41b1f87e9469f5c60b2091690f3",
+        "batch_006.json": "2e54680a00668887a1d8c025d6511eee1a9c47f9b53ef2cf2f60d3bb9259801d"
+      },
+      "sql_statements": 175
+    },
+    {
+      "database": "readyset_m2_20261112_084247_f3ef221b",
+      "rows_initial": 1000,
+      "rows_final": 939,
+      "checks": 142,
+      "verify_phases": 13,
+      "source_row_comparisons": 12336,
+      "missing_key_comparisons": 927,
+      "extra_empty_slot_checks": 914,
+      "applied_batches": 6,
+      "skipped_deliveries": 13,
+      "rejected_deliveries": 4,
+      "raw_directory": "/tmp/readyset-databend-m2/readyset_m2_20261112_084247_f3ef221b",
+      "raw_files": {
+        "report.json": "65c81ed0a39f7b2ffd9a1a79d3cdb28816bf7ca3b6cb261c851235691a691c51",
+        "engine/report.json": "5e52b962f8093d49d4235511aa1f7549f24162fd3cb028a8cc19cbfca1c91930",
+        "initial.jsonl": "2df51dc390c684e8080d5366b5fafcb246449130967d8b4bb989d9fbf0a5ea53",
+        "queries.jsonl": "b8f1e55efe1d3b82899276476899c4255d8abb15eae70c2190bff499adbba1f6",
+        "deliveries.jsonl": "543d68596b45f2a11e9f4b93406c8d0f37963f8c8c31ea52f082316fec25bd5d",
+        "engine_stderr.log": "747991fe66f65c6f7507b44520c65aa8700374d5fa6cacbaed5ea759e0e6c729",
+        "batch_001.json": "387da5b7f41eff6f3790351a46425ac95a579499f2ef1dda3633939c1c029028",
+        "batch_002.json": "204dbe7e2bf120c33063d13f774763e832fb54a2b4b48b0903cf6b2d01bca9de",
+        "batch_003.json": "2a0d2a8529f84c4f33147e4a05910f82d38cda4b8ea76cf054b07595eb2bd2d1",
+        "batch_004.json": "dc1e831c76b34b028eedee972fb9b936c60ead7bf9d61d678c279a532b0764bc",
+        "batch_005.json": "b4e8432dad4ec444a638007911c5acaa4e65901bd0e777642c003f5ab4afe8b0",
+        "batch_006.json": "99da564780766a5debaa9a9f6e7a5a45bcaf80f2fdf2bc6b6af03ee35bccbd9c"
+      },
+      "sql_statements": 145
+    }
+  ],
+  "prior_failed_explorations": [
+    {
+      "raw_report": "/tmp/readyset-databend-m2/readyset_m2_20261112_083040_c7707e84/report.json",
+      "sha256": "184e6eac934eb6e58cc05668a029a7822012051d953a23086ea9a5d9fc93d658",
+      "error": "SqlError: {\"code\": 1005, \"message\": \"error: \\n  --> SQL:1:59\\n  |\\n1 | CREATE TABLE readyset_m2_20261112_083040_c7707e84.outbox (sequence BIGINT NOT NULL, id BIGINT NOT NULL, payload STRING NOT NULL, score BIGINT NOT NULL, note STRING NULL, action STRING NOT NULL, row_id STRING NOT NULL, is_update BOOLEAN NOT NULL)\\n  | ------                                                    ^^^^^^^^ unexpected `sequence`. it's reserved keyword, you may avoid using it, expecting <Ident>, `CHECK`, `VECTOR`, `INVERTED`, `IDENTIFIER`, `SPATIAL`, <LiteralString>, or `NGRAM`\\n  | |                                                          \\n  | while parsing `CREATE [OR REPLACE] TABLE [IF NOT EXISTS] [<database>.]<table> [<source>] [<table_options>]`\\n\\n\"}"
+    },
+    {
+      "raw_report": "/tmp/readyset-databend-m2/readyset_m2_20261112_083109_fec4172b/report.json",
+      "sha256": "9078bfd9f18d54c6e65ec97b803a276c38e7e7d73fe8b6158b567d395201d928",
+      "error": "RuntimeError: ReadySet child closed stdout, exit=1; inspect engine_stderr.log"
+    },
+    {
+      "raw_report": "/tmp/readyset-databend-m2/readyset_m2_20261112_083404_8d8610cd/report.json",
+      "sha256": "6d6e68415f00ed0cdfd778a211f83ed91fce954fcbf751c075572d6c4db29ff6",
+      "error": "RuntimeError: ReadySet child closed stdout, exit=1; inspect engine_stderr.log"
+    }
+  ],
+  "limitations": [
+    "No process/node crash test",
+    "No continuous scheduler",
+    "Single serial consumer",
+    "No source fencing or GC",
+    "No SQL wire frontend",
+    "No end-to-end exactly-once or production SLA"
+  ]
+}

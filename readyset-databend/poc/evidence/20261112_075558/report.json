@@ -1,0 +1,877 @@
+{
+  "endpoint": "http://192.168.1.100:8000",
+  "database": "readyset_m0_20261112_075558_07f27ffb",
+  "database_created": true,
+  "facts": {
+    "version": "Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)",
+    "snapshot_id": "01a1cec1a2117ab3a16f0e5479045b59",
+    "snapshot_before_change_tracking": {
+      "supported": false,
+      "snapshot_id": "01a1cec1a5517af3ba12e95506a4a7b1",
+      "error": "{\"code\": 2733, \"message\": \"Change tracking has been missing for the time range requested on table 'readyset_m0_20261112_075558_07f27ffb'.'pretracking_src'\"}",
+      "requirement": "Enable change tracking before selecting the initialization snapshot"
+    },
+    "existing_table_bootstrap": "CREATE STREAM first, scan AT(STREAM => stream); do not advance stream until initial scan completes",
+    "runtime conversion failure is raised": "{\"code\": 1006, \"message\": \"invalid digit found in string while evaluating function `to_int64('one')` in expr `CAST(_change_append$6af57111.val (#1) AS Int64 NULL)`, during run expr: `CAST(CAST(_change_append$6af57111.val (#1) AS Int64 NULL) AS String NULL)`\"}",
+    "later statement fails inside transaction": "{\"code\": 1006, \"message\": \"invalid digit found in string while evaluating function `to_int64('one')` in expr `CAST(transaction_failure_src.val (#1) AS Int64 NULL)`\"}",
+    "competing_consumer_error": "{\"code\": 2734, \"message\": \"StreamVersionMismatched: 124431763 expect `== 124431765` but `124431780`  while `update_multi_table_meta`\"}"
+  },
+  "checks": [
+    {
+      "name": "fixed snapshot stable across interleaved writes",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "a"
+        ],
+        [
+          "2",
+          "b"
+        ],
+        [
+          "3",
+          "c"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "a"
+        ],
+        [
+          "2",
+          "b"
+        ],
+        [
+          "3",
+          "c"
+        ]
+      ]
+    },
+    {
+      "name": "snapshot boundary emits expected net inserts/deletes",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "a",
+          "DELETE"
+        ],
+        [
+          "1",
+          "a2",
+          "INSERT"
+        ],
+        [
+          "2",
+          "b",
+          "DELETE"
+        ],
+        [
+          "2",
+          "b2",
+          "INSERT"
+        ],
+        [
+          "3",
+          "c",
+          "DELETE"
+        ],
+        [
+          "4",
+          "d",
+          "INSERT"
+        ],
+        [
+          "5",
+          "e",
+          "INSERT"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "a",
+          "DELETE"
+        ],
+        [
+          "1",
+          "a2",
+          "INSERT"
+        ],
+        [
+          "2",
+          "b",
+          "DELETE"
+        ],
+        [
+          "2",
+          "b2",
+          "INSERT"
+        ],
+        [
+          "3",
+          "c",
+          "DELETE"
+        ],
+        [
+          "4",
+          "d",
+          "INSERT"
+        ],
+        [
+          "5",
+          "e",
+          "INSERT"
+        ]
+      ]
+    },
+    {
+      "name": "plain SELECT does not consume stream",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "a",
+          "DELETE",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000000"
+        ],
+        [
+          "1",
+          "a2",
+          "INSERT",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000000"
+        ],
+        [
+          "2",
+          "b",
+          "DELETE",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000001"
+        ],
+        [
+          "2",
+          "b2",
+          "INSERT",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000001"
+        ],
+        [
+          "3",
+          "c",
+          "DELETE",
+          "0",
+          "01a1d3e7fe1171ffaf9c212a52217206000002"
+        ],
+        [
+          "4",
+          "d",
+          "INSERT",
+          "0",
+          "01a1d3e7fe8373d596eb681dde87eaad000000"
+        ],
+        [
+          "5",
+          "e",
+          "INSERT",
+          "0",
+          "01a1d3e800717ea3b348cf7212f447e7000000"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "a",
+          "DELETE",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000000"
+        ],
+        [
+          "1",
+          "a2",
+          "INSERT",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000000"
+        ],
+        [
+          "2",
+          "b",
+          "DELETE",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000001"
+        ],
+        [
+          "2",
+          "b2",
+          "INSERT",
+          "1",
+          "01a1d3e7fe1171ffaf9c212a52217206000001"
+        ],
+        [
+          "3",
+          "c",
+          "DELETE",
+          "0",
+          "01a1d3e7fe1171ffaf9c212a52217206000002"
+        ],
+        [
+          "4",
+          "d",
+          "INSERT",
+          "0",
+          "01a1d3e7fe8373d596eb681dde87eaad000000"
+        ],
+        [
+          "5",
+          "e",
+          "INSERT",
+          "0",
+          "01a1d3e800717ea3b348cf7212f447e7000000"
+        ]
+      ]
+    },
+    {
+      "name": "retractions reference rows in the snapshot",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "snapshot plus delta equals current source (including multiplicity)",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "a2"
+        ],
+        [
+          "2",
+          "b2"
+        ],
+        [
+          "4",
+          "d"
+        ],
+        [
+          "5",
+          "e"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "a2"
+        ],
+        [
+          "2",
+          "b2"
+        ],
+        [
+          "4",
+          "d"
+        ],
+        [
+          "5",
+          "e"
+        ]
+      ]
+    },
+    {
+      "name": "pretracking snapshot rejected for missing change tracking",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "existing table bootstraps at stream offset without rewriting source",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "old_one"
+        ],
+        [
+          "2",
+          "old_two"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "old_one"
+        ],
+        [
+          "2",
+          "old_two"
+        ]
+      ]
+    },
+    {
+      "name": "existing table delta retracts valid initial rows",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "existing table stream-bound snapshot plus delta equals source",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "new_one"
+        ],
+        [
+          "2",
+          "new_two"
+        ],
+        [
+          "3",
+          "new_three"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "new_one"
+        ],
+        [
+          "2",
+          "new_two"
+        ],
+        [
+          "3",
+          "new_three"
+        ]
+      ]
+    },
+    {
+      "name": "autocommit writes all batch rows",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "autocommit advances stream",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "name": "transaction remains Active after consuming INSERT",
+      "passed": true,
+      "actual": "Active",
+      "expected": "Active"
+    },
+    {
+      "name": "uncommitted batch invisible to independent session",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "uncommitted metadata invisible",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "uncommitted consumption invisible",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000001"
+        ]
+      ]
+    },
+    {
+      "name": "rollback restores complete stream",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e806357a738548554d8aae6cf3000001"
+        ]
+      ]
+    },
+    {
+      "name": "rollback removes batch rows",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "rollback removes batch metadata",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "commit persists batch",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "commit persists batch metadata",
+      "passed": true,
+      "actual": [
+        [
+          "3",
+          "2"
+        ]
+      ],
+      "expected": [
+        [
+          "3",
+          "2"
+        ]
+      ]
+    },
+    {
+      "name": "source write after capture survives consumption",
+      "passed": true,
+      "actual": [
+        [
+          "3",
+          "after_capture",
+          "INSERT"
+        ]
+      ],
+      "expected": [
+        [
+          "3",
+          "after_capture",
+          "INSERT"
+        ]
+      ]
+    },
+    {
+      "name": "next batch gets source write exactly once",
+      "passed": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "second batch drains remaining delta",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "name": "runtime conversion failure is raised",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "failed INSERT preserves stream",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e809c17d60a169171c5c07ec3d000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e809c17d60a169171c5c07ec3d000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e809c17d60a169171c5c07ec3d000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e809c17d60a169171c5c07ec3d000001"
+        ]
+      ]
+    },
+    {
+      "name": "failed INSERT leaves no batch",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "later statement fails inside transaction",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "transaction enters Fail state",
+      "passed": true,
+      "actual": "Fail",
+      "expected": "Fail"
+    },
+    {
+      "name": "COMMIT of failed transaction preserves stream",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e80ab9700fa265fced41bace92000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e80ab9700fa265fced41bace92000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e80ab9700fa265fced41bace92000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e80ab9700fa265fced41bace92000001"
+        ]
+      ]
+    },
+    {
+      "name": "COMMIT of failed transaction removes preceding batch",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "failed transaction leaves no metadata",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "outbox preserves full update/delete payload",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "DELETE",
+          "1",
+          "01a1d3e80c017c61987dc454ad013d6e000000"
+        ],
+        [
+          "1",
+          "one_new",
+          "INSERT",
+          "1",
+          "01a1d3e80c017c61987dc454ad013d6e000000"
+        ],
+        [
+          "2",
+          "two",
+          "DELETE",
+          "0",
+          "01a1d3e80c017c61987dc454ad013d6e000001"
+        ],
+        [
+          "3",
+          "three",
+          "INSERT",
+          "0",
+          "01a1d3e80d937dcc842b82d28f6917aa000000"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "DELETE",
+          "1",
+          "01a1d3e80c017c61987dc454ad013d6e000000"
+        ],
+        [
+          "1",
+          "one_new",
+          "INSERT",
+          "1",
+          "01a1d3e80c017c61987dc454ad013d6e000000"
+        ],
+        [
+          "2",
+          "two",
+          "DELETE",
+          "0",
+          "01a1d3e80c017c61987dc454ad013d6e000001"
+        ],
+        [
+          "3",
+          "three",
+          "INSERT",
+          "0",
+          "01a1d3e80d937dcc842b82d28f6917aa000000"
+        ]
+      ]
+    },
+    {
+      "name": "mutation batch drains stream",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "name": "filtered consuming INSERT writes zero rows",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "filtered consuming INSERT still advances stream",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "name": "rollback of zero-row consumption preserves stream",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e80fbb726eae8ce5682f35e145000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e80fbb726eae8ce5682f35e145000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e80fbb726eae8ce5682f35e145000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e80fbb726eae8ce5682f35e145000001"
+        ]
+      ]
+    },
+    {
+      "name": "rollback of zero-row consumption removes metadata",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "WITH CONSUME SELECT returns captured rows",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one"
+        ],
+        [
+          "2",
+          "two"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one"
+        ],
+        [
+          "2",
+          "two"
+        ]
+      ]
+    },
+    {
+      "name": "uncommitted WITH CONSUME invisible to observer",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000001"
+        ]
+      ]
+    },
+    {
+      "name": "WITH CONSUME SELECT rollback preserves stream",
+      "passed": true,
+      "actual": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000001"
+        ]
+      ],
+      "expected": [
+        [
+          "1",
+          "one",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000000"
+        ],
+        [
+          "2",
+          "two",
+          "INSERT",
+          "0",
+          "01a1d3e810e571c9901f4152bccab88f000001"
+        ]
+      ]
+    },
+    {
+      "name": "competing consumers persist only one copy of captured delta",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "competing consumer reports a stream-version conflict",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "winning consumer persists complete batch",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "losing consumer leaves no outbox rows",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "winning consumer advances shared stream",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    }
+  ],
+  "error": null,
+  "passed": true
+}

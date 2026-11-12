@@ -1,0 +1,14 @@
+test_foreign_continuation_rejected (test_m0.ClientTests.test_foreign_continuation_rejected) ... ok
+test_incomplete_response_is_not_success (test_m0.ClientTests.test_incomplete_response_is_not_success) ... ok
+test_pagination_and_transaction_session (test_m0.ClientTests.test_pagination_and_transaction_session) ... ok
+test_sql_error_not_retried_and_fail_session_retained (test_m0.ClientTests.test_sql_error_not_retried_and_fail_session_retained) ... ok
+test_transport_error_never_resubmits_sql (test_m0.ClientTests.test_transport_error_never_resubmits_sql) ... ok
+test_bigint_precision_and_null (test_m1_export.ExportTests.test_bigint_precision_and_null) ... ok
+test_empty_string_distinct_from_null (test_m1_export.ExportTests.test_empty_string_distinct_from_null) ... ok
+test_invalid_source_values_rejected (test_m1_export.ExportTests.test_invalid_source_values_rejected) ... ok
+test_percentiles (test_m1_export.ExportTests.test_percentiles) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.077s
+
+OK

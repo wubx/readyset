@@ -1,0 +1,35 @@
+[package]
+name = "readyset-databend"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "databend-m1"
+path = "src/bin/m1.rs"
+
+[[bin]]
+name = "databend-m2"
+path = "src/bin/m2.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+sqlparser = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+database-utils = { path = "../database-utils" }
+readyset-alloc = { path = "../readyset-alloc" }
+readyset-client = { path = "../readyset-client" }
+readyset-data = { path = "../readyset-data" }
+readyset-server = { path = "../readyset-server" }
+readyset-sql = { path = "../readyset-sql" }
+dataflow-state = { path = "../dataflow-state" }
+replication-offset = { path = "../replication-offset" }
+
+[lints]
+workspace = true

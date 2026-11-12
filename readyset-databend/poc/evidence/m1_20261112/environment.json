@@ -1,0 +1,22 @@
+{
+  "branch": "poc/databend-stream-m0",
+  "base_commit": "9d06bba539c654c9f71450b701dec341367c89e1",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "os": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
+  "cpu": "AMD Ryzen 9 5950X, 16 cores / 32 threads",
+  "build_profile": "dev (unoptimized + debuginfo)",
+  "tokio_worker_threads": 8,
+  "source_data_sha256": "0bcec4cff169a91a20a97272b4fc93e71e9de643e87eb30ad6f3445ecb5e93b3",
+  "source_jsonl_bytes": 14438097,
+  "binary_sha256": "c315e8d958863e58c36e4737f1910d106c79bb73030ced8a4dc11d710ea3ffa6",
+  "source_journal": "source_queries.jsonl contains all SQL/query IDs, row counts and per-result hashes; raw exported data remains in /tmp, not checked in",
+  "raw_source_export": "/tmp/readyset-databend-m1/readyset_m1_20261112_080821_c27444c7/rows.jsonl",
+  "raw_engine_runs": [
+    "/tmp/readyset-databend-m1/engine_100k_debug",
+    "/tmp/readyset-databend-m1/engine_100k_seed2026"
+  ],
+  "source_files_sha256": {
+    "readyset-databend/src/bin/m1.rs": "3391996ecf5171f67220e20256095ddf5ab88003c85792cd90eefe6cc05fbc7f",
+    "readyset-databend/poc/m1_export.py": "bac2e9fe5ba7a01c58306532835de4a80f9afde577987dc6cf88df8b397332cd"
+  }
+}

@@ -4192,6 +4192,82 @@ mod tests {
     }
 
     #[test]
+    fn replication_offset_databend_rows_and_checkpoint_reopen() {
+        use replication_offset::databend::DatabendPosition;
+        let (_dir, name) = get_tmp_path();
+        let params = PersistenceParameters {
+            mode: DurabilityMode::Permanent,
+            wal_flush_interval_seconds: 0,
+            ..Default::default()
+        };
+        let open = || {
+            PersistentState::new(
+                name.clone(),
+                None,
+                Vec::<Box<[usize]>>::new(),
+                &params,
+                PersistenceType::BaseTable,
+                None,
+            )
+            .unwrap()
+        };
+        let position = |sequence| {
+            ReplicationOffset::Databend(DatabendPosition::new("test_generation", sequence).unwrap())
+        };
+        let before: Vec<DfValue> = vec![1.into(), "old".into()];
+        let after: Vec<DfValue> = vec![1.into(), "new".into()];
+        {
+            let mut state = open();
+            state.add_index(Index::new(IndexType::HashMap, vec![0]), None);
+            state
+                .process_records(
+                    &mut vec![(before.clone(), true)].into(),
+                    None,
+                    Some(position(1)),
+                )
+                .unwrap();
+            state
+                .process_records(
+                    &mut vec![(before, false), (after.clone(), true)].into(),
+                    None,
+                    Some(position(2)),
+                )
+                .unwrap();
+        }
+        {
+            let mut state = open();
+            assert_eq!(state.replication_offset(), Some(&position(2)));
+            match state.lookup(&[0], &PointKey::Single(1.into())) {
+                LookupResult::Some(RecordResult::Owned(rows)) => {
+                    assert_eq!(rows, vec![after.clone()])
+                }
+                other => panic!("unexpected lookup after reopening: {other:?}"),
+            }
+            state
+                .process_records(
+                    &mut vec![(after.clone(), false)].into(),
+                    None,
+                    Some(position(3)),
+                )
+                .unwrap();
+            // Verify storage-layer duplicate rejection too. The M2 sink MUST independently
+            // skip before Table RPC to avoid generating/forwarding duplicate dataflow records.
+            state
+                .process_records(&mut vec![(after, true)].into(), None, Some(position(2)))
+                .unwrap();
+            state
+                .process_records(&mut Records::default(), None, Some(position(4)))
+                .unwrap();
+        }
+        let state = open();
+        assert_eq!(state.replication_offset(), Some(&position(4)));
+        assert!(
+            matches!(state.lookup(&[0], &PointKey::Single(1.into())), LookupResult::Some(ref rows) if rows.is_empty())
+        );
+        // Controlled RocksDB close/reopen is NOT an abrupt process/node crash test.
+    }
+
+    #[test]
     fn replication_offset_roundtrip_postgres() {
         let mut state = setup_persistent("replication_offset_roundtrip_postgres", None);
         state.add_index(Index::new(IndexType::HashMap, vec![0]), None);

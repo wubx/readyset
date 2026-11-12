@@ -1,0 +1,414 @@
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_b9125fef5c224209871d432d8909cb5a/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_5848d7194abc49808e611a7d0b3fcc84/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_b9c4839817a9486f80eac9f0d412e2d4/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_5a32d2cee8a9438d85d2174890f742b8/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_81103ebd9c8c4d31b3a27642c009319c/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_f338851926184df693298a7260855ebd/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_5e8ddd6b51314bf38877b7d468114741/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_c2b594d121ec48b09a6d4be35d23feca/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_e0bd06252f134e75a190839006bdaf7b/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_e2815c1316634bf1a11ed6ffa3fcdb3d/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_18a73732283242cabfb995941dfe7f2c/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_023b16ee34fe498b8ae1b487cf073e0f/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_7d8147965ee745ecaeff71c5fbd6655f/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_8d1abbb7c33d44c2bd4246975364c83f/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_7abc8dd42aa546da8765e6e063fb0058/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_d6c8bcae1bdd4eeba13262d1402b35d3/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ad65ec685a92465ab0b4888ce7249c53/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_4bd9c67e75644a9fa8893f7a493c6288/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_85bc86d65f914cd28d1f077713b66152/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_491dc88b09034578aba8c7ed9bcb7652/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_77f5c56fa7664ac7879f098ad5feafa1/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_9d2d8f6448a94faca524c3be7e26cd93/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_6d15cbd8cdf6441caa783b5f4512c43b/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_23f56aaf71f7489f9996d662d79f8af2/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ee12949e5a764be9a9430ffc43e228f2/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_1fd28ed2da2f4e328f80e76745ca6925/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ebf1571fa21d4065b733341816983f1d/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_1fc4415169774ff0bd2ddaa1bc16a614/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2e80f1ad5bc74902aa722508b32ab917/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_0ab4f5eacaae48629d1591efcaf7e21d/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2328fff9eb86400bae09961745313be9/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ccf2e030abe04a0fb049ab655597a29b/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_c263629eee22410ca10960a3019d6778/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_58a730b9956045ee9adbc5ab98b083ac/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_8322783650cc4e8aaa032a603a1778fa/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_06cb28454a88464391240f7d531f83e6/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_58fae9d433c24d24abcc8759bc927ce9/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_c1e90883d3aa41d990b5ff3cfcbf1efb/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_279a8452377d444b91d5d7fef5d521eb/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ed505b3cf2ff42b9b6868d0db9449cc8/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_81dfa565cbe24ce69daf2ee2b7a17ac3/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2a9b2a3ce9b8404e8175dda97747efd0/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_8aa7a3a91ebd4da49bee19800bb742ab/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2406f2a2702746c3a1d72ad4ce97a9de/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ab766639eb79486b8cda934e03c414ec/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_4745be776a5b480cbcbf3e1a7d612593/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_dc77555dce97479bb2bdd3796212f84d/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_208643b9ce60461eb60da6163881b8ae/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_6dd45975c4bf4b76b904b3d0860d5e33/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_79336723538040cbac4ee066b51b2d4e/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_b8fec8b51bf441ebb7b002f05e28f680/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ddb8443ddf9f4cc6a31484b29ff2264e/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_27bd1d734785432a8872cc6a8f5ea1dd/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_0a69370bfcfe4ea2a02356c60954c9e5/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_1eee47a573fd4590ab4f53a029fa3091/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_5be4bf81fc664fabaebfa573a8261476/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_d52432801111488bb9ebde28a20c9877/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_d78bed19cd7a474c8eb62231169f7740/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_e1c56adeea1e4b89839951c30e0bdb50/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ba434dd5fbf241729455fd6b7ff8c0ec/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_f0ef962403bc4e7d88b1accc9057ae0b/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_1fe73357bf134a8c97aa3a04c5bf3b75/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_c909b8a85c59447795f986602f42a09b/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_667d67e94d2f454d90282eb7d8525c9f/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2b2ea4fe53ec403d96bc8ac4eab88eea/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_4cb40546b205433782c78a8a1c5305a6/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_d0772d75d68a443e85b0b027a913a0d7/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_0e740e880d824a688559af60cdfbec72/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_6ca720812e0346a2b261e13010537dcb/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_efde8b8937df4c109dbe841db73e4525/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_21d26ae5efbe4d54a5a59fd3ed01e71a/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2de9c8a37f104fe0aa1ddfc071a034af/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_074d099921954d6fa45bac31975fe95f/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_e117905656e04cd6a772803150410a04/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_e630696a471b43a0aadfc576a85b5576/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2d886051a6c0476c8240d95952b229f6/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_c29ba6ce5ad243b990a2096d0a4db00c/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_b50cee5e9f7e455caa5d73bdb0b33318/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_00ed56382f2b40b98f09db81bad516fe/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_86b2de0146354bc3ad52ea9a444f1e8d/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_96b10a2f6cd343889df46352634c705e/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ca07899d71de4879ba4f217d3e596a13/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_502e394a17ba4b3c8e4b47e7c410e7cf/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_b3c1340c099b4a1bb094b207f8d78838/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_1c948aeda83b461f842070d008f34814/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_fc96f99b967e4cff8d7bd51ee5ff1b53/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_5bede91902dc443daf797ba689c72af2/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_90ea461d1c454975986ecd123e6f26e8/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_6d9081de007446b68d79a3d76885ef0e/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_368e758b8aa94b4cb4a73ca7e7c66756/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_9078807c116d4196916a4cbfbb6c9a2b/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_66651ee10b35437da685fcf762b7447e/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_a001ed7a81ed466c9a41809c042fa4d2/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_ded4f22c1d98413f9fcae6c3f2d5a209/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_aac564e421c2417da697c348f858d162/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_f80e2d4f6ba444669fef88c0a545b30a/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_96fc59dce8da4263916cd5018d31a1c1/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_25333a7357dc4fbc8028d4d577a0c9e9/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_cd7eb496ba2941ccb86398b52ee8b74f/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_49e18013f6d74b318a79d3c4b57e72f5/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_b89e756a43dd4c7f9a848a5d361505aa/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_b89e756a43dd4c7f9a848a5d361505aa", "status": 404, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_bae46830abe94755a91d85e74d5379eb/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql", "session"], "session_keys": ["database"]}
+{"method": "GET", "path": "/v1/query/rs_local_968148331ee64e37ab3ca9ec4907cef1/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0a914a7503a0e2f9bc194af4bf/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0a94e67563a586174e7ca42b47/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0a99d37ac2abcd58d20d2fa8f4/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0a9eb27dc0930eaddd61d688eb/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aa3947de1b52f5819c3d24f0e/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql", "session"], "session_keys": ["settings"]}
+{"method": "GET", "path": "/v1/query/01a1cf0aa88e7b9099320777dc18937a/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql", "pagination"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/1", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/2", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/3", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/4", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/5", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/6", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/7", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/page/8", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/01a1cf0aadab78e39fcedf9e3e67a244/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/session/login?disable_session_token=true", "status": 404, "route": null, "databend_headers": ["x-databend-route-hint"]}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": ["x-databend-route-hint", "x-databend-query-id"], "body_keys": ["session", "sql"], "session_keys": ["database"]}
+{"method": "GET", "path": "/v1/query/01a1cf0ab2a577d0beab5a01fb67e89e/final", "status": 200, "route": "readyset", "databend_headers": ["x-databend-route-hint", "x-databend-query-id", "x-databend-sticky-node"]}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": ["x-databend-route-hint", "x-databend-query-id"], "body_keys": ["session", "sql"], "session_keys": ["database"]}
+{"method": "GET", "path": "/v1/query/01a1cf0ab2a97e908525c57d0366f93f/final", "status": 200, "route": "databend", "databend_headers": ["x-databend-route-hint", "x-databend-query-id", "x-databend-sticky-node"]}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": ["x-databend-route-hint", "x-databend-query-id"], "body_keys": ["session", "sql"], "session_keys": ["catalog", "database", "settings", "role", "txn_state", "need_sticky", "need_keep_alive", "internal"]}
+{"method": "GET", "path": "/v1/query/01a1cf0ab77b73c2a9ac692adca39de4/final", "status": 200, "route": "readyset", "databend_headers": ["x-databend-route-hint", "x-databend-query-id", "x-databend-sticky-node"]}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0ab78172e29f75256b11f41a3c/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_fb3d7d0890d14c06a051673062cc2f2c/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_9a9dfed58b9344e7b55402d0ff462495/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_46aaa4cc340e4df79095bf05f64194cb/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_2302d8d0ad764f4086424772e372680a/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_9064ef481886468fa7fcf07d2d296938/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_315f47f492894ea0b0162fa6eda9f3c9/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_6d215db592ac42cdb381b37e8b661eaa/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_512310f799f7406785b5a0c9640722ed/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_7a6b12fbf498404ab31f1538979761f5/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_7878e31bb7424d6ea6e12c17acc120f9/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_3168b46bc6114c8ea1aed3538eb3577a/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_f1bd20d6ccb74b649d58d3a2adff01c7/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_4b64d2eb392a4a9cb72af273d57659e9/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_9659415fcfd1438e964fb5c12dbf0c81/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/v1/query/rs_local_aaba46b2806f44c9b73eb4249901e706/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql", "session", "pagination"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0ac6237ae281578aa3f82f42cb/final", "status": 200, "route": "databend", "databend_headers": ["X-Databend-Sticky-Node"]}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": ["X-Databend-Sticky-Node"], "body_keys": ["sql", "session", "pagination"], "session_keys": ["catalog", "database", "role", "settings", "txn_state", "need_sticky", "need_keep_alive", "internal"]}
+{"method": "GET", "path": "/v1/query/01a1cf0ac62b73639966e962e1c3680d/final", "status": 200, "route": "databend", "databend_headers": ["X-Databend-Sticky-Node"]}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": ["X-Databend-Sticky-Node"], "body_keys": ["sql", "session", "pagination"], "session_keys": ["catalog", "database", "role", "settings", "txn_state", "need_sticky", "need_keep_alive", "internal"]}
+{"method": "GET", "path": "/v1/query/01a1cf0ac67e72719feb21ac98dbb34f/final", "status": 200, "route": "databend", "databend_headers": ["X-Databend-Sticky-Node"]}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": ["X-Databend-Sticky-Node"], "body_keys": ["sql", "session", "pagination"], "session_keys": ["catalog", "database", "role", "settings", "txn_state", "need_sticky", "need_keep_alive", "internal"]}
+{"method": "GET", "path": "/v1/query/01a1cf0ac6907a418207435b28afe42d/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "readyset", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/rs_local_23dd68679f044abeb46b76a40f836de4/final", "status": 200, "route": "readyset", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}
+{"method": "POST", "path": "/v1/query", "status": 200, "route": "databend", "databend_headers": [], "body_keys": ["sql"], "session_keys": []}
+{"method": "GET", "path": "/v1/query/01a1cf0acb947da08c7ba27f315e5d43/final", "status": 200, "route": "databend", "databend_headers": []}
+{"method": "GET", "path": "/health", "status": 200, "route": null, "databend_headers": []}

@@ -1,0 +1,14 @@
+{
+  "database": "readyset_gateway_example",
+  "table": "source_rows",
+  "queries": [
+    {
+      "name": "users_by_id",
+      "sql": "SELECT id, payload, score, note FROM readyset_gateway_example.source_rows WHERE id = ?"
+    },
+    {
+      "name": "payload_by_id",
+      "sql": "SELECT payload, note FROM readyset_gateway_example.source_rows WHERE id = ?"
+    }
+  ]
+}

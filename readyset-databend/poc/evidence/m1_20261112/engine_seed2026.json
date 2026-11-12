@@ -1,0 +1,135 @@
+{
+  "batch_size": 1000,
+  "build": "debug_assertions_enabled",
+  "concurrency": 16,
+  "concurrent_uniform": {
+    "max_us": 1221.271,
+    "p50_us": 574.01,
+    "p95_us": 836.571,
+    "p99_us": 950.391,
+    "qps": 23412.45366801261,
+    "queries": 10000,
+    "wall_seconds": 0.427123109
+  },
+  "first_query_key": 1226404,
+  "first_request_us": 461.61,
+  "first_touch_all_keys": {
+    "max_us": 3511.674,
+    "p50_us": 236.121,
+    "p95_us": 272.541,
+    "p99_us": 295.1,
+    "qps": 3096.094167169833,
+    "queries": 100000,
+    "wall_seconds": 32.298759211
+  },
+  "full_materialization_persistence": false,
+  "index_ready_seconds": 1.188337133,
+  "limitations": [
+    "No SQL protocol or remote network",
+    "No restart/crash recovery test",
+    "No CDC applied",
+    "No production-scale capacity claim"
+  ],
+  "load_submit_seconds": 15.061379991,
+  "materializations": [
+    {
+      "domain_index": 0,
+      "indexes": [
+        {
+          "columns": [
+            0
+          ],
+          "index_type": "HashMap"
+        }
+      ],
+      "node_description": "B",
+      "node_index": 1,
+      "node_name": {
+        "catalog": null,
+        "name": [
+          109,
+          49,
+          95,
+          115,
+          111,
+          117,
+          114,
+          99,
+          101
+        ],
+        "schema": null
+      },
+      "partial": false,
+      "size": {
+        "bytes": 24779264,
+        "key_count": {
+          "EstimatedRowCount": 100000
+        }
+      }
+    },
+    {
+      "domain_index": 1,
+      "indexes": [
+        {
+          "columns": [
+            0
+          ],
+          "index_type": "HashMap"
+        }
+      ],
+      "node_description": "R",
+      "node_index": 2,
+      "node_name": {
+        "catalog": null,
+        "name": [
+          109,
+          49,
+          95,
+          98,
+          121,
+          95,
+          105,
+          100
+        ],
+        "schema": null
+      },
+      "partial": false,
+      "size": {
+        "bytes": 20488896,
+        "key_count": {
+          "ExactKeyCount": 100000
+        }
+      }
+    }
+  ],
+  "missing_keys": {
+    "max_us": 334.24,
+    "p50_us": 210.60999999999999,
+    "p95_us": 232.27,
+    "p99_us": 263.2,
+    "qps": 4647.448916995917,
+    "queries": 1000,
+    "wall_seconds": 0.215171811
+  },
+  "partial_materialization": false,
+  "passed": true,
+  "persistent_base": true,
+  "process_rss_kib": 241352,
+  "query": "SELECT id, payload, score, note FROM m1_source WHERE id = ?",
+  "reader_rows_before_first_lookup": 100000,
+  "repeated_uniform": {
+    "max_us": 485.07,
+    "p50_us": 237.73,
+    "p95_us": 272.361,
+    "p99_us": 293.66,
+    "qps": 3071.4978722748288,
+    "queries": 10000,
+    "wall_seconds": 3.255740494
+  },
+  "rows_loaded": 100000,
+  "rows_verified": 100000,
+  "seed": 2026,
+  "source_connection_during_lookup": false,
+  "topology": "in-process ReadySet server plus TCP ReaderHandle RPC on loopback; no SQL wire frontend",
+  "total_engine_seconds": 52.635149407
+}
