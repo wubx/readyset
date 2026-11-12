@@ -1,5 +1,6 @@
 //! Experimental Databend outbox types and strictly serial single-table sink.
 //! No native Databend SQL frontend and no distributed consumer ownership protocol.
+pub mod cache_control;
 pub mod declaration;
 
 use std::collections::HashSet;

@@ -1,7 +1,26 @@
 # ReadySet / Databend 开发交接与验证说明
 
 > 分工：**另一台机器继续开发、审查并提交；本机保留为 Databend 联调和验证环境。**
-> 本文件仅记录交接流程，不代表已经同步、暂存、提交或推送代码。
+> 下文原始交接流程及历史证据保留；接手后的变化见本节。
+
+## 接手后更新：SQL 动态声明第一阶段
+
+- 原始 POC 已提交到 `poc/databend-stream-m0`，基线交付 commit 为 `fe6965a65db7510670b6d0b1d499affe3ed67730`。
+- 本地目录 `/Users/wubx/02-vm/05-Github/readyset` 用于开发/审查/提交；Rust 编译、测试及 live 联调在
+  `wu@192.168.1.100:/data1/vmbox/readyset-validation`。原 `/data1/vmbox/readyset` 的旧未提交工作树不覆盖。
+- 新入口以 `--database readyset_gateway_* --table source_rows` 绑定唯一授权源表，查询缓存可从零开始，
+  通过 HTTP `CREATE [DEEP] CACHE <name> FROM SELECT ... WHERE id = ?` 动态增加。
+- 同表共享一份全量底表副本和 Stream/outbox/meta；新增查询视图通过内容 barrier 后才可路由。
+  支持 `SHOW [DEEP] CACHES`、`DROP CACHE <name>`，最多 8 个公共缓存，删除最后一个仍保留复制任务。
+- 使用 ReadySet 现有 SQL parser、ChangeList/extend_recipe 和 ReaderHandle；额外约束只用于 POC 的授权、
+  固定 schema/查询子集和失败关闭，不实现另一套 CREATE CACHE 语法。
+- 仍兼容 `--declarations` 启动模板；动态目录不是可恢复元数据，重启需要重发 SQL。
+  控制 SQL 不透传 Databend，未知选项明确拒绝。完整边界和新增 `--sql-declarations` live 验证见
+  [GATEWAY.md](readyset-databend/poc/GATEWAY.md)。
+- 第 4 节的固定 tracked patch 清单仅适用于**原始未提交交接**，后续代码交付应使用已提交分支或 Git bundle；
+  未提交测试快照必须动态枚举所有改动和新文件，不能再只打包原来四个 tracked 文件。
+- 第 7 节计数和 `poc/evidence/*20261112*` 原始证据是历史版本结果；新增 SQL 路径需单独保存本轮证据，
+  不改写旧证据哈希，不把 JSON 声明版本的通过记录当作动态控制面的验证。
 
 ## 1. 接手前先读
 

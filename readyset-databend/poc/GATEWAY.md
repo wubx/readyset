@@ -31,9 +31,58 @@ Databend 原生 HTTP 客户端
 全量同步由入口管理，不需要应用逐 key 填充。匹配模板中的任意 BIGINT key，包括从未查询过的 key，
 都可本地查询；**查不到返回本地空结果，不会把空结果当作 miss 回源**。
 
-### 声明文件
+### SQL 声明入口（第一阶段）
 
-示例见 `declarations.example.json`。初始范围仍为一张源表，可声明 1..8 个查询模板：
+启动只绑定一个已授权的独立 POC 源表，缓存可以从零开始，无需 JSON 查询配置：
+
+```bash
+python3 -B readyset-databend/poc/gateway.py \
+  --endpoint http://192.168.1.100:8000 --user root \
+  --database readyset_gateway_example --table source_rows \
+  --output /tmp/readyset-gateway-sql-unique --port 8001 --confirm-create
+```
+
+源表必须事先在独立 POC 数据库内创建；此处仍执行一次全量初始化与 Stream/outbox/meta 建立。
+`CREATE CACHE` 不授权访问任意业务库，也不创建第二份底表同步链路。
+
+通过同一 Databend HTTP Query API（`POST /v1/query` 的 `sql` 字段）提交：
+
+```sql
+CREATE CACHE users_by_id FROM
+SELECT id, payload, score, note FROM readyset_gateway_example.source_rows WHERE id = ?;
+
+CREATE DEEP CACHE payload_by_id FROM
+SELECT payload, note FROM readyset_gateway_example.source_rows WHERE id = ?;
+
+SHOW CACHES;
+DROP CACHE payload_by_id;
+```
+
+- 复用 `readyset-sql-parsing::parse_query_with_config` / `CreateCacheStatement`，不自建 CREATE CACHE 语法。
+- 先检查原始 AST 的选项和源表、再复用 `ChangeList::from_strings` → `extend_recipe` → `ReaderHandle`。
+  **不能只将原始 SQL 交给 ChangeList**：它会丢掉一些 adapter 选项，可能把不支持的语义静默忽略。
+- 仍只支持固定四列的普通投影、`WHERE id = ?`。只允许绑定的源表；无前缀表名要求 session database 正确。
+- 每次请求一条语句，显式简单 cache name；最多 8 个公共缓存，名称冲突（含大小写冲突）或同形重复模板报错，
+  不自动覆盖。`DROP CACHE` 后可以重建；`m2_source` / `m2_by_id` 为保留内部名称。
+- 普通 `CREATE CACHE` 与 `CREATE DEEP CACHE` 均走 deep/full 路径。SHALLOW、CONCURRENTLY、ALWAYS、
+  AUTOPARAM、TTL/policy 等非默认选项、query ID 声明、注释/hint、多语句及 `DROP ALL CACHES` 明确拒绝。
+- 新 reader 使用最近一次成功复制 barrier 的固定 oracle（初始 snapshot + 已提交批次）逐 key 验证，
+  包含已删除 key；全部通过才发布路由。迁移或 barrier 结果不确定时关闭本地服务，不自动重试。
+- 全列模板直接复用既有内部 full-row reader，而非新建其别名：ReadySet 的 DROP 会删除同一查询的所有别名，
+  不能让公共 DROP 误删内部复制 barrier。其他投影正常创建独立查询视图，底表和源端捕获任务始终共享。
+- `SHOW CACHES` / `SHOW DEEP CACHES` 返回公共目录三列 `name / query / state`，不是原生 adapter SHOW 输出的全字段兼容；
+  内部验证 reader 不显示。CREATE/DROP 成功也返回当前目录。删除最后一个公共缓存仍保留底表及增量任务。
+- 控制请求需要 safe autocommit session、允许的 headers、就绪且未过期的副本。事务/权限/未知状态拒绝，
+  不可用时返回 503；**缓存控制语句绝不 fallback 到 Databend**，普通查询依然安全回源。
+- 原生 `databend_driver` 可通过相同 HTTP SQL 入口使用此子集；没有增加 MySQL/PostgreSQL wire frontend。
+- `cache_catalog.json` 仅为成功控制操作的审计快照，**不是可恢复目录**。进程重启后 SQL 动态声明需要重发；
+  不声称自动恢复。旧 JSON 的初始模板会在重启时重新加载，运行期 DROP 同样不持久化。
+  整个控制过程仍与捕获和普通查询共用串行锁。
+
+### 兼容旧声明文件
+
+仍可用 `--declarations declarations.json` 指定源表及 0..8 个启动模板；与 `--database/--table` 二选一。
+`queries` 可省略或为空。示例见 `declarations.example.json`：
 
 ```json
 {
@@ -66,7 +115,8 @@ Databend 原生 HTTP 客户端
 不会替调用方创建/修改源表，失败后保留证据。启动前先调用 Rust 的 `--validate-only` 校验实际 AST 模板，
 通过后才访问源端、检查列结构和创建跟踪对象。
 
-不支持通过 HTTP `CREATE CACHE` 动态修改声明；该语句不会被本入口截获，仍会透传给 Databend。
+启动文件冻结为源表绑定和初始模板，不热更新；运行期 `CREATE/SHOW/DROP CACHE` 操作的是 Rust 进程中的公共查询目录，
+不会改写冻结源表配置或重新初始化复制。
 
 ### 路由规则
 
@@ -138,7 +188,7 @@ Databend 原生 HTTP 客户端
 
 ## 启动和复现
 
-开发分支必须为 `poc/databend-stream-m0`；代码保持未提交。
+开发分支必须为 `poc/databend-stream-m0`；本地开发和提交，Rust 编译/测试及 live 联调放在远端独立验证目录。
 
 ```bash
 export LIBCLANG_PATH=/tmp/readyset-m1-libclang
@@ -155,7 +205,19 @@ python3 -B readyset-databend/poc/gateway_verify.py \
   --endpoint http://192.168.1.100:8000 --user root --confirm-create
 ```
 
-该 live 测试需要本机已经安装的 `databend_driver`；入口本身只依赖 Python 标准库及 Rust binary。
+新增 SQL 声明路径的同表多缓存全链路验证（零配置模板启动、动态增删、重复/容量/会话拒绝、原生 driver、晚建缓存及共享增量）：
+
+```bash
+python3 -B readyset-databend/poc/gateway_verify.py \
+  --endpoint http://192.168.1.100:8000 --user root \
+  --binary /data1/vmbox/readyset/target/debug/databend-m2 \
+  --sql-declarations --confirm-create
+```
+
+若构建设置了外部 `CARGO_TARGET_DIR`，所有 live 命令都要显式指定该目录下的新 binary，不能误用 checkout 内旧产物。
+不加 `--sql-declarations` 时仍走旧 JSON 启动模板路径，用于兼容回归。
+
+该 live 测试需要验证机已经安装的 `databend_driver==0.34.0`；入口本身只依赖 Python 标准库及 Rust binary。
 测试最后故意终止**本轮拥有的** engine 子进程，验证本地失效后可继续源端透传，不重启任何外部服务。
 这只验证 fail-closed routing，**不证明崩溃恢复**。
 
@@ -181,9 +243,37 @@ curl -u root: -H 'Content-Type: application/json' \
 每次重启使用新 generation 重新全量初始化；旧的 outbox 和本地状态保留，但**不恢复旧 controller/authority 状态**。
 若上次结果不确定，不要把重新启动当作已经验证的恢复协议，更不能自动清除旧 outbox。
 
-## 验证与证据
+## 第一阶段验证：SQL 动态声明
 
-最终版本两次独立新数据库验证，各 **259/259 条断言通过**：
+精选报告见 [`evidence/sql_cache_20261112/`](evidence/sql_cache_20261112/)，源码/binary 哈希、
+实际工具链、原始报告路径和每项命令退出码在该目录 `report.json`。
+构建与测试均在远端 `/data1/vmbox/readyset-validation`，未在开发机编译。
+
+| 检查 | 本轮结果 |
+| --- | --- |
+| `databend-m1` / `databend-m2` locked build | 通过 |
+| `readyset-databend` | 16 项（12 library + 4 M1）通过 |
+| `replication-offset` | 118 单测 + 3 doctest 通过 |
+| checkpoint 重开 / metadata 兼容 | 1 + 3 项通过 |
+| Python 离线回归 | 39 项通过 |
+| 严格 Clippy / Rust 格式 / 源码 diff | 通过 |
+| SQL 动态声明 live | 两个新数据库，各 350/350 |
+| 旧 JSON 声明 live | 新数据库，259/259 |
+| M2 增量/重放回归 | 新数据库，142/142 |
+
+SQL live 包含：零模板启动、原生 driver 在正确 session database 下使用无前缀源表进行 CREATE，
+多个投影、并发同名 CREATE 仅一次成功、重复/越权/不支持选项/多语句拒绝、8 缓存容量、
+新增/删除数据后的晚建缓存、DROP 后其余视图继续收到更新、删除全部再重建，以及不重启 engine、
+不更换 generation、所有缓存只建立一个源端 Stream。
+
+每轮 gateway 最后都仅终止本轮自己的 engine，验证 SELECT 可回源、控制 SQL 不透传。
+最终 `ready=false / Broken pipe` 为预期故障注入，报告 `passed=true`；不代表实现了崩溃恢复。
+
+## 历史验证与证据（SQL 动态声明前）
+
+以下为交接时的 JSON 声明版本结果；不能将它们当成新增 SQL 控制路径的验证证据。
+
+交接版本两次独立新数据库验证，各 **259/259 条断言通过**：
 
 | 数据库 | 初始行数 | HTTP query：ReadySet / Databend | 自动同步 checkpoint | 源端分页请求 |
 | --- | ---: | ---: | ---: | ---: |
@@ -207,7 +297,7 @@ live 测试覆盖：100 个 sparse key 首次触达、多个投影模板、空�
 
 ## 还没有完成
 
-- 多表/通用 schema、多索引字段、任意 SQL 模板、动态声明与热更新。
+- 多表/通用 schema、多索引字段、任意 SQL 模板、声明持久化恢复与启动文件热更新。
 - 完整 Databend client/login/auth/session/function/HTTP endpoint 兼容性。
 - 自动恢复、消费者 fencing、安全 outbox GC、版本升级/降级协议。
 - source 表 DDL/schema 演进；源表结构必须固定，不能运行中改 schema。

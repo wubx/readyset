@@ -12,6 +12,7 @@ use sqlparser::parser::Parser;
 pub struct Declaration {
     pub database: String,
     pub table: String,
+    #[serde(default)]
     pub queries: Vec<QueryDeclaration>,
 }
 
@@ -89,6 +90,7 @@ pub struct Template {
     ast: Statement,
     pub projection: Vec<String>,
     pub local_sql: String,
+    pub source_sql: String,
 }
 
 impl Declaration {
@@ -97,14 +99,17 @@ impl Declaration {
             identifier(&self.database) && identifier(&self.table) && identifier(local_table),
             "invalid declared relation"
         );
-        ensure!(
-            !self.queries.is_empty() && self.queries.len() <= 8,
-            "declare 1..8 queries"
-        );
+        ensure!(self.queries.len() <= 8, "declare at most 8 queries");
         let mut templates: Vec<Template> = Vec::new();
         for q in &self.queries {
             ensure!(
-                identifier(&q.name) && !templates.iter().any(|t| t.name == q.name),
+                identifier(&q.name)
+                    && !["m2_source", "m2_by_id"]
+                        .iter()
+                        .any(|n| q.name.eq_ignore_ascii_case(n))
+                    && !templates
+                        .iter()
+                        .any(|t| t.name.eq_ignore_ascii_case(&q.name)),
                 "invalid or duplicate cache name"
             );
             let ast = parse(&q.sql)
@@ -150,9 +155,57 @@ impl Declaration {
                 ast,
                 projection,
                 local_sql: format!("SELECT {columns} FROM {local_table} WHERE id = ?"),
+                source_sql: canonical.to_string(),
             });
         }
         Ok(templates)
+    }
+
+    /// Resolve only the configured source relation, then run the existing restricted AST validator.
+    pub fn template_for_sql(
+        &self,
+        name: String,
+        sql: &str,
+        database: &str,
+        local_table: &str,
+    ) -> Result<Template> {
+        let mut ast = parse(sql).context("unsupported cache SELECT")?;
+        if database == self.database
+            && let Statement::Query(q) = &mut ast
+            && let SetExpr::Select(s) = q.body.as_mut()
+            && s.from.len() == 1
+        {
+            let Statement::Query(bare) =
+                parse(&format!("SELECT id FROM {} WHERE id = ?", self.table)).unwrap()
+            else {
+                unreachable!()
+            };
+            let SetExpr::Select(bare) = bare.body.as_ref() else {
+                unreachable!()
+            };
+            if s.from[0].relation == bare.from[0].relation {
+                let Statement::Query(qualified) = parse(&format!(
+                    "SELECT id FROM {}.{} WHERE id = ?",
+                    self.database, self.table
+                ))
+                .unwrap() else {
+                    unreachable!()
+                };
+                let SetExpr::Select(qualified) = qualified.body.as_ref() else {
+                    unreachable!()
+                };
+                s.from[0].relation = qualified.from[0].relation.clone();
+            }
+        }
+        let single = Declaration {
+            database: self.database.clone(),
+            table: self.table.clone(),
+            queries: vec![QueryDeclaration {
+                name,
+                sql: ast.to_string(),
+            }],
+        };
+        Ok(single.templates(local_table)?.remove(0))
     }
 }
 

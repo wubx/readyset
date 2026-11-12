@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "rust_databend": 16,
+  "rust_replication_offset": 118,
+  "doctests": 3,
+  "checkpoint_reopen": 1,
+  "metadata_compatibility": 3,
+  "python": 39,
+  "strict_clippy": true,
+  "logs_directory": "/data1/vmbox/readyset-sql-cache-results-20261112-180652",
+  "raw_log_sha256": {
+    "build.log": "9a30d54c8b16d7e49510b182028079bca120aeebb7d662e88f8566e6196a49f6",
+    "rust_tests.log": "316821fc27970765f9ef7531280df327a5d8d0cf2f4a5319368a9cd2c674daba",
+    "checkpoint_reopen.log": "9ef0c73309f3c21db82062fd1c42b3908457c0a6c62180acce3a49a5212eef69",
+    "metadata_tests.log": "3cf2e2b7b236a7c4b3dea64ccb2c739912fcd058d06f4f53ea648c43ae562786",
+    "clippy.log": "9d892c5778d0c975f64a671e66ea5a753502353da3addd1dfdf3825225e406a2",
+    "python_tests.log": "e90c650c78fc1c2639ab572069efa6f1abb179126b348a92ba4ea50eeaee9765",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diff_check.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sql_live_1.log": "e1f253987501562d4e4275bdba751e349e83470e6a8bfb1fbc9bd603c310b7a8",
+    "sql_live_2.log": "25e589a74d63712ee2db9e97f5c9b173802c8cf4858d48f40afa095068458548",
+    "legacy_live.log": "e270d1b3d82c15702a437ab08d5f5bde61177e4d4d85b71161a886a1ab4faeb8",
+    "m2_live.log": "8ca6c68dd27661261129690efebd1164ea3e1e51b15a704a0c4d1b9fb4599099"
+  }
+}

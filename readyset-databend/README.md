@@ -8,6 +8,23 @@
 - [M2-A：Stream 增量同步、UPDATE / DELETE 与重复投递](poc/M2.md)
 - [声明式统一入口：Databend HTTP 本地查询与透传](poc/GATEWAY.md)
 
+当前第一阶段支持通过 HTTP SQL 动态声明同表多个缓存，复用 ReadySet 原生解析/recipe/reader 链路：
+
+```sql
+CREATE CACHE users_full FROM
+SELECT id, payload, score, note FROM readyset_gateway_example.source_rows WHERE id = ?;
+CREATE CACHE users_payload FROM
+SELECT payload, note FROM readyset_gateway_example.source_rows WHERE id = ?;
+SHOW CACHES;
+DROP CACHE users_payload;
+```
+
+入口可用 `--database readyset_gateway_example --table source_rows` 启动，查询模板不再必须写 JSON。
+源表仍需预先存在且符合固定 schema；一个全量底表副本和一条增量链路服务 0..8 个公共查询缓存。
+保留旧 `--declarations` 启动模板兼容。新增视图通过内容 barrier 才发布路由；删除公共缓存不删除共享复制状态。
+动态目录不支持进程重启恢复，仍只允许普通投影和 `id = ?`，不等于任意 SQL 或完整原生 adapter 管理能力。
+详见 [SQL 入口边界与验证命令](poc/GATEWAY.md#sql-声明入口第一阶段)。
+
 M1 的 `databend-m1` Rust binary 使用当前工程的 ReadySet server/client 实现，而不是旧构建产物：
 
 ```text

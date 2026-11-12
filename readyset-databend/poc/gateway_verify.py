@@ -85,6 +85,90 @@ class Verification:
     def point(self,key,route='readyset'):
         return self.query(f'SELECT id, payload, score, note FROM {self.database}.source_rows WHERE id = {key}',route=route)
 
+    def cache_names(self):
+        rows,_,_=self.query('SHOW CACHES',route='readyset')
+        return [row[0] for row in rows]
+
+    def rejected_cache_sql(self, sql):
+        self.wait_ready()
+        before=self.http('GET','/health')['response']['counters']['databend']
+        r=self.http('POST','/v1/query',{'sql':sql})
+        self.check('cache SQL rejected locally: '+sql[:65],(r['route'],r['response'].get('state')),('readyset','Failed'))
+        self.check('rejected DDL does not disable replica',self.http('GET','/health')['response']['ready'],True)
+        self.check('rejected DDL not forwarded',self.http('GET','/health')['response']['counters']['databend'],before)
+        if r['response'].get('final_uri'):self.http('GET',r['response']['final_uri'])
+
+    def verify_sql_declarations(self, config):
+        self.check('SQL mode starts with zero caches',self.cache_names(),[])
+        self.point(7,route='databend')
+        self.wait_ready()
+        for query in config['queries']:
+            self.query(f"CREATE CACHE {query['name']} FROM {query['sql']}",route='readyset')
+        self.check('two SQL-declared caches on one source',self.cache_names(),['gateway_by_id','gateway_payload'])
+        db=self.database
+        for sql in [
+            f'CREATE CACHE gateway_by_id FROM SELECT note FROM {db}.source_rows WHERE id=?',
+            f'CREATE CACHE duplicate_shape FROM SELECT payload,note FROM {db}.source_rows WHERE id=?',
+            f'CREATE SHALLOW CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=?',
+            f'CREATE CACHE CONCURRENTLY bad FROM SELECT note FROM {db}.source_rows WHERE id=?',
+            f'CREATE CACHE bad FROM SELECT note FROM {db}.other_rows WHERE id=?',
+            'CREATE CACHE bad FROM SELECT note FROM another.source_rows WHERE id=?',
+            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE score=?',
+            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=? LIMIT 1',
+            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=?; DROP CACHE gateway_by_id',
+            'CREATE CACHE broken FROM', 'DROP CACHE m2_by_id', 'DROP CACHE missing']:
+            self.rejected_cache_sql(sql)
+        for session in [{'txn_state':'Active'},{'settings':{'max_threads':'1'}},{'role':'another'}]:
+            self.check('unsafe session cache DDL rejected',self.http('POST','/v1/query',{'sql':'DROP CACHE gateway_by_id','session':session})['status'],400)
+        # Requests serialize under one replica lock; exactly one conflicting CREATE can publish.
+        sql=f'CREATE CACHE racing FROM SELECT payload,score FROM {db}.source_rows WHERE id=?'
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            responses=list(pool.map(lambda _:self.http('POST','/v1/query',{'sql':sql}),range(2)))
+        self.check('concurrent duplicate CREATE publishes once',sorted(r['response']['state'] for r in responses),['Failed','Succeeded'])
+        for r in responses:self.http('GET',r['response']['final_uri'])
+        self.query('DROP CACHE racing',route='readyset')
+        self.check('failed requests leave catalog intact',self.cache_names(),['gateway_by_id','gateway_payload'])
+
+    def verify_runtime_cache_changes(self, info):
+        db=self.database
+        original=self.http('GET','/health')['response']
+        self.query(f'CREATE DEEP CACHE late_score FROM SELECT score,note FROM {db}.source_rows WHERE id=?',route='readyset')
+        rows,_,_=self.query(f'SELECT score,note FROM {db}.source_rows WHERE id=99999',route='readyset')
+        self.check('late cache contains never-read inserted key',rows,[['-9223372036854775808',None]])
+        rows,_,_=self.query(f'SELECT score,note FROM {db}.source_rows WHERE id=24',route='readyset')
+        self.check('late cache excludes deleted key',rows,[])
+        # Exercise the bounded public catalog without creating additional source replicas.
+        extra=[('only_id','id'),('only_payload','payload'),('only_note','note'),('only_score','score'),('reverse_payload','note,payload')]
+        for name,columns in extra:self.query(f'CREATE CACHE {name} FROM SELECT {columns} FROM {db}.source_rows WHERE id=?',route='readyset')
+        self.check('eight public caches supported',len(self.cache_names()),8)
+        self.rejected_cache_sql(f'CREATE CACHE overflow FROM SELECT id,note FROM {db}.source_rows WHERE id=?')
+        for name,_ in extra:self.query(f'DROP CACHE {name}',route='readyset')
+        self.query('DROP CACHE gateway_payload',route='readyset')
+        rows,_,_=self.query(f'SELECT payload,note FROM {db}.source_rows WHERE id=7',route='databend')
+        self.check('dropped template falls back',rows,[['via-gateway','']])
+        self.wait_ready()
+        self.point(7)
+        self.query('DROP CACHE gateway_by_id',route='readyset')
+        # Dropping a full-row public route must not drop the internal replication barrier reader.
+        self.source.sql(f"UPDATE {db}.source_rows SET score=12345 WHERE id=7")
+        checkpoint=self.http('GET','/health')['response']['checkpoint']
+        self.wait_ready(after=checkpoint)
+        rows,_,_=self.query(f'SELECT score,note FROM {db}.source_rows WHERE id=7',route='readyset')
+        self.check('surviving cache receives updates after drops',rows,[['12345','']])
+        self.source.sql(f'UPDATE {db}.source_rows SET score=0 WHERE id=7')
+        checkpoint=self.http('GET','/health')['response']['checkpoint'];self.wait_ready(after=checkpoint)
+        self.query('DROP CACHE late_score',route='readyset')
+        self.check('last public cache can be dropped',self.cache_names(),[])
+        self.point(7,route='databend');self.wait_ready()
+        for name,columns in [('gateway_by_id','id,payload,score,note'),('gateway_payload','payload,note')]:
+            self.query(f'CREATE CACHE {name} FROM SELECT {columns} FROM {db}.source_rows WHERE id=?',route='readyset')
+        self.point(7)
+        now=self.http('GET','/health')['response']
+        self.check('cache DDL does not restart engine',now['engine_pid'],original['engine_pid'])
+        self.check('cache DDL reuses generation',now['generation'],info['generation'])
+        source_log=[json.loads(line) for line in (self.output/'service/source_queries.jsonl').read_text().splitlines()]
+        self.check('one source stream for all caches',sum(r.get('sql','').startswith('CREATE STREAM ') for r in source_log),1)
+
     def run(self):
         error=None
         try:
@@ -100,8 +184,9 @@ class Verification:
             declaration=self.output/'declarations.json';declaration.write_text(json.dumps(config,indent=2)+'\n')
             log=(self.output/'gateway_stderr.log').open('w')
             stdout=(self.output/'gateway_stdout.log').open('w')
+            binding = ['--database', db, '--table', 'source_rows'] if self.args.sql_declarations else ['--declarations', str(declaration)]
             self.child=subprocess.Popen([sys.executable,'-B',str(Path(__file__).with_name('gateway.py')),
-                '--endpoint',self.args.endpoint,'--user',self.args.user,'--declarations',str(declaration),
+                '--endpoint',self.args.endpoint,'--user',self.args.user,*binding,
                 '--output',str(self.output/'service'),'--binary',self.args.binary,'--port','0','--interval','1','--confirm-create'],stdout=stdout,stderr=log)
             deadline=time.monotonic()+75
             while not (self.output/'service/listening.json').exists():
@@ -110,6 +195,8 @@ class Verification:
                 time.sleep(.1)
             info=json.loads((self.output/'service/listening.json').read_text());self.origin=info['origin']
             self.wait_ready()
+            if self.args.sql_declarations:
+                self.verify_sql_declarations(config)
             self.check('HTTP auth required',self.http('POST','/v1/query',{'sql':'SELECT 1'},auth=False)['status'],401)
             # All keys first-touch, not just one hot-key test.
             for n in range(100):
@@ -158,6 +245,12 @@ class Verification:
             before_mixed=self.http('GET','/health')['response']['counters']['readyset']
             self.check('native driver returns to declared cache',tuple(conn.query_row(f'SELECT payload, note FROM {db}.source_rows WHERE id=7').values()),('p-0',None))
             self.check('mixed native connection actually reenters ReadySet',self.http('GET','/health')['response']['counters']['readyset'],before_mixed+1)
+            if self.args.sql_declarations:
+                conn.query_row('CREATE CACHE driver_note FROM SELECT note FROM source_rows WHERE id = ?')
+                before_note=self.http('GET','/health')['response']['counters']['readyset']
+                self.check('native driver SQL-created cache value',tuple(conn.query_row(f'SELECT note FROM {db}.source_rows WHERE id=24').values()),('中文',))
+                self.check('native driver SQL-created cache route',self.http('GET','/health')['response']['counters']['readyset'],before_note+1)
+                conn.query_row('DROP CACHE driver_note')
             conn.close()
             self.wait_ready()
             # Writes through gateway and external source writes are both consumed automatically.
@@ -174,6 +267,8 @@ class Verification:
             rows,_,_=self.point(24);self.check('external delete synchronized',rows,[])
             rows,_,_=self.point(99999);self.check('new never-before-accessed key synchronized',rows,[['99999','never-seen','-9223372036854775808',None]])
             self.wait_ready()
+            if self.args.sql_declarations:
+                self.verify_runtime_cache_changes(info)
             with ThreadPoolExecutor(max_workers=4) as pool:
                 outcomes=list(pool.map(lambda _:self.point(7)[0],range(12)))
             self.check('concurrent local queries correct',outcomes,[[['7','via-gateway','0','']]]*12)
@@ -200,6 +295,10 @@ class Verification:
             failed=self.http('GET','/health')['response']
             self.check('engine failure disables local routing',failed['ready'],False)
             self.check('engine failure is observable',bool(failed['failed']),True)
+            if self.args.sql_declarations:
+                before_ddl=failed['counters']['databend']
+                self.check('DDL on dead engine is rejected locally',self.http('POST','/v1/query',{'sql':'SHOW CACHES'})['status'],503)
+                self.check('dead engine DDL never forwarded',self.http('GET','/health')['response']['counters']['databend'],before_ddl)
             self.child.send_signal(signal.SIGINT)
             self.child.wait(timeout=60)
             self.check('gateway clean exit',self.child.returncode,0)
@@ -230,6 +329,7 @@ def main():
     p.add_argument('--binary',default='target/debug/databend-m2')
     p.add_argument('--output',default='/tmp/readyset-databend-gateway')
     p.add_argument('--confirm-create',action='store_true')
+    p.add_argument('--sql-declarations',action='store_true',help='start without JSON queries; exercise runtime CREATE/SHOW/DROP CACHE')
     args=p.parse_args()
     if not args.confirm_create:p.error('--confirm-create required')
     return Verification(args).run()

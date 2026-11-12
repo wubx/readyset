@@ -1,0 +1,373 @@
+{
+  "root": "/data1/vmbox/readyset-validation",
+  "results": "/data1/vmbox/readyset-sql-cache-results-20261112-180652",
+  "base_commit": "fe6965a65db7510670b6d0b1d499affe3ed67730",
+  "uncommitted_worktree": true,
+  "code_sha256": {
+    "Cargo.toml": "36e9ff284f05f91ff92d2bc6ca07b703dcdadb3511ee97340d38a39d66e97de2",
+    "Cargo.lock": "ae175fb5c2319ab043e962b2296bc5f670376c47c1cf98c7c339a82fb2aaa9d7",
+    "readyset-databend/Cargo.toml": "2a338083229128e61d4cbe8840f141b5eae8ebe1ec0449d0b7a99545823dc364",
+    "replication-offset/src/lib.rs": "193abe3b6545f5c97ec53960801b4f335383bd15064f8732dc0281106c564100",
+    "replication-offset/src/databend.rs": "cc11239fcc96d5afb6d24801a807428f162e38ca2f60a4750a9d96d28e1a1685",
+    "dataflow-state/src/persistent_state/mod.rs": "bc94d0a86b6b8fd552f96cfc59a221af53899d5eda82caa8a6923e3fc06bd436",
+    "readyset-databend/src/bin/m1.rs": "3391996ecf5171f67220e20256095ddf5ab88003c85792cd90eefe6cc05fbc7f",
+    "readyset-databend/src/bin/m2.rs": "5cbc228735bbcc797f39e7e31d4dbdb882f663a99784e005761ddaa9f30b487c",
+    "readyset-databend/src/cache_control.rs": "bc683b322e0c9f3eaa5d76b50e5b3e50ddd9e8648325b084fb95e0ed69dc3117",
+    "readyset-databend/src/declaration.rs": "86135e7e1a536e5e3889bccdc0b0432e0479c64e2877d7246ef8b0c777f4f3b6",
+    "readyset-databend/src/lib.rs": "da9f7f8c5c6cc1056f394b2f9c3113060589472dd5ff584f159fdd6bc2436ebe",
+    "readyset-databend/poc/gateway.py": "19356092de44136bcc85205511ed8f60fcf268ab4fc4b02e9a9362a933022860",
+    "readyset-databend/poc/gateway_verify.py": "d3a97949342375a8330c3b1c025c7f4626c1f616972402ef678421cc9f5cb7a9",
+    "readyset-databend/poc/m0.py": "d5b205b7ebf4c20f0ea1f54501d7e5e9091cfa1b76314ba508a10fb917becba0",
+    "readyset-databend/poc/m1_export.py": "bac2e9fe5ba7a01c58306532835de4a80f9afde577987dc6cf88df8b397332cd",
+    "readyset-databend/poc/m2.py": "66a5befac054767399c0ae4b373566bc529f4f6d236efdca4752a019597243d5",
+    "readyset-databend/poc/test_cache_control.py": "119d3e3d7da18cf32cecd8e716701d6e1ce8a85d2447d759a365f55c48edc826",
+    "readyset-databend/poc/test_gateway.py": "bae0c7bf6b6e7625bdf7d60b0fc318113cc59a809f60cdbf58645bad2e7eca0c",
+    "readyset-databend/poc/test_m0.py": "a63035e7be1f115fb651b1697ac5e5082eb24f953cf5a230fe9dc50ac8a410b2",
+    "readyset-databend/poc/test_m1_export.py": "e8c9dd6701e178735d76bf723a6846e865b66be3b15803a9b48c086f7bff0a8a",
+    "readyset-databend/poc/test_m2.py": "4f2e021988cb9500fd9cd76fe10470973c8987ffd600e4a2c567428dbdbf5f6e"
+  },
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "driver": "0.34.0",
+  "steps": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "--bins",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 0.336
+    },
+    {
+      "name": "rust_tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "replication-offset",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 1.138
+    },
+    {
+      "name": "checkpoint_reopen",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "dataflow-state",
+        "--lib",
+        "replication_offset_databend_rows_and_checkpoint_reopen",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 0.67
+    },
+    {
+      "name": "metadata_tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "dataflow-state",
+        "--lib",
+        "meta_",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 0.279
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "replication-offset",
+        "--all-targets",
+        "-j",
+        "8",
+        "--no-deps",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 0.354
+    },
+    {
+      "name": "python_tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "readyset-databend/poc",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.214
+    },
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--check",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "replication-offset"
+      ],
+      "exit_code": 0,
+      "seconds": 0.112
+    },
+    {
+      "name": "diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.009
+    },
+    {
+      "name": "sql_live_1",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.1.100:8000",
+        "--user",
+        "root",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create",
+        "--sql-declarations"
+      ],
+      "exit_code": 0,
+      "seconds": 28.035
+    },
+    {
+      "name": "sql_live_2",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.1.100:8000",
+        "--user",
+        "root",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create",
+        "--sql-declarations"
+      ],
+      "exit_code": 0,
+      "seconds": 28.112
+    },
+    {
+      "name": "legacy_live",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.1.100:8000",
+        "--user",
+        "root",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 17.299
+    },
+    {
+      "name": "m2_live",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/m2.py",
+        "--endpoint",
+        "http://192.168.1.100:8000",
+        "--user",
+        "root",
+        "--rows",
+        "1000",
+        "--binary",
+        "/data1/vmbox/readyset/target/debug/databend-m2",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 12.541
+    }
+  ],
+  "live": [
+    {
+      "name": "sql_live_1",
+      "report": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_100656_e4bf5d18/report.json",
+      "passed": true,
+      "checks": 350,
+      "database": "readyset_gateway_20261112_100656_e4bf5d18",
+      "facts": {
+        "database": "readyset_gateway_20261112_100656_e4bf5d18",
+        "gateway": {
+          "origin": "http://127.0.0.1:38087",
+          "database": "readyset_gateway_20261112_100656_e4bf5d18",
+          "generation": "rs_f5a42b7ecc08411aaf0fcb4b397bb738",
+          "stream": "readyset_gateway_20261112_100656_e4bf5d18.rs_f5a42b7ecc08411aaf0fcb4b397bb738_stream",
+          "outbox": "readyset_gateway_20261112_100656_e4bf5d18.rs_f5a42b7ecc08411aaf0fcb4b397bb738_outbox",
+          "meta": "readyset_gateway_20261112_100656_e4bf5d18.rs_f5a42b7ecc08411aaf0fcb4b397bb738_meta"
+        },
+        "final_status": {
+          "generation": "rs_f5a42b7ecc08411aaf0fcb4b397bb738",
+          "checkpoint": 20,
+          "ready": false,
+          "failed": "engine query failure: [Errno 32] Broken pipe",
+          "uncertain_upstream": false,
+          "inflight": 0,
+          "rows": 100,
+          "counters": {
+            "readyset": 127,
+            "databend": 17,
+            "empty_local": 3,
+            "sync_batches": 20,
+            "cache_ddl": 27
+          },
+          "engine_pid": 12532
+        },
+        "upstream_page_requests": 8
+      },
+      "sha256": "58710851e638075b0b43f88b5bf7ad90af8f62b0fd7d98b3d70157a6696423d4"
+    },
+    {
+      "name": "sql_live_2",
+      "report": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_100724_0275c48f/report.json",
+      "passed": true,
+      "checks": 350,
+      "database": "readyset_gateway_20261112_100724_0275c48f",
+      "facts": {
+        "database": "readyset_gateway_20261112_100724_0275c48f",
+        "gateway": {
+          "origin": "http://127.0.0.1:45763",
+          "database": "readyset_gateway_20261112_100724_0275c48f",
+          "generation": "rs_3c81944bcf714130b1ad6d1c12c1f729",
+          "stream": "readyset_gateway_20261112_100724_0275c48f.rs_3c81944bcf714130b1ad6d1c12c1f729_stream",
+          "outbox": "readyset_gateway_20261112_100724_0275c48f.rs_3c81944bcf714130b1ad6d1c12c1f729_outbox",
+          "meta": "readyset_gateway_20261112_100724_0275c48f.rs_3c81944bcf714130b1ad6d1c12c1f729_meta"
+        },
+        "final_status": {
+          "generation": "rs_3c81944bcf714130b1ad6d1c12c1f729",
+          "checkpoint": 20,
+          "ready": false,
+          "failed": "engine query failure: [Errno 32] Broken pipe",
+          "uncertain_upstream": false,
+          "inflight": 0,
+          "rows": 100,
+          "counters": {
+            "readyset": 127,
+            "databend": 17,
+            "empty_local": 3,
+            "sync_batches": 20,
+            "cache_ddl": 27
+          },
+          "engine_pid": 15565
+        },
+        "upstream_page_requests": 8
+      },
+      "sha256": "65b0b1a121db6586b37b0dcdcbad251b0be8c62d53a3b42a3aa9101291b31240"
+    },
+    {
+      "name": "legacy_live",
+      "report": "/tmp/readyset-databend-gateway/readyset_gateway_20261112_100752_32c8c9a6/report.json",
+      "passed": true,
+      "checks": 259,
+      "database": "readyset_gateway_20261112_100752_32c8c9a6",
+      "facts": {
+        "database": "readyset_gateway_20261112_100752_32c8c9a6",
+        "gateway": {
+          "origin": "http://127.0.0.1:40823",
+          "database": "readyset_gateway_20261112_100752_32c8c9a6",
+          "generation": "rs_e06529919bb7478b8b745192ccbaea90",
+          "stream": "readyset_gateway_20261112_100752_32c8c9a6.rs_e06529919bb7478b8b745192ccbaea90_stream",
+          "outbox": "readyset_gateway_20261112_100752_32c8c9a6.rs_e06529919bb7478b8b745192ccbaea90_outbox",
+          "meta": "readyset_gateway_20261112_100752_32c8c9a6.rs_e06529919bb7478b8b745192ccbaea90_meta"
+        },
+        "final_status": {
+          "generation": "rs_e06529919bb7478b8b745192ccbaea90",
+          "checkpoint": 12,
+          "ready": false,
+          "failed": "engine query failure: [Errno 32] Broken pipe",
+          "uncertain_upstream": false,
+          "inflight": 0,
+          "rows": 100,
+          "counters": {
+            "readyset": 121,
+            "databend": 14,
+            "empty_local": 2,
+            "sync_batches": 12,
+            "cache_ddl": 0
+          },
+          "engine_pid": 18616
+        },
+        "upstream_page_requests": 8
+      },
+      "sha256": "4b890559862612b55771487095eff999904eb0a0b88995d9726b3c2ee1dbbd7a"
+    },
+    {
+      "name": "m2_live",
+      "report": "/tmp/readyset-databend-m2/readyset_m2_20261112_100809_077c800f/report.json",
+      "passed": true,
+      "checks": 142,
+      "database": "readyset_m2_20261112_100809_077c800f",
+      "facts": {
+        "version": "Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)",
+        "batch_rows": [
+          470,
+          233,
+          6,
+          0,
+          6,
+          802
+        ],
+        "final_checkpoint": 6,
+        "rows_initial": 1000,
+        "rows_final": 939
+      },
+      "sha256": "236f081a767d5cbb96b16f2e3448fde10606f159199248348654df7642f00f51"
+    }
+  ],
+  "passed": true,
+  "intentional_fault": "Gateway live tests terminate ONLY their own engine to verify fallback. This is not recovery testing.",
+  "binaries": {
+    "databend-m1": "7d2fcdfc099a832ad33a7ef3963f2dd00a7d78e45ae3cb89b89779c36c736575",
+    "databend-m2": "459f8f3e3e67cda062094fc521297aff08d981a1178bc594ed7a4f098a44a51d"
+  },
+  "snapshot_unchanged": true
+}

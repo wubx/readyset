@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Loopback-only Databend native HTTP subset + explicit full-replica query routing POC.
 
-Single configured principal, fixed four-column source schema, one table, 1..8 templates.
+Single configured principal, fixed four-column source schema, one table, 0..8 templates.
 Uses NEW Stream/outbox/meta names in an explicitly authorized POC database. No restart recovery.
 """
 import argparse
@@ -32,23 +32,51 @@ MAX_RESPONSE = 16 * 1024 * 1024
 
 def load_declaration(path):
     d = json.loads(Path(path).read_text())
-    if not isinstance(d, dict) or set(d) != {'database', 'table', 'queries'}:
-        raise ValueError('declaration requires exactly database, table, queries')
+    if not isinstance(d, dict) or set(d) not in ({'database', 'table'}, {'database', 'table', 'queries'}):
+        raise ValueError('declaration requires database, table and optional queries')
+    d.setdefault('queries', [])
     if not all(isinstance(d[k], str) and IDENTIFIER.fullmatch(d[k]) for k in ('database', 'table')):
         raise ValueError('invalid source identifier')
     # This POC deliberately refuses to create change-tracking objects in business databases.
     if not d['database'].startswith('readyset_gateway_'):
         raise ValueError('POC source database must be a newly created readyset_gateway_* database')
-    if not isinstance(d['queries'], list) or not 1 <= len(d['queries']) <= 8:
-        raise ValueError('declare 1..8 templates')
+    if not isinstance(d['queries'], list) or not 0 <= len(d['queries']) <= 8:
+        raise ValueError('declare 0..8 templates')
     names = set()
     for q in d['queries']:
         if not isinstance(q, dict) or set(q) != {'name', 'sql'} or not isinstance(q['name'], str) or not IDENTIFIER.fullmatch(q['name']):
             raise ValueError('invalid query declaration')
-        if q['name'] in names or q['name'] == 'm2_by_id' or not isinstance(q['sql'], str) or len(q['sql']) > 16384:
+        if q['name'].lower() in names or q['name'].lower() in {'m2_by_id', 'm2_source'} or not isinstance(q['sql'], str) or len(q['sql']) > 16384:
             raise ValueError('duplicate/reserved query name or invalid SQL')
-        names.add(q['name'])
+        names.add(q['name'].lower())
     return d
+
+
+def cache_control_sql(sql):
+    """Reserve the cache-control namespace, NOT parse its SQL grammar.
+
+    Skip comments between leading keywords so malformed/unsupported cache DDL is
+    rejected locally rather than accidentally forwarded. Rust's existing ReadySet
+    parser is the only authority for accepted statements and options.
+    """
+    words, pos = [], 0
+    while len(words) < 3:
+        skip = re.match(r'(?:\s+|--[^\n]*(?:\n|$)|\#[^\n]*(?:\n|$)|/\*[\s\S]*?\*/)*', sql[pos:])
+        pos += skip.end()
+        word = re.match(r'[A-Za-z_][A-Za-z_0-9]*', sql[pos:])
+        if not word:
+            break
+        words.append(word.group().upper())
+        pos += word.end()
+    return (words[:2] in (['CREATE', 'CACHE'], ['DROP', 'CACHE'], ['SHOW', 'CACHES'])
+            or (len(words) >= 3 and words[0] == 'CREATE' and words[1] in {'DEEP', 'SHALLOW'} and words[2] == 'CACHE')
+            or words == ['DROP', 'ALL', 'CACHES']
+            or (len(words) >= 3 and words[0] == 'SHOW' and words[1] in {'DEEP', 'SHALLOW'} and words[2] == 'CACHES'))
+
+
+def safe_headers(headers):
+    return not any(k.lower().startswith('x-databend-') and k.lower() not in {
+        'x-databend-route-hint', 'x-databend-query-id', 'x-databend-sticky-node'} for k in headers)
 
 
 def safe_session(body, default_role=None):
@@ -104,7 +132,7 @@ class Replica:
         self.engine = None
         self.worker = None
         self.local_results = {}
-        self.counters = {'readyset': 0, 'databend': 0, 'empty_local': 0, 'sync_batches': 0}
+        self.counters = {'readyset': 0, 'databend': 0, 'empty_local': 0, 'sync_batches': 0, 'cache_ddl': 0}
         self.auth = 'Basic ' + base64.b64encode((args.user + ':' + os.environ.get('DATABEND_PASSWORD', '')).encode()).decode()
         self.opener = urllib.request.build_opener(NoRedirect())
         self.tx = self.client('capture')
@@ -263,6 +291,33 @@ class Replica:
             response_headers = {k: v for k, v in response.headers.items() if k.lower().startswith('x-databend-') or k.lower() == 'content-type'}
             return response.code, content, response_headers
 
+    def local_query_id(self, headers):
+        qid = next((v for k, v in headers.items() if k.lower() == 'x-databend-query-id'), None) or 'rs_local_' + uuid.uuid4().hex
+        if not re.fullmatch(r'[A-Za-z_0-9-]{1,128}', qid):
+            raise ValueError('invalid query ID')
+        if qid in self.local_results:
+            raise ValueError('query ID already used locally')
+        return qid
+
+    def local_response(self, result, body, qid, now, control=False):
+        prefix = '/v1/query/' + qid
+        error = None if result.get('ok') else {'code': 1005, 'message': result.get('error', 'cache control failed')}
+        rows = result.get('data', [])
+        data = {'id': qid, 'session_id': '', 'node_id': '', 'state': 'Failed' if error else 'Succeeded',
+                'session': body.get('session', {'database': 'default'}), 'error': error, 'warnings': [], 'has_result_set': True,
+                'schema': result.get('schema', []), 'data': rows, 'affect': None, 'result_timeout_secs': 60,
+                'stats': {'running_time_ms': 0, 'scan_progress': {'rows': len(rows), 'bytes': 0},
+                          'write_progress': {'rows': 0, 'bytes': 0}, 'result_progress': {'rows': len(rows), 'bytes': 0}},
+                'stats_uri': prefix, 'final_uri': prefix + '/final', 'next_uri': prefix + '/final', 'kill_uri': prefix + '/kill'}
+        self.local_results[qid] = (now + 60, data)
+        if control:
+            self.counters['cache_ddl'] = self.counters.get('cache_ddl', 0) + (error is None)
+        else:
+            self.counters['readyset'] += 1
+            self.counters['empty_local'] += not bool(rows)
+        return 200, json.dumps(data, ensure_ascii=False).encode(), {
+            'X-ReadySet-Route': 'readyset', 'X-ReadySet-Template': 'cache-control' if control else result['template']}
+
     def handle(self, method, path, raw, headers):
         if path == '/health' and method == 'GET':
             with self.lock:
@@ -291,31 +346,44 @@ class Replica:
                 elif lifecycle[2] and lifecycle[2].startswith('page/'):
                     return 404, b'{"error":"local one-row result has no continuation pages"}', {}
                 return 200, json.dumps(data, ensure_ascii=False).encode(), {'X-ReadySet-Route': 'readyset'}
+            if start and cache_control_sql(body['sql']):
+                # DDL never falls back to Databend, even when the replica/engine is unavailable.
+                if (not safe_session(body, self.default_role) or not safe_headers(headers)
+                        or body.get('session', {}).get('database', 'default') not in {'default', self.d['database']}):
+                    return 400, b'{"error":"cache control requires a safe autocommit session and configured source"}', {'X-ReadySet-Route': 'readyset'}
+                if (not self.ready or self.failed or self.inflight or self.uncertain
+                        or now - self.last_sync > self.args.max_staleness or len(self.local_results) >= 2048):
+                    return 503, b'{"error":"cache control requires a ready replica; statement was not forwarded"}', {'X-ReadySet-Route': 'readyset'}
+                qid = self.local_query_id(headers)  # Validate BEFORE any mutation.
+                try:
+                    result = self.engine.request({'op': 'cache_ddl', 'sql': body['sql'],
+                                                  'database': body.get('session', {}).get('database', 'default')})
+                    if not result.get('ok') and not result.get('rejected'):
+                        raise RuntimeError('uncertain cache mutation')
+                    # Audit only. This file is not a crash-recovery catalog.
+                    if result.get('ok'):
+                        (self.output / 'cache_catalog.json').write_text(json.dumps(result, indent=2) + '\n')
+                    return self.local_response(result, body, qid, time.monotonic(), control=True)
+                except Exception as exc:
+                    self.ready = False
+                    self.failed = f'engine cache control failure: {exc}'
+                    self.stop.set()
+                    return 502, b'{"error":"cache control failed; no retry or upstream forwarding"}', {'X-ReadySet-Route': 'readyset'}
             eligible = (start and self.ready and not self.failed and not self.inflight and not self.uncertain
                         and now - self.last_sync <= self.args.max_staleness and safe_session(body, self.default_role)
                         and body.get('session', {}).get('database', 'default') in {'default', self.d['database']}
-                        and not any(k.lower().startswith('x-databend-') and k.lower() not in {'x-databend-route-hint', 'x-databend-query-id', 'x-databend-sticky-node'} for k in headers)
+                        and safe_headers(headers)
                         and len(self.local_results) < 2048)
             if eligible:
                 try:
                     result = self.engine.request({'op': 'query', 'sql': body['sql'], 'database': body.get('session', {}).get('database', 'default')})
                     if result.get('matched'):
-                        qid = next((v for k, v in headers.items() if k.lower() == 'x-databend-query-id'), None) or 'rs_local_' + uuid.uuid4().hex
-                        if not re.fullmatch(r'[A-Za-z_0-9-]{1,128}', qid):
-                            return 400, b'{"error":"invalid query ID"}', {}
-                        if qid in self.local_results:
-                            return 409, b'{"error":"query ID already used locally"}', {}
-                        prefix = '/v1/query/' + qid
-                        data = {'id': qid, 'session_id': '', 'node_id': '', 'state': 'Succeeded',
-                                'session': body.get('session', {'database': 'default'}), 'error': None, 'warnings': [], 'has_result_set': True,
-                                'schema': result['schema'], 'data': result['data'], 'affect': None, 'result_timeout_secs': 60,
-                                'stats': {'running_time_ms': 0, 'scan_progress': {'rows': len(result['data']), 'bytes': 0},
-                                          'write_progress': {'rows': 0, 'bytes': 0}, 'result_progress': {'rows': len(result['data']), 'bytes': 0}},
-                                'stats_uri': prefix, 'final_uri': prefix + '/final', 'next_uri': prefix + '/final', 'kill_uri': prefix + '/kill'}
-                        self.local_results[qid] = (now + 60, data)
-                        self.counters['readyset'] += 1
-                        self.counters['empty_local'] += not bool(result['data'])
-                        return 200, json.dumps(data, ensure_ascii=False).encode(), {'X-ReadySet-Route': 'readyset', 'X-ReadySet-Template': result['template']}
+                        try:
+                            qid = self.local_query_id(headers)
+                        except ValueError as exc:
+                            status = 409 if str(exc) == 'query ID already used locally' else 400
+                            return status, json.dumps({'error': str(exc)}).encode(), {}
+                        return self.local_response(result, body, qid, now)
                 except Exception as exc:
                     self.ready = False
                     self.failed = f'engine query failure: {exc}'
@@ -454,7 +522,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--endpoint', required=True)
     p.add_argument('--user', default='root')
-    p.add_argument('--declarations', required=True)
+    p.add_argument('--declarations', help='legacy source binding plus optional bootstrap queries')
+    p.add_argument('--database', help='authorized readyset_gateway_* source database')
+    p.add_argument('--table', help='source table; declare query caches later with CREATE CACHE SQL')
     p.add_argument('--output', required=True)
     p.add_argument('--binary', default='target/debug/databend-m2')
     p.add_argument('--port', type=int, default=8001)
@@ -467,7 +537,15 @@ def main():
         p.error('endpoint must be a confirmed HTTP(S) origin')
     if not args.confirm_create or not 0 < args.interval <= 60 or not 0 < args.max_staleness <= 60 or not 0 <= args.port <= 65535:
         p.error('requires --confirm-create, valid port and intervals in (0,60]')
-    declaration = load_declaration(args.declarations)
+    if args.declarations:
+        if args.database or args.table:
+            p.error('use --declarations OR --database/--table')
+        declaration = load_declaration(args.declarations)
+    else:
+        if (not args.database or not args.table or not args.database.startswith('readyset_gateway_')
+                or not IDENTIFIER.fullmatch(args.database) or not IDENTIFIER.fullmatch(args.table)):
+            p.error('requires --database readyset_gateway_* --table <identifier> or --declarations')
+        declaration = {'database': args.database, 'table': args.table, 'queries': []}
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     replica = Replica(args, declaration, output)

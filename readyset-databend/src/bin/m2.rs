@@ -12,7 +12,8 @@ use dataflow_state::{DurabilityMode, PersistenceParameters};
 use readyset_client::recipe::ChangeList;
 use readyset_client::{ReaderHandle, ReadySetHandle};
 use readyset_data::{DfValue, Dialect};
-use readyset_databend::declaration::Declaration;
+use readyset_databend::cache_control::{self, CacheControl};
+use readyset_databend::declaration::{Declaration, Template};
 use readyset_databend::{Batch, Sink, SourceRow, delivery};
 use readyset_server::{Builder, Handle};
 use replication_offset::ReplicationOffset;
@@ -60,6 +61,10 @@ enum Command {
     Barrier {
         rows: Vec<SourceRow>,
         missing: Vec<i64>,
+    },
+    CacheDdl {
+        sql: String,
+        database: String,
     },
     ResetSink,
     Checkpoint,
@@ -149,13 +154,104 @@ async fn verify(
     )
 }
 
+fn full_projection(template: &Template) -> bool {
+    template.projection == ["id", "payload", "score", "note"]
+}
+
+async fn create_reader(handle: &mut Handle, template: &Template) -> Result<ReaderHandle> {
+    // ReadySet removes ALL aliases of an identical query on DROP. Reuse the internal
+    // full-row reader directly, rather than adding a droppable alias to the barrier query.
+    let name = if full_projection(template) {
+        QUERY
+    } else {
+        handle
+            .extend_recipe(ChangeList::from_strings(
+                vec![format!(
+                    "CREATE CACHE {} FROM {}",
+                    template.name, template.local_sql
+                )],
+                Dialect::DEFAULT_MYSQL,
+            )?)
+            .await?;
+        template.name.as_str()
+    };
+    let reader = handle
+        .view(name)
+        .await?
+        .into_reader_handle()
+        .context("single declared reader required")?;
+    ensure!(
+        handle
+            .materialization_info()
+            .await?
+            .iter()
+            .all(|m| !m.partial),
+        "partial query state"
+    );
+    Ok(reader)
+}
+
+async fn fence_template(
+    template: &Template,
+    reader: &mut ReaderHandle,
+    rows: &[SourceRow],
+    missing: &[i64],
+) -> Result<()> {
+    for (id, expected) in rows
+        .iter()
+        .map(|row| {
+            let values = row.values();
+            let projected = template
+                .projection
+                .iter()
+                .map(|c| {
+                    values[match c.as_str() {
+                        "id" => 0,
+                        "payload" => 1,
+                        "score" => 2,
+                        "note" => 3,
+                        _ => unreachable!(),
+                    }]
+                    .clone()
+                })
+                .collect::<Vec<_>>();
+            (row.id, vec![projected])
+        })
+        .chain(missing.iter().map(|&id| (id, vec![])))
+    {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                if reader
+                    .lookup(&[id.into()], Dialect::DEFAULT_MYSQL)
+                    .await?
+                    .into_vec()
+                    == expected
+                {
+                    return Ok::<_, anyhow::Error>(());
+                }
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        })
+        .await
+        .context("declared reader barrier timeout")??;
+    }
+    Ok(())
+}
+
+fn cache_listing(templates: &[Template]) -> Value {
+    json!({"ok":true,"schema":[{"name":"name","type":"String"},
+        {"name":"query","type":"String"},{"name":"state","type":"String"}],
+        "data":templates.iter().map(|t| vec![t.name.clone(),t.source_sql.clone(),"ready".into()]).collect::<Vec<_>>(),
+        "caches":templates.iter().map(|t| t.name.clone()).collect::<Vec<_>>()})
+}
+
 async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
     let declaration: Option<Declaration> = args
         .declarations
         .as_ref()
         .map(|p| -> Result<_> { Ok(serde_json::from_reader(File::open(p)?)?) })
         .transpose()?;
-    let templates = declaration
+    let mut templates = declaration
         .as_ref()
         .map(|d| d.templates(TABLE))
         .transpose()?
@@ -209,24 +305,14 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
     );
     let mut declared_readers = Vec::new();
     for template in &templates {
-        ensure!(template.name != QUERY, "reserved cache name");
-        handle
-            .extend_recipe(ChangeList::from_strings(
-                vec![format!(
-                    "CREATE CACHE {} FROM {}",
-                    template.name, template.local_sql
-                )],
-                Dialect::DEFAULT_MYSQL,
-            )?)
-            .await?;
-        let r = handle
-            .view(template.name.as_str())
-            .await?
-            .into_reader_handle()
-            .context("single declared reader required")?;
+        let mut r = create_reader(handle, template).await?;
+        fence_template(template, &mut r, &rows, &[]).await?;
         declared_readers.push(r);
     }
-    emit(&json!({"ok":true,"ready":true,"rows":rows.len(),"checkpoint":0,"generation":args.generation})).await?;
+    let mut barrier_rows = rows;
+    let mut barrier_missing = Vec::new();
+    let mut barrier_checkpoint = 0;
+    emit(&json!({"ok":true,"ready":true,"rows":barrier_rows.len(),"checkpoint":0,"generation":args.generation})).await?;
     let mut lines = tokio::io::BufReader::new(tokio::io::stdin()).lines();
     let mut results = Vec::new();
     loop {
@@ -304,47 +390,65 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                     missing.clone(),
                 )
                 .await?;
-                // Fence all declared readers, not just the M2 full-column verification reader.
+                // Keep a fenced oracle for runtime cache construction. Never rescan the source.
                 for (t, r) in templates.iter().zip(&mut declared_readers) {
-                    for (id, expected) in rows
-                        .iter()
-                        .map(|row| {
-                            let values = row.values();
-                            let projected = t
-                                .projection
-                                .iter()
-                                .map(|c| {
-                                    values[match c.as_str() {
-                                        "id" => 0,
-                                        "payload" => 1,
-                                        "score" => 2,
-                                        "note" => 3,
-                                        _ => unreachable!(),
-                                    }]
-                                    .clone()
-                                })
-                                .collect::<Vec<_>>();
-                            (row.id, vec![projected])
-                        })
-                        .chain(missing.iter().map(|&id| (id, vec![])))
-                    {
-                        tokio::time::timeout(Duration::from_secs(5), async {
-                            loop {
-                                if r.lookup(&[id.into()], Dialect::DEFAULT_MYSQL)
-                                    .await?
-                                    .into_vec()
-                                    == expected
-                                {
-                                    return Ok::<_, anyhow::Error>(());
-                                }
-                                tokio::time::sleep(Duration::from_millis(5)).await;
+                    fence_template(t, r, &rows, &missing).await?;
+                }
+                barrier_rows = rows;
+                barrier_missing = missing;
+                barrier_checkpoint = sink.checkpoint(handle).await?.sequence();
+                result
+            }
+            Command::CacheDdl { sql, database } => {
+                let planned = declaration
+                    .as_ref()
+                    .context("source binding required")
+                    .and_then(|d| cache_control::plan(&sql, &database, d, &templates));
+                match planned {
+                    Err(error) => json!({"ok":false,"rejected":true,"error":format!("{error:#}")}),
+                    Ok(control) => {
+                        // After this point, an uncertain migration/RPC failure is fatal.
+                        // Do not publish the new route or retry a mutation with unknown outcome.
+                        ensure!(
+                            sink.checkpoint(handle).await?.sequence() == barrier_checkpoint,
+                            "cache DDL requires a completed replication barrier"
+                        );
+                        match control {
+                            CacheControl::Create(template) => {
+                                sink.wait_persisted(handle, barrier_checkpoint).await?;
+                                let mut r = create_reader(handle, &template).await?;
+                                fence_template(&template, &mut r, &barrier_rows, &barrier_missing)
+                                    .await?;
+                                templates.push(*template);
+                                declared_readers.push(r);
                             }
-                        })
-                        .await
-                        .context("declared reader barrier timeout")??;
+                            CacheControl::Drop(name) => {
+                                let i = templates.iter().position(|t| t.name == name).unwrap();
+                                if !full_projection(&templates[i]) {
+                                    ensure!(
+                                        handle.remove_query(&name.into()).await? == 1,
+                                        "cache missing in controller"
+                                    );
+                                }
+                                templates.remove(i);
+                                declared_readers.remove(i);
+                                // A drop must not invalidate any surviving query or the shared base.
+                                verify(
+                                    &mut reader,
+                                    "post-drop barrier".into(),
+                                    barrier_rows.clone(),
+                                    barrier_missing.clone(),
+                                )
+                                .await?;
+                                for (t, r) in templates.iter().zip(&mut declared_readers) {
+                                    fence_template(t, r, &barrier_rows, &barrier_missing).await?;
+                                }
+                            }
+                            CacheControl::Show => {}
+                        }
+                        cache_listing(&templates)
                     }
                 }
-                result
             }
             Command::ResetSink => {
                 sink = Sink::new(args.generation.clone(), TABLE.into())?;
