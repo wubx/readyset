@@ -3,7 +3,33 @@
 > 分工：**另一台机器继续开发、审查并提交；本机保留为 Databend 联调和验证环境。**
 > 下文原始交接流程及历史证据保留；接手后的变化见本节。
 
-## 当前更新：原生查询链路与 AND 等值（第二阶段）
+## 当前更新：原生 IN 与数值范围（第三阶段）
+
+- 基线 `878ceff2a9ea4af10980e6bbc5f5de9a3880d152`，分支 `poc/databend-stream-m0`；本地仅编辑与审查。
+  所有构建/格式化/测试仍只在 `wu@192.168.191.96:/data1/vmbox/readyset-in-range-validation`。
+  原仓库、第一阶段及第二阶段三个工作树均保留，未覆盖其修改。
+- 先接入 IN，再接入 `id/score` 的 `>`、`>=`、`<`、`<=`、`BETWEEN` 及 AND 等值加范围。
+  IN 可连接多个不同字段，按声明的原生 slots 分组/长度匹配；不允许 IN 与范围混用、多个范围字段、
+  NOT IN/NOT BETWEEN、NULL 参数、隐式转换、字符串范围、聚合/排序/LIMIT。
+- 创建与读取在同一边界调用原生 `RewriteBetween`，再走原生 `rewrite_query`；adapter/server 同步打开 mixed comparisons。
+  参数匹配复用 `LiteralSlots::match_read` / `DfQueryParameters::for_read`，展开、索引边界和 residual filter 均交给原生代码。
+  同一物理查询形状仅允许一个公共声明布局，避免不同 IN 长度成为危险 DROP 别名；未匹配查询原样回源。
+- 新 `reader_fence.rs` 仅做 POC 内容校验：从原生 projected schema/key_map 获取物理键，
+  比较当前/历史/额外键上的投影多重集；BTree 用退化范围探针，不反解 IN/范围参数，不自建 SQL 解释器。
+  NULL 条件槽仍不开放。该内容 fence 不是任意 SQL 语义证明。
+- 在原生 `readyset-dataflow/src/backlog/{mod,multir}.rs` 修复全物化多键读：一个不存在的点键不再丢弃其余命中；
+  所有键仍共用一个 read guard。partial Reader 的未知键继续报 miss，原生重复 lookup key 去重及源行重复保留不变。
+- 结果通过原生读取上限 10,001 哨兵检测 10,000 行超限，转换过程累计实际 JSON 字节（4 MiB）；
+  超限只在返回成功前变成保守 miss，不截断结果、不禁用副本。此预算不等于扫描量或 engine 总堆内存上限。
+- 新增 `poc/in_range_verify.py`（Databend 对照）和 `poc/in_range_engine.py`（无源端的真实 engine 边界/预算回归）。
+  live 通过 `gateway_verify.py --sql-declarations --native-queries --in-range-queries` 运行；详情见 GATEWAY.md。
+- 最终证据见 [`poc/evidence/in_range_20261112/`](readyset-databend/poc/evidence/in_range_20261112/README.md)：
+  live **804/804 × 2**，engine 预算 **28/28**，旧入口 **259/259**，M2 **142/142**，dataflow **242**、Reader **149**、Python **45** 全通过。
+  两项依赖 PostgreSQL 的 rewrite-equivalence 明确排除；31 个源码哈希匹配远端最终快照。
+  三个保留工作树的 5,928 / 5,936 / 5,947 个源码文件逐一校验未变。
+- 仍为固定 schema、单源表、8 公共缓存、全物化，无恢复/完整协议/exactly-once 承诺；历史证据不改写。
+
+## 历史更新：原生查询链路与 AND 等值（第二阶段）
 
 - 本轮基线 `e56d9c067df633d18cf8dabc117b56b5f8240203`，分支仍为 `poc/databend-stream-m0`。
 - 用户将验证机/授权端点改为 `wu@192.168.191.96` / `http://192.168.191.96:8000`。

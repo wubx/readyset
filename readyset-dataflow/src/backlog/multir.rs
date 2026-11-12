@@ -94,6 +94,7 @@ impl Handle {
         handle: &HandleSingle,
         keys: &'a [KeyComparison],
         miss_meta: F,
+        missing_is_empty: bool,
     ) -> Result<SharedResults, LookupError<'a, T>> {
         let mut prev_keys = HashSet::new();
         let mut hits = SharedResults::with_capacity(keys.len());
@@ -113,6 +114,7 @@ impl Handle {
                 }
                 KeyComparison::Equal(k) => match map.get(&k[0]) {
                     Some(v) => hits.push(v.to_shared_smallvec()),
+                    None if missing_is_empty => hits.push(Default::default()),
                     None => misses.push(Cow::Borrowed(key)),
                 },
                 KeyComparison::Range((start, end)) => {
@@ -151,6 +153,7 @@ impl Handle {
         handle: &HandleMany,
         keys: &'a [KeyComparison],
         miss_meta: F,
+        missing_is_empty: bool,
     ) -> Result<SharedResults, LookupError<'a, T>> {
         let mut prev_keys = HashSet::new();
         let mut hits = SharedResults::with_capacity(keys.len());
@@ -170,6 +173,7 @@ impl Handle {
                 }
                 KeyComparison::Equal(k) => match map.get(k.as_slice()) {
                     Some(v) => hits.push(v.to_shared_smallvec()),
+                    None if missing_is_empty => hits.push(Default::default()),
                     None => misses.push(Cow::Borrowed(key)),
                 },
                 KeyComparison::Range((start, end)) => {
@@ -212,8 +216,8 @@ impl Handle {
         keys: &'a [KeyComparison],
     ) -> Result<SharedResults, LookupError<'a>> {
         match self {
-            Handle::Single(h) => Self::get_multi_single_handle(h, keys, || {}),
-            Handle::Many(h) => Self::get_multi_many_handle(h, keys, || {}),
+            Handle::Single(h) => Self::get_multi_single_handle(h, keys, || {}, false),
+            Handle::Many(h) => Self::get_multi_many_handle(h, keys, || {}, false),
         }
     }
 
@@ -221,14 +225,21 @@ impl Handle {
     /// of the values refer to the same state map. If the get misses, the provided closure will be
     /// used to map the results of the miss, also under the same read guard, ensuring no writer swap
     /// took place between the miss and the closure being called.
+    ///
+    /// `missing_is_empty` is only for fully materialized readers: absent point keys are
+    /// known empty results and must not discard other hits. Partial readers pass false so
+    /// unknown keys still return Miss with notifier metadata from this same read guard.
     pub(super) fn get_multi_and_map_error<'a, T, F: Fn() -> T>(
         &self,
         keys: &'a [KeyComparison],
         miss_meta: F,
+        missing_is_empty: bool,
     ) -> Result<SharedResults, LookupError<'a, T>> {
         match self {
-            Handle::Single(h) => Self::get_multi_single_handle(h, keys, miss_meta),
-            Handle::Many(h) => Self::get_multi_many_handle(h, keys, miss_meta),
+            Handle::Single(h) => {
+                Self::get_multi_single_handle(h, keys, miss_meta, missing_is_empty)
+            }
+            Handle::Many(h) => Self::get_multi_many_handle(h, keys, miss_meta, missing_is_empty),
         }
     }
 

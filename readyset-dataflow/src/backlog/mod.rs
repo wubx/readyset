@@ -540,10 +540,10 @@ impl SingleReadHandle {
         &self,
         keys: &'a [KeyComparison],
     ) -> Result<SharedResults, LookupError<'a>> {
-        match self.handle.get_multi(keys) {
-            Err(e) if e.is_miss() && self.upquery.is_none() => Ok(SharedResults::default()),
-            r => r,
-        }
+        // For a full reader, an absent point is a known empty result, not a cache miss.
+        // Preserve other hits under the SAME read guard (IN commonly mixes hits and absences).
+        self.handle
+            .get_multi_and_map_error(keys, || {}, self.upquery.is_none())
     }
 
     /// Look up a list of keys under the same reader guard. If missed, will include a notifier
@@ -552,13 +552,11 @@ impl SingleReadHandle {
         &self,
         keys: &'a [KeyComparison],
     ) -> Result<SharedResults, LookupError<'a, ReaderUpdatedNotifier>> {
-        match self
-            .handle
-            .get_multi_and_map_error(keys, || self.receiver.resubscribe())
-        {
-            Err(e) if e.is_miss() && self.upquery.is_none() => Ok(SharedResults::default()),
-            r => r,
-        }
+        self.handle.get_multi_and_map_error(
+            keys,
+            || self.receiver.resubscribe(),
+            self.upquery.is_none(),
+        )
     }
 
     pub fn len(&self) -> usize {
@@ -780,6 +778,81 @@ mod tests {
 
         assert_eq!(r.get(&a[0..1]).unwrap().len(), 1);
         assert_eq!(r.get(&a[0..1]).unwrap()[0], b);
+    }
+
+    #[test]
+    fn full_multi_read_keeps_hits_when_other_points_are_absent() {
+        for columns in [vec![0], vec![0, 1]] {
+            let (r, mut w) = new(
+                2,
+                Index::hash_map(columns.clone()),
+                ReaderProcessing::default(),
+                Default::default(),
+            );
+            let row: Vec<DfValue> = vec![1.into(), 11.into()];
+            w.add(vec![
+                Record::Positive(row.clone()),
+                Record::Positive(row.clone()),
+            ]);
+            w.publish();
+            let present = KeyComparison::Equal(
+                columns
+                    .iter()
+                    .map(|i| row[*i].clone())
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            );
+            let missing =
+                KeyComparison::Equal(vec![DfValue::from(99); columns.len()].try_into().unwrap());
+            let keys = vec![missing.clone(), present.clone(), missing, present];
+            let collect = |rows: SharedResults| {
+                rows.iter()
+                    .flat_map(|bag| bag.iter())
+                    .map(|row| row.to_vec())
+                    .collect::<Vec<_>>()
+            };
+            assert_eq!(
+                collect(r.get_multi(&keys).unwrap()),
+                vec![row.clone(), row.clone()]
+            );
+            assert_eq!(
+                collect(r.get_multi_with_notifier(&keys).unwrap()),
+                vec![row.clone(), row]
+            );
+        }
+    }
+
+    #[test]
+    fn partial_multi_read_still_reports_holes_with_other_hits() {
+        for columns in [vec![0], vec![0, 1]] {
+            let (r, mut w) = new_partial(
+                2,
+                Index::hash_map(columns.clone()),
+                |_: &mut dyn Iterator<Item = KeyComparison>| true,
+                EvictionKind::default(),
+                ReaderProcessing::default(),
+                Default::default(),
+            );
+            let row: Vec<DfValue> = vec![1.into(), 11.into()];
+            let present = KeyComparison::Equal(
+                columns
+                    .iter()
+                    .map(|i| row[*i].clone())
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            );
+            w.publish();
+            w.mark_filled(present.clone()).unwrap();
+            w.add(vec![Record::Positive(row)]);
+            w.publish();
+            let missing =
+                KeyComparison::Equal(vec![DfValue::from(99); columns.len()].try_into().unwrap());
+            let keys = vec![present, missing];
+            assert!(r.get_multi(&keys).unwrap_err().is_miss());
+            assert!(r.get_multi_with_notifier(&keys).unwrap_err().is_miss());
+        }
     }
 
     #[test]

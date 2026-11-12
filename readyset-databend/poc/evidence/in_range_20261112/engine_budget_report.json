@@ -1,0 +1,120 @@
+{
+  "passed": true,
+  "error": null,
+  "checks": [
+    {
+      "label": "DDL: CREATE CACHE budget FROM SELECT payload FROM poc_in_range.source_rows WHERE score>=?",
+      "passed": true
+    },
+    {
+      "label": "exactly 10000 rows are local",
+      "passed": true
+    },
+    {
+      "label": "exact limit preserves source duplicates",
+      "passed": true
+    },
+    {
+      "label": "apply checkpoint 1",
+      "passed": true
+    },
+    {
+      "label": "physical reader barrier 1",
+      "passed": true
+    },
+    {
+      "label": "10001 rows is a conservative miss, never truncated",
+      "passed": true
+    },
+    {
+      "label": "overflow returns no partial data",
+      "passed": true
+    },
+    {
+      "label": "reader still accepts empty range after row overflow",
+      "passed": true
+    },
+    {
+      "label": "apply checkpoint 2",
+      "passed": true
+    },
+    {
+      "label": "physical reader barrier 2",
+      "passed": true
+    },
+    {
+      "label": "encoded byte overflow is a conservative miss",
+      "passed": true
+    },
+    {
+      "label": "byte overflow returns no partial data",
+      "passed": true
+    },
+    {
+      "label": "apply checkpoint 3",
+      "passed": true
+    },
+    {
+      "label": "physical reader barrier 3",
+      "passed": true
+    },
+    {
+      "label": "index and route recover after bounded content update",
+      "passed": true
+    },
+    {
+      "label": "apply checkpoint 4",
+      "passed": true
+    },
+    {
+      "label": "physical reader barrier 4",
+      "passed": true
+    },
+    {
+      "label": "DDL: DROP CACHE budget",
+      "passed": true
+    },
+    {
+      "label": "DDL: CREATE CACHE ids FROM SELECT id,payload,score,note FROM poc_in_range.source_rows WHERE id IN (?,?)",
+      "passed": true
+    },
+    {
+      "label": "repeated IN key is fetched once",
+      "passed": true
+    },
+    {
+      "label": "another IN arity cannot reuse route by shape alone",
+      "passed": true
+    },
+    {
+      "label": "physical-shape alias rejected",
+      "passed": true
+    },
+    {
+      "label": "DDL: DROP CACHE ids",
+      "passed": true
+    },
+    {
+      "label": "DDL: CREATE CACHE closed FROM SELECT id FROM poc_in_range.source_rows WHERE score BETWEEN ? AND ?",
+      "passed": true
+    },
+    {
+      "label": "inclusive single-value interval",
+      "passed": true
+    },
+    {
+      "label": "inverted interval is local empty",
+      "passed": true
+    },
+    {
+      "label": "explicit closed pair shares native BETWEEN identity",
+      "passed": true
+    },
+    {
+      "label": "DDL: DROP CACHE closed",
+      "passed": true
+    }
+  ],
+  "raw_directory": "/tmp/readyset-in-range-engine-oepn9idz/run",
+  "scope": "Synthetic offline engine only; not crash recovery or a Databend live run"
+}

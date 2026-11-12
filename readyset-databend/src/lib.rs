@@ -3,6 +3,7 @@
 pub mod cache_control;
 pub mod declaration;
 pub mod native_query;
+pub mod reader_fence;
 
 use std::collections::HashSet;
 use std::time::{Duration, Instant};

@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/dataflow_state-d7065ac174bdac7a)
+
+running 3 tests
+test persistent_state::format_version::tests::meta_alias_accepts_legacy_field_name ... ok
+test persistent_state::format_version::tests::meta_serialization_backwards_compatibility ... ok
+test persistent_state::format_version::tests::meta_deserialization_backwards_compatibility ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 163 filtered out; finished in 0.00s
+

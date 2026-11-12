@@ -113,7 +113,7 @@ class Verification:
             f'CREATE CACHE CONCURRENTLY bad FROM SELECT note FROM {db}.source_rows WHERE id=?',
             f'CREATE CACHE bad FROM SELECT note FROM {db}.other_rows WHERE id=?',
             'CREATE CACHE bad FROM SELECT note FROM another.source_rows WHERE id=?',
-            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE score>?',
+            f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE score!=?',
             f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=? LIMIT 1',
             f'CREATE CACHE bad FROM SELECT note FROM {db}.source_rows WHERE id=?; DROP CACHE gateway_by_id',
             'CREATE CACHE broken FROM', 'DROP CACHE m2_by_id', 'DROP CACHE missing']:
@@ -380,6 +380,9 @@ class Verification:
                 self.verify_runtime_cache_changes(info)
             if self.args.native_queries:
                 self.verify_native_queries(info)
+            if self.args.in_range_queries:
+                from in_range_verify import verify
+                verify(self, info)
             with ThreadPoolExecutor(max_workers=4) as pool:
                 outcomes=list(pool.map(lambda _:self.point(7)[0],range(12)))
             self.check('concurrent local queries correct',outcomes,[[['7','via-gateway','0','']]]*12)
@@ -442,6 +445,7 @@ def main():
     p.add_argument('--confirm-create',action='store_true')
     p.add_argument('--sql-declarations',action='store_true',help='start without JSON queries; exercise runtime CREATE/SHOW/DROP CACHE')
     p.add_argument('--native-queries',action='store_true',help='exercise native multi-column equality, key migration, strings and local pagination')
+    p.add_argument('--in-range-queries',action='store_true',help='exercise native IN layouts, numeric ranges, mixed equality/ranges and index withdrawal')
     args=p.parse_args()
     if not args.confirm_create:p.error('--confirm-create required')
     return Verification(args).run()

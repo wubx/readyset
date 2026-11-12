@@ -1,6 +1,6 @@
 //! ReadySet's native adapter rewrite/read path, with a bounded Databend source context.
 //! The validator below is an allowlist, NOT a parameterizer or query executor.
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use anyhow::{Context, Result, bail, ensure};
 use readyset_client::View;
@@ -13,14 +13,14 @@ use readyset_sql_passes::adapter_rewrites::{
     AdapterRewriteContext, AdapterRewriteParams, DfQueryParameters, rewrite_query,
 };
 use readyset_sql_passes::{
-    BaseSchemasContext, CanQuery, ImpliedTablesContext, ResolveSchemasContext,
+    BaseSchemasContext, CanQuery, ImpliedTablesContext, ResolveSchemasContext, RewriteBetween,
     RewriteDialectContext, StarExpansionContext,
 };
 use serde_json::{Value as Json, json};
 use sqlparser::dialect::MySqlDialect;
 use sqlparser::tokenizer::{Token, Tokenizer};
 
-use crate::{SourceRow, declaration::Declaration};
+use crate::declaration::Declaration;
 
 pub const COLUMNS: [&str; 4] = ["id", "payload", "score", "note"];
 pub const LOCAL_TABLE: &str = "m2_source";
@@ -38,8 +38,6 @@ pub struct NativeQuery {
     pub params: DfQueryParameters,
     pub id: QueryId,
     pub projection: Vec<String>,
-    /// Original client placeholder order. Only used to construct independent barrier inputs.
-    pub bindings: Vec<String>,
 }
 
 /// Enforce a single bounded statement even when a parsing backend accepts a prefix.
@@ -195,55 +193,114 @@ fn map_column(column: &mut Column, source: &Relation) -> Result<String> {
     Ok(column.name.to_string())
 }
 
+#[derive(Clone, Copy, PartialEq)]
+enum PredicateKind {
+    Equality,
+    In,
+    Lower,
+    Upper,
+    Between,
+}
+
+fn validate_value(expr: &Expr, name: &str, input: Input) -> Result<()> {
+    let Expr::Literal(value) = expr else {
+        bail!("literal or ? required")
+    };
+    match input {
+        Input::Declaration => ensure!(
+            matches!(value, Literal::Placeholder(ItemPlaceholder::QuestionMark)),
+            "cache predicates require ? placeholders"
+        ),
+        Input::Read => match (name, value) {
+            ("id" | "score", Literal::Integer(_)) => {}
+            ("id" | "score", Literal::UnsignedInteger(v)) if i64::try_from(*v).is_ok() => {}
+            ("payload" | "note", Literal::String(_)) => {}
+            _ => bail!("literal type is not supported; no implicit coercion or NULL lookup"),
+        },
+    }
+    Ok(())
+}
+
+// A closed syntax/type allowlist, not an evaluator or a parameterizer. Native passes own
+// BETWEEN desugaring, IN expansion, parameter order, physical keys and residual filters.
 fn validate_predicate(
     expr: &mut Expr,
     source: &Relation,
     input: Input,
-    bindings: &mut Vec<String>,
+    seen: &mut HashMap<String, Vec<PredicateKind>>,
 ) -> Result<()> {
-    match expr {
+    let (column, values, kind) = match expr {
         Expr::BinaryOp {
             op: BinaryOperator::And,
             lhs,
             rhs,
         } => {
-            validate_predicate(lhs, source, input, bindings)?;
-            validate_predicate(rhs, source, input, bindings)?;
+            validate_predicate(lhs, source, input, seen)?;
+            return validate_predicate(rhs, source, input, seen);
         }
-        Expr::BinaryOp {
-            op: BinaryOperator::Equal,
+        Expr::BinaryOp { op, lhs, rhs }
+            if *op == BinaryOperator::Equal || op.is_ordering_comparison() =>
+        {
+            let Expr::Column(column) = lhs.as_mut() else {
+                bail!("comparison must have a column on the left")
+            };
+            let kind = match op {
+                BinaryOperator::Equal => PredicateKind::Equality,
+                BinaryOperator::Greater | BinaryOperator::GreaterOrEqual => PredicateKind::Lower,
+                BinaryOperator::Less | BinaryOperator::LessOrEqual => PredicateKind::Upper,
+                _ => unreachable!(),
+            };
+            (column, vec![&**rhs], kind)
+        }
+        Expr::In {
             lhs,
-            rhs,
+            rhs: InValue::List(values),
+            negated: false,
         } => {
             let Expr::Column(column) = lhs.as_mut() else {
-                bail!("equality must have a column on the left")
+                bail!("single-column IN required")
             };
-            let name = map_column(column, source)?;
-            ensure!(
-                !bindings.contains(&name),
-                "repeated predicate column is not supported"
-            );
-            let Expr::Literal(value) = rhs.as_ref() else {
-                bail!("equality must have a literal or ? on the right")
-            };
-            match input {
-                Input::Declaration => ensure!(
-                    matches!(value, Literal::Placeholder(ItemPlaceholder::QuestionMark)),
-                    "cache predicates require ? placeholders"
-                ),
-                Input::Read => match (name.as_str(), value) {
-                    ("id" | "score", Literal::Integer(_)) => {}
-                    ("id" | "score", Literal::UnsignedInteger(v)) if i64::try_from(*v).is_ok() => {}
-                    ("payload" | "note", Literal::String(_)) => {}
-                    _ => {
-                        bail!("literal type is not supported; no implicit coercion or NULL lookup")
-                    }
-                },
-            }
-            bindings.push(name);
+            ensure!(!values.is_empty(), "empty IN is not supported");
+            (column, values.iter().collect(), PredicateKind::In)
         }
-        _ => bail!("only distinct-column AND equality predicates are supported"),
+        Expr::Between {
+            operand,
+            min,
+            max,
+            negated: false,
+        } => {
+            let Expr::Column(column) = operand.as_mut() else {
+                bail!("single-column BETWEEN required")
+            };
+            (column, vec![&**min, &**max], PredicateKind::Between)
+        }
+        _ => bail!("only AND equality, IN and numeric range predicates are supported"),
+    };
+    let name = map_column(column, source)?;
+    if matches!(
+        kind,
+        PredicateKind::Lower | PredicateKind::Upper | PredicateKind::Between
+    ) {
+        ensure!(
+            matches!(name.as_str(), "id" | "score"),
+            "numeric ranges only"
+        );
     }
+    for value in values {
+        validate_value(value, &name, input)?;
+    }
+    let previous = seen.entry(name).or_default();
+    ensure!(
+        previous.is_empty()
+            || (previous.len() == 1
+                && matches!(
+                    (previous[0], kind),
+                    (PredicateKind::Lower, PredicateKind::Upper)
+                        | (PredicateKind::Upper, PredicateKind::Lower)
+                )),
+        "only one lower/upper bound pair may repeat a predicate column"
+    );
+    previous.push(kind);
     Ok(())
 }
 
@@ -301,20 +358,42 @@ pub fn compile(
         })
         .collect::<Result<Vec<_>>>()?;
     ensure!(!projection.is_empty(), "empty projection");
-    let mut bindings = Vec::new();
+    let mut seen = HashMap::new();
     validate_predicate(
         select.where_clause.as_mut().context("WHERE required")?,
         &source,
         input,
-        &mut bindings,
+        &mut seen,
     )?;
+    let has_in = seen.values().flatten().any(|k| *k == PredicateKind::In);
+    let has_range = seen.values().flatten().any(|k| {
+        matches!(
+            k,
+            PredicateKind::Lower | PredicateKind::Upper | PredicateKind::Between
+        )
+    });
+    ensure!(
+        !(has_in && has_range),
+        "IN mixed with ranges is not yet admitted"
+    );
+    ensure!(
+        seen.values()
+            .filter(|kinds| kinds.iter().any(|k| matches!(
+                k,
+                PredicateKind::Lower | PredicateKind::Upper | PredicateKind::Between
+            )))
+            .count()
+            <= 1,
+        "only one numeric range column is admitted"
+    );
     select.tables[0] = Relation::from(LOCAL_TABLE).into();
+    // Use the existing native pass at the SAME boundary for CREATE and SELECT. Otherwise
+    // adapter rewrites leave literal BETWEEN bounds inline until the later controller pass.
+    select.rewrite_between();
     let context = SourceContext::new()?;
-    let params = rewrite_query(
-        &mut select,
-        AdapterRewriteParams::new(Dialect::MySQL),
-        &context,
-    )?;
+    let mut flags = AdapterRewriteParams::new(Dialect::MySQL);
+    flags.server_supports_mixed_comparisons = true;
+    let params = rewrite_query(&mut select, flags, &context)?;
     ensure!(
         matches!(input, Input::Declaration) || params.user_param_placeholders()?.is_empty(),
         "HTTP text SELECT cannot bind placeholders"
@@ -325,7 +404,6 @@ pub fn compile(
         params,
         id,
         projection,
-        bindings,
     })
 }
 
@@ -336,16 +414,16 @@ impl NativeQuery {
     pub fn sql(&self) -> String {
         self.statement.display(Dialect::MySQL).to_string()
     }
-    pub fn row_params(&self, row: &SourceRow) -> Option<Vec<DfValue>> {
-        let values = row.values();
-        let params: Vec<_> = self
-            .bindings
-            .iter()
-            .map(|name| values[COLUMNS.iter().position(|c| c == name).unwrap()].clone())
-            .collect();
-        (!params.iter().any(DfValue::is_none)).then_some(params)
+    /// Native shape alone loses IN arity/grouping. Match the native literal slots too, then
+    /// carry the read's values using the production adapter's parameter orchestration.
+    pub fn read_params(&self, read: &Self) -> Option<DfQueryParameters> {
+        if !self.same_shape(read) {
+            return None;
+        }
+        let lookup = self.params.slots().match_read(read.params.slots())?;
+        Some(self.params.clone().for_read(&read.params, lookup))
     }
-    pub fn project(&self, row: &SourceRow) -> Vec<DfValue> {
+    pub fn project(&self, row: &crate::SourceRow) -> Vec<DfValue> {
         let values = row.values();
         self.projection
             .iter()
@@ -354,22 +432,29 @@ impl NativeQuery {
     }
 }
 
-/// Same orchestration as the production adapter: native parameter construction and native
-/// View key remapping, result projection and schema. No hand-built physical lookup keys.
+pub const MAX_RESULT_ROWS: usize = 10_000;
+pub const MAX_RESULT_BYTES: usize = 4 * 1024 * 1024;
+pub type LocalResult = (Vec<Vec<Json>>, Vec<Json>);
+
+/// Native parameter construction, View key remapping, result projection and schema.
+/// Returns None on result overflow, never a partial success. No physical application keys
+/// are constructed here; post-lookup filtering and the sentinel limit stay in read_cache.
 pub async fn read(
     view: &mut View,
     query: &NativeQuery,
-    user_params: &[DfValue],
-) -> Result<(Vec<Vec<DfValue>>, Vec<Json>)> {
-    let keys = query.params.make_keys(user_params)?;
-    let (limit, offset) = query.params.limit_offset_params(user_params)?;
+    params: &DfQueryParameters,
+) -> Result<Option<LocalResult>> {
+    let keys = params.make_keys::<DfValue>(&[])?;
+    let (_, offset) = params.limit_offset_params(&[])?;
     let result = readyset_client::read::read_cache(
         view,
         None,
         keys,
-        limit,
+        // A sentinel row detects overflow; it is NEVER returned as a truncated success.
+        // This bounds returned rows, not the engine's range-scan work or total heap usage.
+        Some(MAX_RESULT_ROWS + 1),
         offset,
-        query.params.post_lookup_plan(),
+        params.post_lookup_plan(),
         readyset_data::Dialect::DEFAULT_MYSQL,
     )
     .await?;
@@ -390,39 +475,35 @@ pub async fn read(
         };
         Ok(json!({"name":name.as_str(), "type":if column.nullable { format!("Nullable({ty})") } else {ty.to_owned()} }))
     }).collect::<Result<Vec<_>>>()?;
-    Ok((result.rows.into_vec(), schema))
-}
-
-/// Debug-only POC fence: recover client parameter positions from native physical key mappings.
-/// This is not used by application reads; it lets the oracle catch even unexpected extra keys.
-pub fn params_from_reader_key(
-    view: &View,
-    key: &[DfValue],
-    parameter_count: usize,
-) -> Result<Vec<DfValue>> {
-    let View::Single(reader) = view else {
-        bail!("single reader required")
-    };
-    ensure!(
-        reader.key_map().len() == key.len(),
-        "unexpected native key arity"
-    );
-    let mut params = vec![DfValue::None; parameter_count];
-    let mut seen = HashSet::new();
-    for ((placeholder, _), value) in reader.key_map().iter().zip(key) {
-        let readyset_client::ViewPlaceholder::OneToOne(index, BinaryOperator::Equal) = placeholder
-        else {
-            bail!("non-equality reader key")
-        };
+    // Consume incrementally instead of making an unbounded second owned row collection.
+    let mut rows = Vec::new();
+    let mut bytes = 2;
+    for row in result.rows {
         ensure!(
-            *index > 0 && *index <= parameter_count && seen.insert(*index),
-            "unexpected placeholder mapping"
+            row.len() == query.projection.len(),
+            "native result arity mismatch"
         );
-        params[*index - 1] = value.clone();
+        if rows.len() == MAX_RESULT_ROWS {
+            return Ok(None);
+        }
+        let row = row
+            .iter()
+            .zip(&query.projection)
+            .map(|(value, column)| -> Result<Json> {
+                Ok(match value {
+                    DfValue::None => Json::Null,
+                    _ if column == "id" || column == "score" => {
+                        Json::String(i64::try_from(value.clone())?.to_string())
+                    }
+                    _ => Json::String(value.as_str().context("non-text projected value")?.into()),
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        bytes += serde_json::to_vec(&row)?.len() + usize::from(!rows.is_empty());
+        if bytes > MAX_RESULT_BYTES {
+            return Ok(None);
+        }
+        rows.push(row);
     }
-    ensure!(
-        seen.len() == parameter_count,
-        "incomplete placeholder mapping"
-    );
-    Ok(params)
+    Ok(Some((rows, schema)))
 }

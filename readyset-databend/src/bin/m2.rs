@@ -15,7 +15,7 @@ use readyset_data::{DfValue, Dialect};
 use readyset_databend::cache_control::{self, CacheControl};
 use readyset_databend::declaration::{Declaration, Template};
 use readyset_databend::native_query::{self, NativeQuery};
-use readyset_databend::{Batch, Sink, SourceRow, delivery};
+use readyset_databend::{Batch, Sink, SourceRow, delivery, reader_fence};
 use readyset_server::{Builder, Handle};
 use readyset_sql::ast::TrxCachePolicy;
 use replication_offset::ReplicationOffset;
@@ -212,8 +212,8 @@ async fn create_reader(
 
 struct DeclaredReader {
     view: View,
-    /// Every previously witnessed logical key is checked again, including keys vacated by
-    /// UPDATE/DELETE. Count only live expected rows, but preserve duplicate projected rows.
+    /// Every previously witnessed physical key is checked again, including keys vacated by
+    /// UPDATE/DELETE. This is an oracle only, never application key construction.
     witnessed: HashSet<Vec<DfValue>>,
 }
 
@@ -224,9 +224,11 @@ async fn fence_template(
 ) -> Result<()> {
     let mut expected: HashMap<Vec<DfValue>, Vec<Vec<DfValue>>> = HashMap::new();
     for row in rows {
-        if let Some(params) = template.query.row_params(row) {
+        let key = reader_fence::physical_key(&reader.view, row)?;
+        // Equality/IN NULL predicates are not admitted; native point lookups skip NULL keys.
+        if !key.iter().any(DfValue::is_none) {
             expected
-                .entry(params)
+                .entry(key)
                 .or_default()
                 .push(template.query.project(row));
         }
@@ -235,21 +237,18 @@ async fn fence_template(
         bag.sort();
     }
     reader.witnessed.extend(expected.keys().cloned());
-    // Also examine unexpected physical keys. Their order comes from the native key_map,
-    // never from predicate order. NULL equality slots cannot contain a matching SQL row.
+    // Inspect all comparable physical keys, including stale extras. NULL predicate slots
+    // remain unadmitted. No SQL predicate evaluator or inverse parameter mapping is needed.
     let View::Single(handle) = &mut reader.view else {
         anyhow::bail!("single reader required")
     };
-    for key in handle.keys().await? {
-        let params = native_query::params_from_reader_key(
-            &reader.view,
-            &key,
-            template.query.bindings.len(),
-        )?;
-        if !params.iter().any(DfValue::is_none) {
-            reader.witnessed.insert(params);
-        }
-    }
+    reader.witnessed.extend(
+        handle
+            .keys()
+            .await?
+            .into_iter()
+            .filter(|key| !key.iter().any(DfValue::is_none)),
+    );
     ensure!(
         reader.witnessed.len() <= 20000,
         "POC oracle key history exceeds 20000; restart required"
@@ -258,8 +257,7 @@ async fn fence_template(
         let wanted = expected.get(params).cloned().unwrap_or_default();
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
-                let (mut actual, _) =
-                    native_query::read(&mut reader.view, &template.query, params).await?;
+                let mut actual = reader_fence::point_contents(&mut reader.view, params).await?;
                 actual.sort();
                 if actual == wanted {
                     return Ok::<_, anyhow::Error>(());
@@ -405,41 +403,18 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
                 let query = declaration
                     .as_ref()
                     .and_then(|d| d.read_query(&sql, &database));
-                let found = query
-                    .as_ref()
-                    .and_then(|q| templates.iter().position(|t| t.query.same_shape(q)));
-                if let Some(i) = found {
-                    let q = query.as_ref().unwrap();
-                    let (actual, schema) =
-                        native_query::read(&mut declared_readers[i].view, q, &[]).await?;
-                    let data = actual
+                let found = query.as_ref().and_then(|q| {
+                    templates
                         .iter()
-                        .map(|row| {
-                            ensure!(
-                                row.len() == q.projection.len(),
-                                "native result arity mismatch"
-                            );
-                            row.iter()
-                                .zip(&q.projection)
-                                .map(|(v, c)| -> Result<Value> {
-                                    Ok(match v {
-                                        DfValue::None => Value::Null,
-                                        _ if c == "id" || c == "score" => {
-                                            Value::String(i64::try_from(v.clone())?.to_string())
-                                        }
-                                        _ => Value::String(
-                                            v.as_str().context("non-text projected value")?.into(),
-                                        ),
-                                    })
-                                })
-                                .collect::<Result<Vec<_>>>()
-                        })
-                        .collect::<Result<Vec<_>>>()?;
-                    // A conservative pre-response miss, not a truncated success or fatal error.
-                    if data.len() > 10000 || serde_json::to_vec(&data)?.len() > 4 * 1024 * 1024 {
-                        json!({"ok":true,"matched":false,"reason":"local result limit"})
-                    } else {
-                        json!({"ok":true,"matched":true,"template":templates[i].name,"schema":schema,"data":data})
+                        .enumerate()
+                        .find_map(|(i, t)| t.query.read_params(q).map(|params| (i, params)))
+                });
+                if let Some((i, params)) = found {
+                    let q = query.as_ref().unwrap();
+                    match native_query::read(&mut declared_readers[i].view, q, &params).await? {
+                        Some((data, schema)) => json!({"ok":true,"matched":true,
+                            "template":templates[i].name,"schema":schema,"data":data}),
+                        None => json!({"ok":true,"matched":false,"reason":"local result limit"}),
                     }
                 } else {
                     json!({"ok":true,"matched":false})
@@ -576,6 +551,7 @@ async fn main() -> Result<()> {
     builder.set_external_addr("127.0.0.1:0".parse()?);
     builder.set_dialect(readyset_sql::Dialect::MySQL);
     builder.disable_partial();
+    builder.set_mixed_comparisons(true);
     // No upstream URL; do not use replication_enabled=false (shallow-only deep-state wipe).
     builder.set_persistence(PersistenceParameters {
         mode: DurabilityMode::Permanent,

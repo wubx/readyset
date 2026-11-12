@@ -167,7 +167,7 @@ mod tests {
             "CREATE CACHE CONCURRENTLY c FROM SELECT payload FROM poc.users WHERE id = ?",
             "CREATE CACHE ALWAYS c FROM SELECT payload FROM poc.users WHERE id = ?",
             "CREATE CACHE c WITH (AUTOPARAM OFF) FROM SELECT payload FROM poc.users WHERE id = ?",
-            "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE score > ?",
+            "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE score != ?",
             "CREATE CACHE c FROM SELECT payload FROM other.users WHERE id = ?",
             "CREATE CACHE c FROM SELECT payload FROM poc.other WHERE id = ?",
             "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE id = ? LIMIT 1",

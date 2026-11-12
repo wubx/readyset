@@ -1,0 +1,5 @@
+    Checking readyset-dataflow v0.7.0 (/data1/vmbox/readyset-in-range-validation/readyset-dataflow)
+    Checking readyset-mir v0.7.0 (/data1/vmbox/readyset-in-range-validation/readyset-mir)
+    Checking readyset-server v0.7.0 (/data1/vmbox/readyset-in-range-validation/readyset-server)
+    Checking readyset-databend v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-databend)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.77s

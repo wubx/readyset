@@ -1,0 +1,174 @@
+   Compiling readyset-decimal v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-decimal)
+   Compiling readyset-multiplex v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-multiplex)
+   Compiling test-utils v0.0.0 (/data1/vmbox/readyset-in-range-validation/test-utils)
+   Compiling readyset-tracing v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-tracing)
+   Compiling readyset-util v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-util)
+   Compiling readyset-sql v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-sql)
+   Compiling mysql-time v0.1.0 (/data1/vmbox/readyset-in-range-validation/mysql-time)
+   Compiling readyset-errors v0.0.1 (/data1/vmbox/readyset-in-range-validation/readyset-errors)
+   Compiling nom-sql v0.0.11 (/data1/vmbox/readyset-in-range-validation/nom-sql)
+   Compiling readyset-data v0.0.1 (/data1/vmbox/readyset-in-range-validation/readyset-data)
+   Compiling replication-offset v0.1.0 (/data1/vmbox/readyset-in-range-validation/replication-offset)
+   Compiling readyset-post-lookup v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-post-lookup)
+   Compiling dataflow-expression v0.1.0 (/data1/vmbox/readyset-in-range-validation/dataflow-expression)
+   Compiling readyset-sql-parsing v0.1.0 (/data1/vmbox/readyset-in-range-validation/readyset-sql-parsing)
+   Compiling readyset-sql-passes v0.0.1 (/data1/vmbox/readyset-in-range-validation/readyset-sql-passes)
+   Compiling schema-catalog v0.1.0 (/data1/vmbox/readyset-in-range-validation/schema-catalog)
+   Compiling readyset-client v0.7.0 (/data1/vmbox/readyset-in-range-validation/readyset-client)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 29.36s
+     Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_client-71778ceeb03ea6a7)
+
+running 149 tests
+test consensus::allowed_users::tests::load_returns_none_before_any_write ... ok
+test consensus::allowed_users::tests::first_add_seeds_then_applies_delta ... ok
+test consensus::allowed_users::tests::add_existing_user_errors ... ok
+test consensus::allowed_users::tests::load_or_init_seeds_then_is_authoritative ... ok
+test consensus::allowed_users::tests::load_or_init_rejects_retained_password_without_rotation_support ... ok
+test consensus::allowed_users::tests::discard_old_retires_secondary_and_is_idempotent ... ok
+test consensus::allowed_users::tests::serde_round_trips_retained_password ... ok
+test consensus::allowed_users::tests::retain_with_empty_current_password_errors ... ok
+test consensus::allowed_users::tests::retain_saves_previous_password_as_secondary ... ok
+test consensus::allowed_users::tests::retain_replaces_existing_secondary ... ok
+test consensus::cache_ddl_tests::remove_cache_ddl_requests_named_removes_match ... ok
+test consensus::allowed_users::tests::drop_removes_user ... ok
+test consensus::allowed_users::tests::plain_set_to_empty_drops_secondary ... ok
+test consensus::cache_ddl_tests::add_cache_ddl_request_is_idempotent_by_name ... ok
+test consensus::allowed_users::tests::modify_unknown_user_errors ... ok
+test consensus::allowed_users::tests::retain_with_empty_new_password_errors ... ok
+test consensus::allowed_users::tests::drop_unknown_user_errors ... ok
+test consensus::mcp_tokens::tests::different_values_hash_differently ... ok
+test consensus::local::tests::retrieve_workers ... ok
+test consensus::cache_ddl_tests::remove_shallow_cache_ddl_request_keeps_other_database ... ok
+test consensus::allowed_users::tests::serde_compat_with_single_password_format ... ok
+test consensus::allowed_users::tests::modify_rotates_password ... ok
+test consensus::cache_ddl_tests::remove_cache_ddl_request_removes_legacy_entry ... ok
+test consensus::mcp_tokens::tests::add_and_find_token ... ok
+test consensus::cache_ddl_tests::remove_cache_ddl_requests_named_reports_no_match ... ok
+test consensus::allowed_users::tests::plain_set_leaves_secondary_unchanged ... ok
+test consensus::mcp_tokens::tests::hash_is_deterministic ... ok
+test consensus::mcp_tokens::tests::expires_when_expires_at_in_the_past ... ok
+test consensus::mcp_tokens::tests::not_expired_when_expires_at_in_the_future ... ok
+test consensus::cache_ddl_tests::remove_shallow_cache_ddl_request_removes_legacy_entry ... ok
+test consensus::mcp_tokens::tests::never_expires_when_expires_at_is_none ... ok
+test consensus::mcp_tokens::tests::cannot_add_duplicate_name ... ok
+test consensus::cache_ddl_tests::shallow_remove_named_is_independent ... ok
+test consensus::mcp_tokens::tests::find_returns_none_for_unknown_value ... ok
+test consensus::local::tests::test_register_deregister ... ok
+test consensus::mcp_tokens::tests::remove_unknown_name_errors ... ok
+test consensus::upstream_servers::tests::load_returns_none_before_any_write ... ok
+test consensus::mcp_tokens::tests::remove_token_by_name ... ok
+test consensus::mcp_tokens::tests::expired_tokens_are_not_found ... ok
+test debug::info::tests::key_count_add_assign ... ok
+test consensus::mcp_tokens::tests::set_expires_at_removes_expiration ... ok
+test consensus::mcp_tokens::tests::set_expires_at_extends_lifetime ... ok
+test consensus::upstream_servers::tests::an_edit_based_on_a_replaced_list_is_rejected ... ok
+test consensus::mcp_tokens::tests::set_expires_at_unknown_name_errors ... ok
+test consensus::upstream_servers::tests::first_start_seeds_then_the_stored_value_wins ... ok
+test events::tests::test_false_event_boundary_in_residual_data ... ok
+test debug::info::tests::key_count_formatting ... ok
+test events::tests::test_clear_dynamic_clears_url ... ok
+test consensus::upstream_servers::tests::edits_replace_one_list_and_keep_the_other ... ok
+test debug::info::tests::key_count_add_assign_panic - should panic ... ok
+test events::tests::test_clear_fixed_is_noop ... ok
+test post_processing::post_lookup::decompose::tests::empty_plan_is_passthrough ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_empty_results ... ok
+test post_processing::post_lookup::decompose::tests::fixes_avg_type_on_postgres ... ok
+test post_processing::post_lookup::decompose::tests::recomposes_multiple_avgs ... ok
+test post_processing::post_lookup::decompose::tests::recomposes_single_avg ... ok
+test events::tests::test_task_stops_when_receivers_dropped ... ok
+test post_processing::post_lookup::decompose::tests::recomposes_with_mixed_columns ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_hash_based_dedup ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_hash_based_dedup_removes_duplicates ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_hash_based_single_key ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_hash_based_with_limit ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_sorted_multi_column ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_sorted_dedup ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_sorted_single_key ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_hash_based_with_order_by ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_sorted_with_order_by ... ok
+test post_processing::post_lookup::iter::tests::test_distinct_sorted_with_limit ... ok
+test post_processing::post_lookup::iter::tests::test_multi_key_array_agg ... ok
+test post_processing::post_lookup::iter::tests::test_multi_key_no_group_by ... ok
+test post_processing::post_lookup::iter::tests::test_raw_single_row_in_group ... ok
+test post_processing::post_lookup::iter::tests::test_raw_value_containing_separator ... ok
+test post_processing::post_lookup::iter::tests::test_single_key_shortcircuit ... ok
+test post_processing::post_lookup::iter::tests::test_multi_key_with_distinct ... ok
+test post_processing::post_lookup::iter::tests::test_multi_key_string_agg ... ok
+test post_processing::post_lookup::iter::tests::test_multi_key_with_group_by ... ok
+test post_processing::post_lookup::iter::tests::test_raw_with_distinct ... ok
+test post_processing::post_lookup::iter::tests::test_single_row_per_group_passthrough ... ok
+test post_processing::post_lookup::iter::tests::test_raw_multi_key_string_agg ... ok
+test post_processing::post_lookup::tests::empty_plan_passes_rows_through ... ok
+test post_processing::post_lookup::tests::applies_limit_and_offset ... ok
+test post_processing::post_lookup::iter::tests::test_split_lossiness_bug ... ok
+test post_processing::post_lookup::tests::empty_input_emits_default_row_once ... ok
+test post_processing::post_lookup::tests::hash_dedup_runs_after_recompose ... ok
+test post_processing::post_lookup::tests::hash_based_distinct_no_plan ... ok
+test post_processing::post_lookup::iter::tests::test_raw_single_key_finalization ... ok
+test post_processing::post_lookup::tests::sorted_distinct_collapses_consecutive_duplicates ... ok
+test post_processing::post_lookup::tests::projection_truncates_rows ... ok
+test post_processing::post_lookup::tests::recompose_with_plan ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_enum_with_variant_at_end ... ok
+test query::tests::shallow_query_id_matches_query_hash ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_enum_without_original_variants ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_enum_with_variant_in_middle ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_table_replica_identity_default ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_table_replica_identity_using_index ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_table_replica_identity_nothing ... ok
+test recipe::changelist::tests::requires_resnapshot::alter_table_replica_identity_full ... ok
+test tests::lag_terminates_schema_catalog_update_stream ... ok
+test view::tests::build_view_query::compound_range_closed ... ok
+test view::tests::build_view_query::compound_range_open ... ok
+test view::tests::build_view_query::mixed_equal_and_between ... ok
+test view::tests::build_view_query::mixed_equal_and_exclusive ... ok
+test view::tests::build_view_query::paginated_with_key ... ok
+test view::tests::build_view_query::mixed_equal_and_inclusive ... ok
+test view::tests::build_view_query::simple_point_lookup ... ok
+test view::tests::build_view_query::single_between ... ok
+test view::tests::replay_keys::degenerate_range_stays_in_ranges ... ok
+test view::tests::replay_keys::empty_excluded_range_stays_in_ranges ... ok
+test recipe::changelist::tests::from_cache_ddl_request::unnamed_takes_name_from_request ... ok
+test recipe::changelist::tests::from_cache_ddl_request::explicit_name_wins_over_request_name ... ok
+test recipe::changelist::tests::from_cache_ddl_request::unnamed_derives_query_id ... ok
+test view::tests::replay_keys::equality_is_order_independent_on_ranges ... ok
+test view::tests::replay_keys::from_iter_dedupes_repeated_ranges ... ok
+test view::tests::replay_keys::from_iter_separates_equal_and_degenerate_range ... ok
+test view::tests::replay_keys::equals_only_input_yields_empty_ranges ... ok
+test query::tests::deep_query_id_golden ... ok
+test view::tests::replay_keys::remove_is_variant_specific ... ok
+test view::tests::replay_keys::retain_sees_equal_and_range_variants ... ok
+test tests::schema_catalog_stream_yields_valid_update ... ok
+test tests::schema_catalog_stream_filters_non_catalog_events ... ok
+test query::tests::shallow_query_id_matches_hashing_the_query ... ok
+test consensus::standalone::tests::create_cache_statements ... ok
+test consensus::standalone::tests::it_works ... ok
+test consensus::standalone::tests::schema_replication_offset_round_trip ... ok
+test consensus::standalone::tests::overwrite_controller_state ... ok
+test consensus::standalone::tests::shallow_cache_allowlist_round_trip ... ok
+test consensus::standalone::tests::schema_catalog_overwrite_round_trip ... ok
+test consensus::standalone::tests::retrieve_workers ... ok
+test consensus::standalone::tests::update_controller_state_replication_offsets ... ok
+test consensus::local::tests::it_works ... ok
+test query::tests::hash::matches_eq ... ok
+test controller::tests::an_unknown_endpoint_fails_without_retrying ... ok
+test events::tests::test_leader_lost_clears_url_and_reconnects ... ok
+test events::tests::test_leader_lost_stops_when_no_receivers ... ok
+test events::tests::test_connection_error_clears_dynamic_url ... ok
+test events::tests::test_body_chunk_timeout_on_stalled_stream ... ok
+test events::tests::test_response_timeout_on_silent_server ... ok
+test view::tests::key_comparison::eq::reflexive::no_retry::test ... ok
+test view::tests::replay_keys::contains_matches_owned ... ok
+test view::tests::key_comparison::eq::symmetric::no_retry::test ... ok
+test recipe::changelist::tests::hash::matches_eq ... ok
+test view::tests::key_comparison::eq::transitive::no_retry::test ... ok
+test view::tests::replay_keys::bincode_round_trip ... ok
+test view::tests::replay_keys::iter_round_trip ... ok
+test view::tests::replay_keys::eq::reflexive::no_retry::test ... ok
+test view::tests::replay_keys::into_iter_round_trip ... ok
+test view::tests::replay_keys::eq::symmetric::no_retry::test ... ok
+test view::tests::replay_keys::eq::transitive::no_retry::test ... ok
+test view::tests::replay_keys::partition_preserves_variant has been running for over 60 seconds
+test view::tests::replay_keys::partition_preserves_variant ... ok
+
+test result: ok. 149 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 126.67s
+

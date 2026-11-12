@@ -28,7 +28,7 @@ Databend 原生 HTTP 客户端
 后台任务：Standard Stream → 原子 outbox/meta → ReadySet 行变更 + checkpoint → reader barrier
 ```
 
-全量同步由入口管理，不需要应用逐 key 填充。匹配声明的任意等值参数组合，包括从未查询过的组合，
+全量同步由入口管理，不需要应用逐 key 填充。匹配声明形状/参数布局的等值、IN、数值范围，包括从未查询过的参数值，
 都可本地查询；**查不到返回本地空结果，不会把空结果当作 miss 回源**。
 
 ### 原生查询链路（第二阶段）
@@ -62,6 +62,44 @@ SELECT note FROM readyset_gateway_example.source_rows WHERE payload = ? AND scor
   两个后端 `readyset-sql/src/ast/expression.rs` / `nom-sql/src/expression.rs` 一致修复，
   并通过双 parser 边界回归；不是在网关自己解析整数。
 
+### 原生 IN 与数值范围（第三阶段）
+
+在上述链路上扩展，**不增加手写 IN 展开或范围执行器**：
+
+```sql
+CREATE CACHE by_scores FROM
+SELECT payload, note FROM readyset_gateway_example.source_rows WHERE score IN (?, ?, ?);
+CREATE CACHE by_payload_scores FROM
+SELECT id FROM readyset_gateway_example.source_rows WHERE payload = ? AND score IN (?, ?);
+CREATE CACHE by_score_window FROM
+SELECT id, payload FROM readyset_gateway_example.source_rows WHERE score BETWEEN ? AND ?;
+CREATE CACHE by_note_window FROM
+SELECT id, payload FROM readyset_gateway_example.source_rows WHERE note = ? AND score >= ? AND score < ?;
+```
+
+- IN 支持同类型字面值（精确 Int64 或单引号字符串），允许多个不同列上的 IN/等值 AND。
+  由原生 `collapse_where_in` / `DfQueryParameters::make_keys` 展开，Reader 原生去除重复 lookup key，
+  但保留不同源行产生的相同投影。不存在的部分键不能使已命中的其他键消失。
+- 在 `QueryId + rewritten AST` 后增加原生 `LiteralSlots::match_read`，再用 `for_read` 携带读取值。
+  IN 折叠会抹去长度；例如 `a IN (?,?) AND b IN (?,?,?)` 不匹配 `a IN (?,?,?) AND b IN (?,?)`。
+  当前一个物理形状仅允许一个公共布局，另一长度声明作为同形重复拒绝，读取则安全回源；不自动建缓存。
+- 原生 IN 展开上限为 **10,000 个 lookup keys**，多个 IN 按笛卡尔积计算；这不是行数限制或缓存数量限制。
+  继续保留 SQL 16 KiB、8 公共缓存等独立限制。
+- 仅 `id/score` 可用于 `>`、`>=`、`<`、`<=`、`BETWEEN`；每个查询最多一个范围字段，
+  可与其他字段等值条件连接。同一字段只允许一个下界/上界或一对上下界。
+  暂不开放 IN 加范围、多个范围字段、NOT IN/NOT BETWEEN、NULL 条件、字符串范围、元组/子查询 IN。
+- 创建与读取先共同调用 ReadySet 原生 `RewriteBetween`，再执行 `rewrite_query`；
+  adapter 的 `server_supports_mixed_comparisons` 与 server `set_mixed_comparisons` 一致开启。
+  原生 `View::build_view_query` 负责 BTree 范围边界、物理列序和严格比较 residual filter；不手拼应用范围键。
+- `BETWEEN` 与同顺序 `>= AND <=` 经共享原生 pass 可得到同一身份；条件/投影的其他等价变换仍不承诺命中。
+- 原生 full Reader 的多键读已修复：在同一 read guard 内将不存在的点键视为已知空结果，保留其他命中；
+  partial Reader 继续将未知键报为 miss。该修复位于 `readyset-dataflow/src/backlog/`，不是在 POC 中逐键请求/拼结果。
+- POC fence 改为原生 schema/key_map 驱动的物理内容多重集校验，覆盖当前/历史/额外的可比较键；
+  范围 Reader 用退化范围探针，不把物理键强行反解成 IN 参数或上下界。NULL 条件槽不开放。
+  它只校验受限投影 reader 的内容，不宣称验证任意 SQL，也不用于应用读取。
+- 原生读取最多返回 10,001 个哨兵行；超过 10,000 行或增量编码后 data JSON 超过 4 MiB 时，在返回成功前保守 miss。
+  不做截断成功、不禁用 engine；该预算不等于范围扫描量、Reader 内部结果集合或总堆内存的硬上限。
+
 ### SQL 声明入口
 
 启动只绑定一个已授权的独立 POC 源表，缓存可以从零开始，无需 JSON 查询配置：
@@ -93,7 +131,7 @@ DROP CACHE payload_by_id;
 - 复用 `readyset-sql-parsing::parse_query_with_config` / `CreateCacheStatement`，不自建 CREATE CACHE 语法。
 - 先检查原始 AST 的选项和源表，再以原生重写后的 AST 调用 `Change::create_cache` → `extend_recipe` → `View`。
   **不能只将原始 SQL 交给 ChangeList**：它会丢掉一些 adapter 选项，可能把不支持的语义静默忽略。
-- 支持固定四列的普通投影和上述多字段 AND 等值子集。只允许绑定的源表；无前缀表名要求 session database 正确。
+- 支持固定四列的普通投影和上述 AND 等值、IN、Int64 范围子集。只允许绑定的源表；无前缀表名要求 session database 正确。
 - 每次请求一条语句，显式简单 cache name；最多 8 个公共缓存，名称冲突（含大小写冲突）或同形重复模板报错，
   不自动覆盖。`DROP CACHE` 后可以重建；`m2_source` / `m2_by_id` 为保留内部名称。
 - 普通 `CREATE CACHE` 与 `CREATE DEEP CACHE` 均走 deep/full 路径。SHALLOW、CONCURRENTLY、ALWAYS、
@@ -252,9 +290,17 @@ python3 -B readyset-databend/poc/gateway_verify.py \
 python3 -B readyset-databend/poc/gateway_verify.py \
   --endpoint http://192.168.191.96:8000 --user root \
   --binary /data1/vmbox/readyset/target/debug/databend-m2 \
-  --sql-declarations --native-queries --confirm-create
+  --sql-declarations --native-queries --in-range-queries --confirm-create
 ```
 
+无源端的真实 engine 回归（10,000/10,001 行、JSON 转义字节预算、IN 布局、DROP、闭区间）：
+
+```bash
+python3 -B readyset-databend/poc/in_range_engine.py \
+  --binary /data1/vmbox/readyset/target/debug/databend-m2
+```
+
+第三阶段使用独立目录 `/data1/vmbox/readyset-in-range-validation`，并保留原仓库及前两阶段工作树。
 若构建设置了外部 `CARGO_TARGET_DIR`，所有 live 命令都要显式指定该目录下的新 binary，不能误用 checkout 内旧产物。
 不加 `--sql-declarations` 时仍走旧 JSON 启动模板路径，用于兼容回归。
 
@@ -372,7 +418,7 @@ live 测试覆盖：100 个 sparse key 首次触达、多个投影模板、空�
 
 ## 还没有完成
 
-- 多表/通用 schema、更多类型、OR/范围/IN/固定过滤等 SQL 形状、声明持久化恢复与启动文件热更新。
+- 多表/通用 schema、更多类型、OR、NOT IN、字符串/多字段范围、IN 加范围、固定过滤等 SQL 形状、声明持久化恢复与启动文件热更新。
 - 完整 Databend client/login/auth/session/function/HTTP endpoint 兼容性。
 - 自动恢复、消费者 fencing、安全 outbox GC、版本升级/降级协议。
 - source 表 DDL/schema 演进；源表结构必须固定，不能运行中改 schema。
