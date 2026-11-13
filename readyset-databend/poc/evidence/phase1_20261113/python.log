@@ -1,0 +1,8 @@
+..................................PASS batch 1 has no prior commit
+.PASS batch 1 has no prior commit
+FAIL batch 1 transaction reads its complete outbox
+..........
+----------------------------------------------------------------------
+Ran 45 tests in 0.117s
+
+OK

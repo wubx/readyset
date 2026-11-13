@@ -1,0 +1,55 @@
+   Compiling rusty-fork v0.3.1
+   Compiling readyset-tracing v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-tracing)
+   Compiling test-utils-proc-macros v0.0.0 (/data1/vmbox/readyset-single-binary/test-utils/proc-macros)
+   Compiling readyset-metrics v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-metrics)
+   Compiling include_dir v0.7.4
+   Compiling proptest v1.12.0
+   Compiling test-utils v0.0.0 (/data1/vmbox/readyset-single-binary/test-utils)
+   Compiling readyset-util v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-util)
+   Compiling readyset-sql v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-sql)
+   Compiling mysql-time v0.1.0 (/data1/vmbox/readyset-single-binary/mysql-time)
+   Compiling partial-map v0.1.0 (/data1/vmbox/readyset-single-binary/partial-map)
+   Compiling readyset-telemetry-reporter v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-telemetry-reporter)
+   Compiling readyset-alloc-metrics v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-alloc-metrics)
+   Compiling readyset-errors v0.0.1 (/data1/vmbox/readyset-single-binary/readyset-errors)
+   Compiling nom-sql v0.0.11 (/data1/vmbox/readyset-single-binary/nom-sql)
+   Compiling catalog-tables v0.0.1 (/data1/vmbox/readyset-single-binary/catalog-tables)
+   Compiling readyset-data v0.0.1 (/data1/vmbox/readyset-single-binary/readyset-data)
+   Compiling replication-offset v0.1.0 (/data1/vmbox/readyset-single-binary/replication-offset)
+   Compiling database-utils v0.1.0 (/data1/vmbox/readyset-single-binary/database-utils)
+   Compiling readyset-post-lookup v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-post-lookup)
+   Compiling dataflow-expression v0.1.0 (/data1/vmbox/readyset-single-binary/dataflow-expression)
+   Compiling mysql-srv v0.8.8 (/data1/vmbox/readyset-single-binary/mysql-srv)
+   Compiling readyset-sql-parsing v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-sql-parsing)
+   Compiling readyset-sql-passes v0.0.1 (/data1/vmbox/readyset-single-binary/readyset-sql-passes)
+   Compiling schema-catalog v0.1.0 (/data1/vmbox/readyset-single-binary/schema-catalog)
+   Compiling readyset-client v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-client)
+   Compiling readyset-common v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-common)
+   Compiling reader-map v0.1.0 (/data1/vmbox/readyset-single-binary/reader-map)
+   Compiling replicators v0.1.0 (/data1/vmbox/readyset-single-binary/replicators)
+   Compiling dataflow-state v0.0.1 (/data1/vmbox/readyset-single-binary/dataflow-state)
+   Compiling readyset-dataflow v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-dataflow)
+   Compiling readyset-mir v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-mir)
+   Compiling readyset-server v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 53.29s
+     Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_server-1bdd45ab1f913b6e)
+
+running 15 tests
+test integration::it_works_with_simple_arithmetic ... ok
+test integration::it_works_with_identical_queries ... ok
+test integration::it_works_with_arithmetic_aliases ... ok
+test integration::it_works_with_double_query_through ... ok
+test integration::it_works_w_partial_mat_below_empty ... ok
+test integration::it_works_with_vote ... ok
+test integration::it_works_with_multiple_arithmetic_expressions ... ok
+test integration::it_works_with_duplicate_subquery ... ok
+test integration::it_works_with_sql_recipe ... ok
+test integration::it_works_with_join_arithmetic ... ok
+test integration::it_works_with_function_arithmetic ... ok
+test integration::it_works_w_partial_mat ... ok
+test integration::it_works_w_mat ... ok
+test integration::it_works_with_reads_before_writes ... ok
+test integration::it_works_deletion ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 307 filtered out; finished in 6.01s
+

@@ -1,0 +1,26 @@
+[16:00:20] database=readyset_gateway_rsbench_20261113_160020 out=/data1/vmbox/readyset-rsbench-20261113_160020
+[16:00:52] snapshot: {'name': 'snapshot', 'wall_secs': 31.0, 'snapshot': {'read_load_secs': 16.236772224, 'rows': 10000000, 'rows_per_sec': 615885.9570142111, 'total_secs': 30.420788262}, 'rss_mb': 8235, 'peak_mb': 9309, 'storage_mb': 895}
+[16:01:06] {'name': 'create cache c_score_in', 'secs': 10.7, 'rss_before_mb': 8235, 'rss_mb': 11608, 'peak_mb': 12377, 'rss_settled_mb': 11208}
+[16:01:27] {'name': 'create cache c_range', 'secs': 18.6, 'rss_before_mb': 11208, 'rss_mb': 13800, 'peak_mb': 15691, 'rss_settled_mb': 13709}
+[16:01:45] {'name': 'create cache c_payload', 'secs': 14.3, 'rss_before_mb': 13709, 'rss_mb': 20187, 'peak_mb': 21257, 'rss_settled_mb': 20106}
+[16:01:45]   caches: OK  local rows=200 local=2.3ms databend=81.9ms  SELECT id, payload FROM orders WHERE score IN (3, 4)
+[16:01:48]   caches: OK  local rows=200 local=1768.7ms databend=64.9ms  SELECT id, payload, score, note FROM orders WHERE score >= 2 AND score < 4
+[16:01:49]   caches: OK  local rows=1 local=1.8ms databend=71.6ms  SELECT id, score FROM orders WHERE payload = 'p-123456'
+[16:01:50]   caches: OK  local rows=1 local=1.6ms databend=68.4ms  SELECT id, score FROM orders WHERE payload = 'p-9999999'
+[16:02:07] UPDATE 1M rows: changes=2000000 (expected 2000000) total=15.4s rate=130188/s finish=0.1s rss=18343MB peak=21257MB
+[16:02:11]   UPDATE 1M rows: OK  local rows=200 local=4.8ms databend=63.7ms  SELECT id, payload FROM orders WHERE score IN (3, 4)
+[16:02:13]   UPDATE 1M rows: OK  local rows=200 local=1804.6ms databend=61.9ms  SELECT id, payload, score, note FROM orders WHERE score >= 2 AND score < 4
+[16:02:15]   UPDATE 1M rows: OK  local rows=1 local=1.1ms databend=68.6ms  SELECT id, score FROM orders WHERE payload = 'p-123456'
+[16:02:16]   UPDATE 1M rows: OK  local rows=1 local=1.3ms databend=72.7ms  SELECT id, score FROM orders WHERE payload = 'p-9999999'
+[16:02:20] INSERT 1M rows: changes=1000000 (expected 1000000) total=3.1s rate=317819/s finish=0.7s rss=19787MB peak=21257MB
+[16:02:24]   INSERT 1M rows: OK  local rows=220 local=7.7ms databend=75.3ms  SELECT id, payload FROM orders WHERE score IN (3, 4)
+[16:02:27]   INSERT 1M rows: OK  local rows=220 local=1896.4ms databend=71.3ms  SELECT id, payload, score, note FROM orders WHERE score >= 2 AND score < 4
+[16:02:28]   INSERT 1M rows: OK  local rows=1 local=1.4ms databend=64.8ms  SELECT id, score FROM orders WHERE payload = 'p-123456'
+[16:02:29]   INSERT 1M rows: OK  local rows=1 local=1.6ms databend=72.3ms  SELECT id, score FROM orders WHERE payload = 'p-9999999'
+[16:02:39]   mid-batch read: {'route': 'databend', 'equal': True, 'checkpoint_at_probe': 34}
+[16:05:15] UPDATE all rows: changes=22000000 (expected 22000000) total=163.6s rate=134433/s finish=0.1s rss=23010MB peak=23219MB
+[16:05:18]   UPDATE all rows: OK  local rows=220 local=2.4ms databend=70.8ms  SELECT id, payload FROM orders WHERE score IN (3, 4)
+[16:05:21]   UPDATE all rows: OK  local rows=320 local=1619.4ms databend=65.3ms  SELECT id, payload, score, note FROM orders WHERE score >= 2 AND score < 4
+[16:05:22]   UPDATE all rows: OK  local rows=1 local=1.3ms databend=69.3ms  SELECT id, score FROM orders WHERE payload = 'p-123456'
+[16:05:23]   UPDATE all rows: OK  local rows=1 local=1.7ms databend=73.0ms  SELECT id, score FROM orders WHERE payload = 'p-9999999'
+[16:05:23] DONE 22866MB rss, 23219MB peak

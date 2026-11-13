@@ -1,0 +1,42 @@
+biz=readyset_gateway_dk_biz_20261113_163309 user=readyset_dk_20261113_163309 container=readyset-dk-20261113_163309 image=readyset-databend:phase1
+PASS least-privilege container bootstrapped and ready (2s)
+PASS authenticated endpoints require credentials
+PASS health {'checkpoint': 1, 'rows': 100, 'instance_id': '89c32872011f'}
+stream	readyset_89c32872011f_source_rows
+tables	source_rows
+databases	0
+PASS bendsql reads served locally (point + IN, 20 rows)
+PASS external UPDATE replicated
+PASS external INSERT replicated into IN cache
+PASS writes through the gateway keep Databend permissions (INSERT denied)
+PASS SIGTERM clean exit
+PASS restart reused its own Stream (still exactly 1 Stream, SELECT+CREATE role)
+PASS write made while down is present after restart
+PASS delete made while down is applied after restart
+PASS earlier replicated update survives restart
+PASS primary-key change made while down is applied after restart (8 -> 4000)
+instance_id=89c32872011f
+{
+  "checkpoint": 3,
+  "counters": {
+    "cache_ddl": 2,
+    "databend": 1,
+    "empty_local": 0,
+    "readyset": 4,
+    "sync_batches": 3
+  },
+  "engine_pid": 1,
+  "failed": null,
+  "fault_injection": false,
+  "generation": "rs_89c32872011f_0fac2df61071",
+  "inflight": 0,
+  "instance_id": "89c32872011f",
+  "last_batch": {
+    "cancelled": 0,
+    "changes": 3,
+    "changes_per_sec": 37.56283322928429,
+    "commit_ms": 22.585458,
+    "deletes": 1,
+    "finish": {
+      "cancelled": 0,
+DONE

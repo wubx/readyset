@@ -1,0 +1,260 @@
+PASS HTTP auth required
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 7
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 24
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 41
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 58
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 75
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 92
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 109
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 126
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 143
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 160
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 177
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 194
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 211
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 228
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 245
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 262
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 279
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 296
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 313
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 330
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 347
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 364
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 381
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 398
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 415
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 432
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 449
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 466
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 483
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 500
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 517
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 534
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 551
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 568
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 585
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 602
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 619
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 636
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 653
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 670
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 687
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 704
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 721
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 738
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 755
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 772
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 789
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 806
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 823
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 840
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 857
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 874
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 891
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 908
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 925
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 942
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 959
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 976
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 993
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1010
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1027
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1044
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1061
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1078
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1095
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1112
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1129
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1146
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1163
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1180
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1197
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1214
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1231
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1248
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1265
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1282
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1299
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1316
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1333
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1350
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1367
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1384
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1401
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1418
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1435
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1452
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1469
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1486
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1503
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1520
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1537
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1554
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1571
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1588
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1605
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1622
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1639
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1656
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1673
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS first touch key 1690
+PASS native result schema
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS missing key local empty
+PASS empty result causes no fallback
+PASS local stats lifecycle
+PASS query route: select payload,note from readyset_gateway_20261113_035517_8504664
+PASS second declared projection
+PASS query route: SELECT payload, note FROM source_rows WHERE id=24
+PASS unqualified in declared database
+PASS query route: SELECT count(*) FROM readyset_gateway_20261113_035517_85046649.so
+PASS query route: SELECT * FROM readyset_gateway_20261113_035517_85046649.source_ro
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT val FROM readyset_gateway_20261113_035517_85046649.other_r
+PASS query route: SELECT payload,note FROM readyset_gateway_20261113_035517_8504664
+PASS query route: SELECT payload, note FROM readyset_gateway_20261113_035517_850466
+PASS session-sensitive query kept correct
+PASS query route: SELECT number FROM numbers(25)
+PASS all upstream pages preserve rows
+PASS upstream pagination actually proxied
+PASS all upstream pages retain route
+PASS native databend_driver returns correct values
+PASS native driver actually uses ReadySet
+PASS native driver local query ID
+PASS native driver unmatched query passthrough
+PASS native driver returns to declared cache
+PASS mixed native connection actually reenters ReadySet
+PASS query route: UPDATE readyset_gateway_20261113_035517_85046649.source_rows SET 
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS gateway write synchronized
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS external delete synchronized
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS new never-before-accessed key synchronized
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS concurrent local queries correct
+PASS transaction sees own upstream write
+PASS transaction never used local cache
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS rollback preserved replicated value
+PASS sync had no failure before fault injection
+PASS query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03
+PASS engine unavailable falls back to correct source result
+PASS engine failure disables local routing
+PASS engine failure is observable
+PASS gateway clean exit
+PASS injected failure remains fail-closed
+PASS sync advanced automatically
+Report: /tmp/readyset-databend-gateway/readyset_gateway_20261113_035517_85046649/report.json

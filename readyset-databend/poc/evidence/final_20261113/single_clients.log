@@ -1,0 +1,52 @@
+PASS bendsql-0.34.3 forward_version      routes=['databend'] 
+PASS bendsql-0.34.3 point_unqualified    routes=['readyset'] 
+PASS bendsql-0.34.3 point_qualified      routes=['readyset'] 
+PASS bendsql-0.34.3 point_absent_key     routes=['readyset'] 
+PASS bendsql-0.34.3 in_list              routes=['readyset'] 
+PASS bendsql-0.34.3 between              routes=['readyset'] 
+PASS bendsql-0.34.3 uncached_aggregate   routes=['databend'] 
+PASS bendsql-0.34.3 show_caches          routes=['readyset'] 
+PASS bendsql-0.34.3 insert_passthrough   routes=['databend'] 
+PASS bendsql-0.34.3 read_after_write     routes=['readyset'] 
+PASS bendsql-0.34.3 stdin_multi_statement routes=['readyset', 'readyset', 'readyset']
+INFO python-0.34.0  connect ready=True endpoints=['POST /v1/session/login 404 None'] 
+PASS python-0.34.0  forward_version      routes=['databend'] 
+PASS python-0.34.0  point_unqualified    routes=['readyset'] 
+PASS python-0.34.0  point_qualified      routes=['readyset'] 
+PASS python-0.34.0  point_absent_key     routes=['readyset'] 
+PASS python-0.34.0  in_list              routes=['readyset'] 
+PASS python-0.34.0  between              routes=['readyset'] 
+PASS python-0.34.0  uncached_aggregate   routes=['databend'] 
+PASS python-0.34.0  show_caches          routes=['readyset'] 
+PASS python-0.34.0  prepared_point       routes=['readyset'] 
+PASS python-0.34.0  insert_passthrough   routes=['databend'] 
+PASS python-0.34.0  read_after_write     routes=['readyset'] 
+INFO python-0.34.0:close connect ready=True endpoints=['GET /v1/query/01a1d409b9eb78f08e31d405906801f1/final 200 readyset'] 
+INFO python-0.34.3  connect ready=True endpoints=['POST /v1/session/login 404 None'] 
+PASS python-0.34.3  forward_version      routes=['databend'] 
+PASS python-0.34.3  point_unqualified    routes=['readyset'] 
+PASS python-0.34.3  point_qualified      routes=['readyset'] 
+PASS python-0.34.3  point_absent_key     routes=['readyset'] 
+PASS python-0.34.3  in_list              routes=['readyset'] 
+PASS python-0.34.3  between              routes=['readyset'] 
+PASS python-0.34.3  uncached_aggregate   routes=['databend'] 
+PASS python-0.34.3  show_caches          routes=['readyset'] 
+PASS python-0.34.3  prepared_point       routes=['readyset'] 
+PASS python-0.34.3  insert_passthrough   routes=['databend'] 
+PASS python-0.34.3  read_after_write     routes=['readyset'] 
+INFO python-0.34.3:close connect ready=True endpoints=['GET /v1/query/01a1d409cf5277928af1d8293809c0eb/final 200 readyset'] 
+INFO jdbc-0.4.6     connect ready=False endpoints=['POST /v1/session/login 404 None'] java.lang.NullPointerException: Cannot invoke "com.databend.jdbc.com.fasterxml.jackson.databind.JsonNode.asText()" because the return value of "com.databend.jdbc.com.fasterxml.jackson.databind.JsonNode.get(String)" is null
+INFO jdbc-0.4.8     connect ready=True endpoints=['POST /v1/session/login 404 None'] 
+FAIL jdbc-0.4.8     forward_version      routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT version(), error = Cannot invoke "com.databend.jdbc.internal.session.Capability.heartBeat()" because "
+FAIL jdbc-0.4.8     point_unqualified    routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 24, error = Cannot invoke "com.databend.jdbc.interna
+FAIL jdbc-0.4.8     point_qualified      routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM readyset_gateway_clients_20261113_083238_afa8eda8.source_rows WHERE id = 41
+FAIL jdbc-0.4.8     point_absent_key     routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 25, error = Cannot invoke "com.databend.jdbc.interna
+FAIL jdbc-0.4.8     in_list              routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,payload FROM source_rows WHERE score IN (1,2,3), error = Cannot invoke "com.databend.jdbc.internal.
+FAIL jdbc-0.4.8     between              routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,score FROM source_rows WHERE score BETWEEN 10 AND 12, error = Cannot invoke "com.databend.jdbc.inte
+FAIL jdbc-0.4.8     uncached_aggregate   routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT count(*) FROM source_rows, error = Cannot invoke "com.databend.jdbc.internal.session.Capability.heartB
+FAIL jdbc-0.4.8     show_caches          routes=['readyset'] error=com.databend.jdbc.exception.DatabendSQLException: Failed to start query: Failed to start query: Failed to execute query request [query_id=a9797d0ae8404e8f8243a1
+FAIL jdbc-0.4.8     prepared_point       routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 58, error = Cannot invoke "com.databend.jdbc.interna
+FAIL jdbc-0.4.8     insert_passthrough   routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: INSERT INTO source_rows VALUES (1000004,'client-jdbc-0.4.8',777,'w'), error = Cannot invoke "com.databend.jdb
+FAIL jdbc-0.4.8     read_after_write     routes=['databend'] error=java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 1000004, error = Cannot invoke "com.databend.jdbc.in
+INFO jdbc-0.4.8:close connect ready=True endpoints=['GET /v1/query/e8511fa19f574ab285bb76a56939d3ea/final 200 databend'] 
+Report: /data1/vmbox/readyset-client-compat/runs/readyset_gateway_clients_20261113_083238_afa8eda8/report.json

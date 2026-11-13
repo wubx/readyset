@@ -1,0 +1,88 @@
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/bin/server.rs:1463:
+         "total_secs": started.elapsed().as_secs_f64(),
+         "rows_per_sec": replicator.rows as f64 / loaded_secs.max(1e-9),
+     });
+-    eprintln!("snapshot {} rows from {}: {snapshot}", replicator.rows, names.source);
++    eprintln!(
++        "snapshot {} rows from {}: {snapshot}",
++        replicator.rows, names.source
++    );
+     let (stop, stop_rx) = watch::channel(false);
+     let routes_journal = if s.route_journal {
+         Some(Journal::open(&s.run_dir.join("routes.jsonl"))?)
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/engine.rs:698:
+             marker_fence(&mut core.table, &mut targets).await?;
+         }
+         core.barrier_checkpoint = self.sequence;
+-        Ok(json!({"ok": true, "checkpoint": self.sequence, "inserts": self.inserts,
++        Ok(
++            json!({"ok": true, "checkpoint": self.sequence, "inserts": self.inserts,
+             "deletes": self.deletes, "cancelled": self.cancelled, "persisted_ms": persisted_ms,
+-            "finish_ms": started.elapsed().as_secs_f64() * 1000.0}))
++            "finish_ms": started.elapsed().as_secs_f64() * 1000.0}),
++        )
+     }
+ }
+ 
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/replicator.rs:260:
+             kept.windows(2).all(|w| w[0].id < w[1].id),
+             "oracle mode requires unique source ids"
+         );
+-        ensure!(!kept.is_empty(), "oracle mode requires a nonempty initial table");
++        ensure!(
++            !kept.is_empty(),
++            "oracle mode requires a nonempty initial table"
++        );
+         self.state = kept.iter().map(|r| (r.id, r.clone())).collect();
+         self.known = self.state.keys().copied().collect();
+         Ok(Some(kept))
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/replicator.rs:284:
+     /// may or may not have advanced) and must stop capture.
+     pub async fn commit_consumed(&mut self, inserts: u64, deletes: u64) -> Result<()> {
+         ensure!(
+-            self.capture.session.get("txn_state").and_then(Value::as_str) == Some("Active"),
++            self.capture
++                .session
++                .get("txn_state")
++                .and_then(Value::as_str)
++                == Some("Active"),
+             "capture transaction not Active"
+         );
+         self.capture.sql("COMMIT").await?;
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/upstream.rs:397:
+             }
+         }
+         let Some(uri) = response["next_uri"].as_str().map(str::to_owned) else {
+-            ensure!(self.state == "Succeeded", "incomplete query: {}", self.state);
++            ensure!(
++                self.state == "Succeeded",
++                "incomplete query: {}",
++                self.state
++            );
+             self.done = true;
+             return Ok(rows);
+         };
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/upstream.rs:484:
+             if self.state != "Succeeded" && self.state != "Failed" {
+                 let _ = self
+                     .client
+-                    .call(&format!("/v1/query/{id}/kill"), None, Duration::from_secs(5))
++                    .call(
++                        &format!("/v1/query/{id}/kill"),
++                        None,
++                        Duration::from_secs(5),
++                    )
+                     .await;
+             }
+             let _ = self
+Diff in /data1/vmbox/readyset-single-binary/readyset-databend/src/upstream.rs:491:
+                 .client
+-                .call(&format!("/v1/query/{id}/final"), None, Duration::from_secs(5))
++                .call(
++                    &format!("/v1/query/{id}/final"),
++                    None,
++                    Duration::from_secs(5),
++                )
+                 .await;
+             self.finished = true;
+         }

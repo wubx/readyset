@@ -1,0 +1,431 @@
+PASS query route: CREATE CACHE pk_by_id FROM SELECT id,payload,score,note FROM read
+PASS query route: CREATE CACHE pk_by_ids FROM SELECT id,payload,score,note FROM rea
+PASS query route: CREATE CACHE pk_by_score FROM SELECT id,payload FROM readyset_gat
+PASS query route: CREATE CACHE pk_range FROM SELECT id,payload,score,note FROM read
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS initial: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== move id 1 -> 101
+  stream move id 1 -> 101: ['1', 'p-1', '10', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000000']
+  stream move id 1 -> 101: ['101', 'p-1', '10', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000000']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS move id 1 -> 101: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+PASS move: Stream reports DELETE old id + INSERT new id
+PASS move: both sides are one update of one row (same row_id)
+== swap ids 2 <-> 3 in one statement
+  stream swap ids 2 <-> 3 in one statement: ['2', 'p-2', '20', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000001']
+  stream swap ids 2 <-> 3 in one statement: ['3', 'p-2', '20', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000001']
+  stream swap ids 2 <-> 3 in one statement: ['3', 'p-3', '30', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000002']
+  stream swap ids 2 <-> 3 in one statement: ['2', 'p-3', '30', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000002']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS swap ids 2 <-> 3 in one statement: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== batch shift ids 4..8 -> 1004..1008
+  stream batch shift ids 4..8 -> 1004..1008: ['4', 'p-4', '40', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000003']
+  stream batch shift ids 4..8 -> 1004..1008: ['1004', 'p-4', '40', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000003']
+  stream batch shift ids 4..8 -> 1004..1008: ['5', 'p-5', '50', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000004']
+  stream batch shift ids 4..8 -> 1004..1008: ['1005', 'p-5', '50', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000004']
+  stream batch shift ids 4..8 -> 1004..1008: ['6', 'p-6', '60', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000005']
+  stream batch shift ids 4..8 -> 1004..1008: ['1006', 'p-6', '60', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000005']
+  stream batch shift ids 4..8 -> 1004..1008: ['7', 'p-7', '70', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000006']
+  stream batch shift ids 4..8 -> 1004..1008: ['1007', 'p-7', '70', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000006']
+  stream batch shift ids 4..8 -> 1004..1008: ['8', 'p-8', '80', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000007']
+  stream batch shift ids 4..8 -> 1004..1008: ['1008', 'p-8', '80', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000007']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS batch shift ids 4..8 -> 1004..1008: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== overlapping chain 9..12 -> 8..11 (new ids collide with old ids)
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['9', 'p-9', '90', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000008']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['8', 'p-9', '90', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000008']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['10', 'p-10', '100', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000009']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['9', 'p-10', '100', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000009']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['11', 'p-11', '110', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb00000a']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['10', 'p-11', '110', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb00000a']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['12', 'p-12', '120', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb00000b']
+  stream overlapping chain 9..12 -> 8..11 (new ids collide with old ids): ['11', 'p-12', '120', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb00000b']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS overlapping chain 9..12 -> 8..11 (new ids collide with old ids): replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== delete 14, move 15 -> 14 in one transaction
+  stream delete 14, move 15 -> 14 in one transaction: ['14', 'p-14', '140', 'DELETE', '0', '01a1d83f38a37dbcabb34a42f30500cb00000d']
+  stream delete 14, move 15 -> 14 in one transaction: ['15', 'p-15', '150', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb00000e']
+  stream delete 14, move 15 -> 14 in one transaction: ['14', 'p-15', '150', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb00000e']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS delete 14, move 15 -> 14 in one transaction: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== reuse a key deleted in an earlier batch (101 -> 1)
+  stream reuse a key deleted in an earlier batch (101 -> 1): ['101', 'p-1', '10', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000000']
+  stream reuse a key deleted in an earlier batch (101 -> 1): ['1', 'p-1', '10', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000000']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS reuse a key deleted in an earlier batch (101 -> 1): replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== move 16 -> 116 and back in one transaction (net no-op)
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS move 16 -> 116 and back in one transaction (net no-op): replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+PASS move-and-back: Stream reports no change
+== move 17 -> 117 and back with a new payload in one transaction
+  stream move 17 -> 117 and back with a new payload in one transaction: ['17', 'p-17', '170', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000010']
+  stream move 17 -> 117 and back with a new payload in one transaction: ['17', 'came-back', '170', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000010']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS move 17 -> 117 and back with a new payload in one transaction: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== change id, payload and score together (18 -> 118)
+  stream change id, payload and score together (18 -> 118): ['18', 'p-18', '180', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000011']
+  stream change id, payload and score together (18 -> 118): ['118', 'moved', '999', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000011']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS change id, payload and score together (18 -> 118): replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== insert then move a new row (500 -> 501) in one transaction
+  stream insert then move a new row (500 -> 501) in one transaction: ['501', 'new', '5000', 'INSERT', '0', '01a1d83fa9e77d278c797c9f42bea8a8000000']
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS insert then move a new row (500 -> 501) in one transaction: replica row count
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS native rows agree with Databend: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_06852ace.source_rows WH
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=1
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=2
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=3
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=4
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=5
+PASS query route: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.
+PASS native rows agree with Databend: SELECT id,payload FROM readyset_gateway_20261113_040944_06852ace.source_rows WHERE score=6
+== duplicate id (19 -> 20 while 20 exists): capture must stop
+  stream duplicate id: ['19', 'p-19', '190', 'DELETE', '1', '01a1d83f38a37dbcabb34a42f30500cb000012']
+  stream duplicate id: ['20', 'p-19', '190', 'INSERT', '1', '01a1d83f38a37dbcabb34a42f30500cb000012']
+PASS duplicate id stops capture with a key error
+PASS readyz reports not ready
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS after failure reads are forwarded and correct: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_068
+PASS query route: SELECT id,payload,score,note FROM readyset_gateway_20261113_04094
+PASS after failure reads are forwarded and correct: SELECT id,payload,score,note FROM readyset_gateway_20261113_040944_068
+Checks: 382/382
+Report: /tmp/readyset-databend-pk-change/readyset_gateway_20261113_040944_06852ace/report.json

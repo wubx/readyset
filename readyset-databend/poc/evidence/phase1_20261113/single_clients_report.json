@@ -1,0 +1,1399 @@
+{
+  "database": "readyset_gateway_clients_20261113_035757_33fc2297",
+  "endpoint": "http://192.168.191.96:8000",
+  "error": null,
+  "results": [
+    {
+      "client": "bendsql-0.34.3",
+      "label": "forward_version",
+      "kind": "query",
+      "sql": "SELECT version()",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "point_unqualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 24",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "point_qualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM readyset_gateway_clients_20261113_035757_33fc2297.source_rows WHERE id = 41",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "point_absent_key",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 25",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "in_list",
+      "kind": "query",
+      "sql": "SELECT id,payload FROM source_rows WHERE score IN (1,2,3)",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "between",
+      "kind": "query",
+      "sql": "SELECT id,score FROM source_rows WHERE score BETWEEN 10 AND 12",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "uncached_aggregate",
+      "kind": "query",
+      "sql": "SELECT count(*) FROM source_rows",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "show_caches",
+      "kind": "query",
+      "sql": "SHOW CACHES",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "cache_names": [
+        "c_in",
+        "c_point",
+        "c_range"
+      ],
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "insert_passthrough",
+      "kind": "exec",
+      "sql": "INSERT INTO source_rows VALUES (1000001,'client-bendsql-0.34.3',777,'w')",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "read_after_write",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 1000001",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [
+        "POST /v1/session/login 404"
+      ],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true,
+      "bendsql_stderr": ""
+    },
+    {
+      "client": "bendsql-0.34.3",
+      "label": "stdin_multi_statement",
+      "ok": true,
+      "routes": [
+        "readyset",
+        "readyset",
+        "readyset"
+      ],
+      "rows": 7,
+      "error": null,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "connect",
+      "hello": {
+        "ready": true,
+        "version": null
+      },
+      "endpoints": [
+        "POST /v1/session/login 404 None"
+      ]
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "forward_version",
+      "kind": "query",
+      "sql": "SELECT version()",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "point_unqualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 24",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "point_qualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM readyset_gateway_clients_20261113_035757_33fc2297.source_rows WHERE id = 41",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "point_absent_key",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 25",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "in_list",
+      "kind": "query",
+      "sql": "SELECT id,payload FROM source_rows WHERE score IN (1,2,3)",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "between",
+      "kind": "query",
+      "sql": "SELECT id,score FROM source_rows WHERE score BETWEEN 10 AND 12",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "uncached_aggregate",
+      "kind": "query",
+      "sql": "SELECT count(*) FROM source_rows",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "show_caches",
+      "kind": "query",
+      "sql": "SHOW CACHES",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "cache_names": [
+        "c_in",
+        "c_point",
+        "c_range"
+      ],
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "prepared_point",
+      "kind": "prepared",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = ?",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "insert_passthrough",
+      "kind": "exec",
+      "sql": "INSERT INTO source_rows VALUES (1000002,'client-python-0.34.0',777,'w')",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0",
+      "label": "read_after_write",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 1000002",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.0:close",
+      "label": "connect",
+      "hello": {
+        "ready": true
+      },
+      "endpoints": [
+        "GET /v1/query/01a1d30e481770e1b0bccdfddc4cddb2/final 200 readyset"
+      ]
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "connect",
+      "hello": {
+        "ready": true,
+        "version": null
+      },
+      "endpoints": [
+        "POST /v1/session/login 404 None"
+      ]
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "forward_version",
+      "kind": "query",
+      "sql": "SELECT version()",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "database"
+      ],
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "point_unqualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 24",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "point_qualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM readyset_gateway_clients_20261113_035757_33fc2297.source_rows WHERE id = 41",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "point_absent_key",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 25",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "in_list",
+      "kind": "query",
+      "sql": "SELECT id,payload FROM source_rows WHERE score IN (1,2,3)",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "between",
+      "kind": "query",
+      "sql": "SELECT id,score FROM source_rows WHERE score BETWEEN 10 AND 12",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "uncached_aggregate",
+      "kind": "query",
+      "sql": "SELECT count(*) FROM source_rows",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "show_caches",
+      "kind": "query",
+      "sql": "SHOW CACHES",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "cache_names": [
+        "c_in",
+        "c_point",
+        "c_range"
+      ],
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "prepared_point",
+      "kind": "prepared",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = ?",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "insert_passthrough",
+      "kind": "exec",
+      "sql": "INSERT INTO source_rows VALUES (1000003,'client-python-0.34.3',777,'w')",
+      "ok": true,
+      "error": null,
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3",
+      "label": "read_after_write",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 1000003",
+      "ok": true,
+      "error": null,
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "rows_match": true,
+      "route_ok": true,
+      "passed": true
+    },
+    {
+      "client": "python-0.34.3:close",
+      "label": "connect",
+      "hello": {
+        "ready": true
+      },
+      "endpoints": [
+        "GET /v1/query/01a1d30e5f9174df8e91f09bb85f025a/final 200 readyset"
+      ]
+    },
+    {
+      "client": "jdbc-0.4.6",
+      "label": "connect",
+      "hello": {
+        "ready": false,
+        "error": "java.lang.NullPointerException: Cannot invoke \"com.databend.jdbc.com.fasterxml.jackson.databind.JsonNode.asText()\" because the return value of \"com.databend.jdbc.com.fasterxml.jackson.databind.JsonNode.get(String)\" is null"
+      },
+      "endpoints": [
+        "POST /v1/session/login 404 None"
+      ]
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "connect",
+      "hello": {
+        "ready": true,
+        "driver": "0.4.8"
+      },
+      "endpoints": [
+        "POST /v1/session/login 404 None"
+      ]
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "forward_version",
+      "kind": "query",
+      "sql": "SELECT version()",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT version(), error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "database",
+        "need_keep_alive",
+        "need_sticky",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": true,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "point_unqualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 24",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 24, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "point_qualified",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM readyset_gateway_clients_20261113_035757_33fc2297.source_rows WHERE id = 41",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM readyset_gateway_clients_20261113_035757_33fc2297.source_rows WHERE id = 41, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "point_absent_key",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 25",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 25, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "in_list",
+      "kind": "query",
+      "sql": "SELECT id,payload FROM source_rows WHERE score IN (1,2,3)",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,payload FROM source_rows WHERE score IN (1,2,3), error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "between",
+      "kind": "query",
+      "sql": "SELECT id,score FROM source_rows WHERE score BETWEEN 10 AND 12",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,score FROM source_rows WHERE score BETWEEN 10 AND 12, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "uncached_aggregate",
+      "kind": "query",
+      "sql": "SELECT count(*) FROM source_rows",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT count(*) FROM source_rows, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": true,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "show_caches",
+      "kind": "query",
+      "sql": "SHOW CACHES",
+      "ok": false,
+      "error": "com.databend.jdbc.exception.DatabendSQLException: Failed to start query: Failed to start query: Failed to execute query request [query_id=422829464a594952bf7ef701c91c22b9]",
+      "expected_route": "readyset",
+      "routes": [
+        "readyset"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": true,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "prepared_point",
+      "kind": "prepared",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = ?",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 58, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "insert_passthrough",
+      "kind": "exec",
+      "sql": "INSERT INTO source_rows VALUES (1000004,'client-jdbc-0.4.8',777,'w')",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: INSERT INTO source_rows VALUES (1000004,'client-jdbc-0.4.8',777,'w'), error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "databend",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": true,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8",
+      "label": "read_after_write",
+      "kind": "query",
+      "sql": "SELECT id,payload,score,note FROM source_rows WHERE id = 1000004",
+      "ok": false,
+      "error": "java.sql.SQLException: Error executing query: SQL: SELECT id,payload,score,note FROM source_rows WHERE id = 1000004, error = Cannot invoke \"com.databend.jdbc.internal.session.Capability.heartBeat()\" because \"capability\" is null, cause: null",
+      "expected_route": "readyset",
+      "routes": [
+        "databend"
+      ],
+      "query_posts": 1,
+      "other_endpoints": [],
+      "databend_headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "route_ok": false,
+      "passed": false
+    },
+    {
+      "client": "jdbc-0.4.8:close",
+      "label": "connect",
+      "hello": {
+        "ready": true
+      },
+      "endpoints": [
+        "GET /v1/query/c400512071b24f4689792d9dd779cc33/final 200 databend"
+      ]
+    }
+  ],
+  "final_health": {
+    "checkpoint": 28,
+    "counters": {
+      "cache_ddl": 6,
+      "databend": 19,
+      "empty_local": 3,
+      "readyset": 23,
+      "sync_batches": 28
+    },
+    "engine_pid": 10382,
+    "failed": null,
+    "fault_injection": false,
+    "generation": "rs_3f3383288a05_7f5520d3766b",
+    "inflight": 0,
+    "instance_id": "3f3383288a05",
+    "ready": true,
+    "rows": 104,
+    "single_process": true,
+    "uncertain_upstream": false
+  }
+}

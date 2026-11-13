@@ -1,0 +1,3495 @@
+{
+  "passed": true,
+  "error": null,
+  "checks": [
+    {
+      "label": "HTTP auth required",
+      "passed": true,
+      "actual": 401,
+      "expected": 401
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 7",
+      "passed": true,
+      "actual": [
+        [
+          "7",
+          "p-0",
+          "0",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "7",
+          "p-0",
+          "0",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 24",
+      "passed": true,
+      "actual": [
+        [
+          "24",
+          "p-1",
+          "1",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "24",
+          "p-1",
+          "1",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 41",
+      "passed": true,
+      "actual": [
+        [
+          "41",
+          "p-2",
+          "2",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "41",
+          "p-2",
+          "2",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 58",
+      "passed": true,
+      "actual": [
+        [
+          "58",
+          "p-3",
+          "3",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "58",
+          "p-3",
+          "3",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 75",
+      "passed": true,
+      "actual": [
+        [
+          "75",
+          "p-4",
+          "4",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "75",
+          "p-4",
+          "4",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 92",
+      "passed": true,
+      "actual": [
+        [
+          "92",
+          "p-5",
+          "5",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "92",
+          "p-5",
+          "5",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 109",
+      "passed": true,
+      "actual": [
+        [
+          "109",
+          "p-6",
+          "6",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "109",
+          "p-6",
+          "6",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 126",
+      "passed": true,
+      "actual": [
+        [
+          "126",
+          "p-7",
+          "7",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "126",
+          "p-7",
+          "7",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 143",
+      "passed": true,
+      "actual": [
+        [
+          "143",
+          "p-8",
+          "8",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "143",
+          "p-8",
+          "8",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 160",
+      "passed": true,
+      "actual": [
+        [
+          "160",
+          "p-9",
+          "9",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "160",
+          "p-9",
+          "9",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 177",
+      "passed": true,
+      "actual": [
+        [
+          "177",
+          "p-10",
+          "10",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "177",
+          "p-10",
+          "10",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 194",
+      "passed": true,
+      "actual": [
+        [
+          "194",
+          "p-11",
+          "11",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "194",
+          "p-11",
+          "11",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 211",
+      "passed": true,
+      "actual": [
+        [
+          "211",
+          "p-12",
+          "12",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "211",
+          "p-12",
+          "12",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 228",
+      "passed": true,
+      "actual": [
+        [
+          "228",
+          "p-13",
+          "13",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "228",
+          "p-13",
+          "13",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 245",
+      "passed": true,
+      "actual": [
+        [
+          "245",
+          "p-14",
+          "14",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "245",
+          "p-14",
+          "14",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 262",
+      "passed": true,
+      "actual": [
+        [
+          "262",
+          "p-15",
+          "15",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "262",
+          "p-15",
+          "15",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 279",
+      "passed": true,
+      "actual": [
+        [
+          "279",
+          "p-16",
+          "16",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "279",
+          "p-16",
+          "16",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 296",
+      "passed": true,
+      "actual": [
+        [
+          "296",
+          "p-17",
+          "17",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "296",
+          "p-17",
+          "17",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 313",
+      "passed": true,
+      "actual": [
+        [
+          "313",
+          "p-18",
+          "18",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "313",
+          "p-18",
+          "18",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 330",
+      "passed": true,
+      "actual": [
+        [
+          "330",
+          "p-19",
+          "19",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "330",
+          "p-19",
+          "19",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 347",
+      "passed": true,
+      "actual": [
+        [
+          "347",
+          "p-20",
+          "20",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "347",
+          "p-20",
+          "20",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 364",
+      "passed": true,
+      "actual": [
+        [
+          "364",
+          "p-21",
+          "21",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "364",
+          "p-21",
+          "21",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 381",
+      "passed": true,
+      "actual": [
+        [
+          "381",
+          "p-22",
+          "22",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "381",
+          "p-22",
+          "22",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 398",
+      "passed": true,
+      "actual": [
+        [
+          "398",
+          "p-23",
+          "23",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "398",
+          "p-23",
+          "23",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 415",
+      "passed": true,
+      "actual": [
+        [
+          "415",
+          "p-24",
+          "24",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "415",
+          "p-24",
+          "24",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 432",
+      "passed": true,
+      "actual": [
+        [
+          "432",
+          "p-25",
+          "25",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "432",
+          "p-25",
+          "25",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 449",
+      "passed": true,
+      "actual": [
+        [
+          "449",
+          "p-26",
+          "26",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "449",
+          "p-26",
+          "26",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 466",
+      "passed": true,
+      "actual": [
+        [
+          "466",
+          "p-27",
+          "27",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "466",
+          "p-27",
+          "27",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 483",
+      "passed": true,
+      "actual": [
+        [
+          "483",
+          "p-28",
+          "28",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "483",
+          "p-28",
+          "28",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 500",
+      "passed": true,
+      "actual": [
+        [
+          "500",
+          "p-29",
+          "29",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "500",
+          "p-29",
+          "29",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 517",
+      "passed": true,
+      "actual": [
+        [
+          "517",
+          "p-30",
+          "30",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "517",
+          "p-30",
+          "30",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 534",
+      "passed": true,
+      "actual": [
+        [
+          "534",
+          "p-31",
+          "31",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "534",
+          "p-31",
+          "31",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 551",
+      "passed": true,
+      "actual": [
+        [
+          "551",
+          "p-32",
+          "32",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "551",
+          "p-32",
+          "32",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 568",
+      "passed": true,
+      "actual": [
+        [
+          "568",
+          "p-33",
+          "33",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "568",
+          "p-33",
+          "33",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 585",
+      "passed": true,
+      "actual": [
+        [
+          "585",
+          "p-34",
+          "34",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "585",
+          "p-34",
+          "34",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 602",
+      "passed": true,
+      "actual": [
+        [
+          "602",
+          "p-35",
+          "35",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "602",
+          "p-35",
+          "35",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 619",
+      "passed": true,
+      "actual": [
+        [
+          "619",
+          "p-36",
+          "36",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "619",
+          "p-36",
+          "36",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 636",
+      "passed": true,
+      "actual": [
+        [
+          "636",
+          "p-37",
+          "37",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "636",
+          "p-37",
+          "37",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 653",
+      "passed": true,
+      "actual": [
+        [
+          "653",
+          "p-38",
+          "38",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "653",
+          "p-38",
+          "38",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 670",
+      "passed": true,
+      "actual": [
+        [
+          "670",
+          "p-39",
+          "39",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "670",
+          "p-39",
+          "39",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 687",
+      "passed": true,
+      "actual": [
+        [
+          "687",
+          "p-40",
+          "40",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "687",
+          "p-40",
+          "40",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 704",
+      "passed": true,
+      "actual": [
+        [
+          "704",
+          "p-41",
+          "41",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "704",
+          "p-41",
+          "41",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 721",
+      "passed": true,
+      "actual": [
+        [
+          "721",
+          "p-42",
+          "42",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "721",
+          "p-42",
+          "42",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 738",
+      "passed": true,
+      "actual": [
+        [
+          "738",
+          "p-43",
+          "43",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "738",
+          "p-43",
+          "43",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 755",
+      "passed": true,
+      "actual": [
+        [
+          "755",
+          "p-44",
+          "44",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "755",
+          "p-44",
+          "44",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 772",
+      "passed": true,
+      "actual": [
+        [
+          "772",
+          "p-45",
+          "45",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "772",
+          "p-45",
+          "45",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 789",
+      "passed": true,
+      "actual": [
+        [
+          "789",
+          "p-46",
+          "46",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "789",
+          "p-46",
+          "46",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 806",
+      "passed": true,
+      "actual": [
+        [
+          "806",
+          "p-47",
+          "47",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "806",
+          "p-47",
+          "47",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 823",
+      "passed": true,
+      "actual": [
+        [
+          "823",
+          "p-48",
+          "48",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "823",
+          "p-48",
+          "48",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 840",
+      "passed": true,
+      "actual": [
+        [
+          "840",
+          "p-49",
+          "49",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "840",
+          "p-49",
+          "49",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 857",
+      "passed": true,
+      "actual": [
+        [
+          "857",
+          "p-50",
+          "50",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "857",
+          "p-50",
+          "50",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 874",
+      "passed": true,
+      "actual": [
+        [
+          "874",
+          "p-51",
+          "51",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "874",
+          "p-51",
+          "51",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 891",
+      "passed": true,
+      "actual": [
+        [
+          "891",
+          "p-52",
+          "52",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "891",
+          "p-52",
+          "52",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 908",
+      "passed": true,
+      "actual": [
+        [
+          "908",
+          "p-53",
+          "53",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "908",
+          "p-53",
+          "53",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 925",
+      "passed": true,
+      "actual": [
+        [
+          "925",
+          "p-54",
+          "54",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "925",
+          "p-54",
+          "54",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 942",
+      "passed": true,
+      "actual": [
+        [
+          "942",
+          "p-55",
+          "55",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "942",
+          "p-55",
+          "55",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 959",
+      "passed": true,
+      "actual": [
+        [
+          "959",
+          "p-56",
+          "56",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "959",
+          "p-56",
+          "56",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 976",
+      "passed": true,
+      "actual": [
+        [
+          "976",
+          "p-57",
+          "57",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "976",
+          "p-57",
+          "57",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 993",
+      "passed": true,
+      "actual": [
+        [
+          "993",
+          "p-58",
+          "58",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "993",
+          "p-58",
+          "58",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1010",
+      "passed": true,
+      "actual": [
+        [
+          "1010",
+          "p-59",
+          "59",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1010",
+          "p-59",
+          "59",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1027",
+      "passed": true,
+      "actual": [
+        [
+          "1027",
+          "p-60",
+          "60",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1027",
+          "p-60",
+          "60",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1044",
+      "passed": true,
+      "actual": [
+        [
+          "1044",
+          "p-61",
+          "61",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1044",
+          "p-61",
+          "61",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1061",
+      "passed": true,
+      "actual": [
+        [
+          "1061",
+          "p-62",
+          "62",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1061",
+          "p-62",
+          "62",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1078",
+      "passed": true,
+      "actual": [
+        [
+          "1078",
+          "p-63",
+          "63",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1078",
+          "p-63",
+          "63",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1095",
+      "passed": true,
+      "actual": [
+        [
+          "1095",
+          "p-64",
+          "64",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1095",
+          "p-64",
+          "64",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1112",
+      "passed": true,
+      "actual": [
+        [
+          "1112",
+          "p-65",
+          "65",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1112",
+          "p-65",
+          "65",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1129",
+      "passed": true,
+      "actual": [
+        [
+          "1129",
+          "p-66",
+          "66",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1129",
+          "p-66",
+          "66",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1146",
+      "passed": true,
+      "actual": [
+        [
+          "1146",
+          "p-67",
+          "67",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1146",
+          "p-67",
+          "67",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1163",
+      "passed": true,
+      "actual": [
+        [
+          "1163",
+          "p-68",
+          "68",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1163",
+          "p-68",
+          "68",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1180",
+      "passed": true,
+      "actual": [
+        [
+          "1180",
+          "p-69",
+          "69",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1180",
+          "p-69",
+          "69",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1197",
+      "passed": true,
+      "actual": [
+        [
+          "1197",
+          "p-70",
+          "70",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1197",
+          "p-70",
+          "70",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1214",
+      "passed": true,
+      "actual": [
+        [
+          "1214",
+          "p-71",
+          "71",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1214",
+          "p-71",
+          "71",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1231",
+      "passed": true,
+      "actual": [
+        [
+          "1231",
+          "p-72",
+          "72",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1231",
+          "p-72",
+          "72",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1248",
+      "passed": true,
+      "actual": [
+        [
+          "1248",
+          "p-73",
+          "73",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1248",
+          "p-73",
+          "73",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1265",
+      "passed": true,
+      "actual": [
+        [
+          "1265",
+          "p-74",
+          "74",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1265",
+          "p-74",
+          "74",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1282",
+      "passed": true,
+      "actual": [
+        [
+          "1282",
+          "p-75",
+          "75",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1282",
+          "p-75",
+          "75",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1299",
+      "passed": true,
+      "actual": [
+        [
+          "1299",
+          "p-76",
+          "76",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1299",
+          "p-76",
+          "76",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1316",
+      "passed": true,
+      "actual": [
+        [
+          "1316",
+          "p-77",
+          "77",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1316",
+          "p-77",
+          "77",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1333",
+      "passed": true,
+      "actual": [
+        [
+          "1333",
+          "p-78",
+          "78",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1333",
+          "p-78",
+          "78",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1350",
+      "passed": true,
+      "actual": [
+        [
+          "1350",
+          "p-79",
+          "79",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1350",
+          "p-79",
+          "79",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1367",
+      "passed": true,
+      "actual": [
+        [
+          "1367",
+          "p-80",
+          "80",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1367",
+          "p-80",
+          "80",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1384",
+      "passed": true,
+      "actual": [
+        [
+          "1384",
+          "p-81",
+          "81",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1384",
+          "p-81",
+          "81",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1401",
+      "passed": true,
+      "actual": [
+        [
+          "1401",
+          "p-82",
+          "82",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1401",
+          "p-82",
+          "82",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1418",
+      "passed": true,
+      "actual": [
+        [
+          "1418",
+          "p-83",
+          "83",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1418",
+          "p-83",
+          "83",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1435",
+      "passed": true,
+      "actual": [
+        [
+          "1435",
+          "p-84",
+          "84",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1435",
+          "p-84",
+          "84",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1452",
+      "passed": true,
+      "actual": [
+        [
+          "1452",
+          "p-85",
+          "85",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1452",
+          "p-85",
+          "85",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1469",
+      "passed": true,
+      "actual": [
+        [
+          "1469",
+          "p-86",
+          "86",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1469",
+          "p-86",
+          "86",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1486",
+      "passed": true,
+      "actual": [
+        [
+          "1486",
+          "p-87",
+          "87",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1486",
+          "p-87",
+          "87",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1503",
+      "passed": true,
+      "actual": [
+        [
+          "1503",
+          "p-88",
+          "88",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1503",
+          "p-88",
+          "88",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1520",
+      "passed": true,
+      "actual": [
+        [
+          "1520",
+          "p-89",
+          "89",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1520",
+          "p-89",
+          "89",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1537",
+      "passed": true,
+      "actual": [
+        [
+          "1537",
+          "p-90",
+          "90",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1537",
+          "p-90",
+          "90",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1554",
+      "passed": true,
+      "actual": [
+        [
+          "1554",
+          "p-91",
+          "91",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1554",
+          "p-91",
+          "91",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1571",
+      "passed": true,
+      "actual": [
+        [
+          "1571",
+          "p-92",
+          "92",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1571",
+          "p-92",
+          "92",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1588",
+      "passed": true,
+      "actual": [
+        [
+          "1588",
+          "p-93",
+          "93",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1588",
+          "p-93",
+          "93",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1605",
+      "passed": true,
+      "actual": [
+        [
+          "1605",
+          "p-94",
+          "94",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1605",
+          "p-94",
+          "94",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1622",
+      "passed": true,
+      "actual": [
+        [
+          "1622",
+          "p-95",
+          "95",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1622",
+          "p-95",
+          "95",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1639",
+      "passed": true,
+      "actual": [
+        [
+          "1639",
+          "p-96",
+          "96",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1639",
+          "p-96",
+          "96",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1656",
+      "passed": true,
+      "actual": [
+        [
+          "1656",
+          "p-97",
+          "97",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1656",
+          "p-97",
+          "97",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1673",
+      "passed": true,
+      "actual": [
+        [
+          "1673",
+          "p-98",
+          "98",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "1673",
+          "p-98",
+          "98",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "first touch key 1690",
+      "passed": true,
+      "actual": [
+        [
+          "1690",
+          "p-99",
+          "99",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "1690",
+          "p-99",
+          "99",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "native result schema",
+      "passed": true,
+      "actual": [
+        {
+          "name": "id",
+          "type": "Int64"
+        },
+        {
+          "name": "payload",
+          "type": "String"
+        },
+        {
+          "name": "score",
+          "type": "Int64"
+        },
+        {
+          "name": "note",
+          "type": "Nullable(String)"
+        }
+      ],
+      "expected": [
+        {
+          "name": "id",
+          "type": "Int64"
+        },
+        {
+          "name": "payload",
+          "type": "String"
+        },
+        {
+          "name": "score",
+          "type": "Int64"
+        },
+        {
+          "name": "note",
+          "type": "Nullable(String)"
+        }
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "missing key local empty",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "label": "empty result causes no fallback",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "label": "local stats lifecycle",
+      "passed": true,
+      "actual": 404,
+      "expected": 404
+    },
+    {
+      "label": "query route: select payload,note from readyset_gateway_20261113_035740_63d8b8e",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "second declared projection",
+      "passed": true,
+      "actual": [
+        [
+          "p-0",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "p-0",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT payload, note FROM source_rows WHERE id=24",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "unqualified in declared database",
+      "passed": true,
+      "actual": [
+        [
+          "p-1",
+          "中文"
+        ]
+      ],
+      "expected": [
+        [
+          "p-1",
+          "中文"
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT count(*) FROM readyset_gateway_20261113_035740_63d8b8ec.so",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "query route: SELECT * FROM readyset_gateway_20261113_035740_63d8b8ec.source_ro",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "query route: SELECT val FROM readyset_gateway_20261113_035740_63d8b8ec.other_r",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "query route: SELECT payload,note FROM readyset_gateway_20261113_035740_63d8b8e",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "query route: SELECT payload, note FROM readyset_gateway_20261113_035740_63d8b8",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "session-sensitive query kept correct",
+      "passed": true,
+      "actual": [
+        [
+          "p-0",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "p-0",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT number FROM numbers(25)",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "all upstream pages preserve rows",
+      "passed": true,
+      "actual": [
+        [
+          "0"
+        ],
+        [
+          "1"
+        ],
+        [
+          "2"
+        ],
+        [
+          "3"
+        ],
+        [
+          "4"
+        ],
+        [
+          "5"
+        ],
+        [
+          "6"
+        ],
+        [
+          "7"
+        ],
+        [
+          "8"
+        ],
+        [
+          "9"
+        ],
+        [
+          "10"
+        ],
+        [
+          "11"
+        ],
+        [
+          "12"
+        ],
+        [
+          "13"
+        ],
+        [
+          "14"
+        ],
+        [
+          "15"
+        ],
+        [
+          "16"
+        ],
+        [
+          "17"
+        ],
+        [
+          "18"
+        ],
+        [
+          "19"
+        ],
+        [
+          "20"
+        ],
+        [
+          "21"
+        ],
+        [
+          "22"
+        ],
+        [
+          "23"
+        ],
+        [
+          "24"
+        ]
+      ],
+      "expected": [
+        [
+          "0"
+        ],
+        [
+          "1"
+        ],
+        [
+          "2"
+        ],
+        [
+          "3"
+        ],
+        [
+          "4"
+        ],
+        [
+          "5"
+        ],
+        [
+          "6"
+        ],
+        [
+          "7"
+        ],
+        [
+          "8"
+        ],
+        [
+          "9"
+        ],
+        [
+          "10"
+        ],
+        [
+          "11"
+        ],
+        [
+          "12"
+        ],
+        [
+          "13"
+        ],
+        [
+          "14"
+        ],
+        [
+          "15"
+        ],
+        [
+          "16"
+        ],
+        [
+          "17"
+        ],
+        [
+          "18"
+        ],
+        [
+          "19"
+        ],
+        [
+          "20"
+        ],
+        [
+          "21"
+        ],
+        [
+          "22"
+        ],
+        [
+          "23"
+        ],
+        [
+          "24"
+        ]
+      ]
+    },
+    {
+      "label": "upstream pagination actually proxied",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "label": "all upstream pages retain route",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "label": "native databend_driver returns correct values",
+      "passed": true,
+      "actual": [
+        7,
+        "p-0",
+        0,
+        null
+      ],
+      "expected": [
+        7,
+        "p-0",
+        0,
+        null
+      ]
+    },
+    {
+      "label": "native driver actually uses ReadySet",
+      "passed": true,
+      "actual": 104,
+      "expected": 104
+    },
+    {
+      "label": "native driver local query ID",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "label": "native driver unmatched query passthrough",
+      "passed": true,
+      "actual": [
+        "not-cached"
+      ],
+      "expected": [
+        "not-cached"
+      ]
+    },
+    {
+      "label": "native driver returns to declared cache",
+      "passed": true,
+      "actual": [
+        "p-0",
+        null
+      ],
+      "expected": [
+        "p-0",
+        null
+      ]
+    },
+    {
+      "label": "mixed native connection actually reenters ReadySet",
+      "passed": true,
+      "actual": 105,
+      "expected": 105
+    },
+    {
+      "label": "query route: UPDATE readyset_gateway_20261113_035740_63d8b8ec.source_rows SET ",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "gateway write synchronized",
+      "passed": true,
+      "actual": [
+        [
+          "7",
+          "via-gateway",
+          "0",
+          ""
+        ]
+      ],
+      "expected": [
+        [
+          "7",
+          "via-gateway",
+          "0",
+          ""
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "external delete synchronized",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "new never-before-accessed key synchronized",
+      "passed": true,
+      "actual": [
+        [
+          "99999",
+          "never-seen",
+          "-9223372036854775808",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "99999",
+          "never-seen",
+          "-9223372036854775808",
+          null
+        ]
+      ]
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "concurrent local queries correct",
+      "passed": true,
+      "actual": [
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ],
+        [
+          [
+            "7",
+            "via-gateway",
+            "0",
+            ""
+          ]
+        ]
+      ]
+    },
+    {
+      "label": "transaction sees own upstream write",
+      "passed": true,
+      "actual": [
+        [
+          "uncommitted"
+        ]
+      ],
+      "expected": [
+        [
+          "uncommitted"
+        ]
+      ]
+    },
+    {
+      "label": "transaction never used local cache",
+      "passed": true,
+      "actual": 120,
+      "expected": 120
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "readyset",
+      "expected": "readyset"
+    },
+    {
+      "label": "rollback preserved replicated value",
+      "passed": true,
+      "actual": [
+        [
+          "7",
+          "via-gateway",
+          "0",
+          ""
+        ]
+      ],
+      "expected": [
+        [
+          "7",
+          "via-gateway",
+          "0",
+          ""
+        ]
+      ]
+    },
+    {
+      "label": "sync had no failure before fault injection",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "label": "fault injection hook accepted",
+      "passed": true,
+      "actual": 200,
+      "expected": 200
+    },
+    {
+      "label": "query route: SELECT id, payload, score, note FROM readyset_gateway_20261113_03",
+      "passed": true,
+      "actual": "databend",
+      "expected": "databend"
+    },
+    {
+      "label": "engine unavailable falls back to correct source result",
+      "passed": true,
+      "actual": [
+        [
+          "7",
+          "via-gateway",
+          "0",
+          ""
+        ]
+      ],
+      "expected": [
+        [
+          "7",
+          "via-gateway",
+          "0",
+          ""
+        ]
+      ]
+    },
+    {
+      "label": "engine failure disables local routing",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "label": "engine failure is observable",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "label": "gateway clean exit",
+      "passed": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "label": "injected failure remains fail-closed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "label": "sync advanced automatically",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    }
+  ],
+  "facts": {
+    "database": "readyset_gateway_20261113_035740_63d8b8ec",
+    "gateway": {
+      "database": "readyset_gateway_20261113_035740_63d8b8ec",
+      "generation": "rs_e36d72f4e4fc_fe01474ab40d",
+      "instance_id": "e36d72f4e4fc",
+      "listen": "127.0.0.1:40941",
+      "origin": "http://127.0.0.1:40941",
+      "stream": "readyset_gateway_20261113_035740_63d8b8ec.readyset_e36d72f4e4fc_source_rows"
+    },
+    "final_status": {
+      "checkpoint": 12,
+      "counters": {
+        "cache_ddl": 0,
+        "databend": 14,
+        "empty_local": 2,
+        "readyset": 121,
+        "sync_batches": 12
+      },
+      "engine_pid": 9584,
+      "failed": "injected engine failure",
+      "fault_injection": true,
+      "generation": "rs_e36d72f4e4fc_fe01474ab40d",
+      "inflight": 0,
+      "instance_id": "e36d72f4e4fc",
+      "ready": false,
+      "rows": 100,
+      "single_process": true,
+      "uncertain_upstream": false
+    },
+    "upstream_page_requests": 8,
+    "native_reordered_route": null
+  },
+  "database": "readyset_gateway_20261113_035740_63d8b8ec",
+  "raw_directory": "/tmp/readyset-databend-gateway/readyset_gateway_20261113_035740_63d8b8ec"
+}

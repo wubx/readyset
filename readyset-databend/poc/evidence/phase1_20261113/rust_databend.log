@@ -1,0 +1,62 @@
+   Compiling readyset-databend v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-databend)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.36s
+     Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_databend-9cca242e508b0074)
+
+running 20 tests
+test tests::empty_batch_still_carries_a_checkpoint ... ok
+test tests::checksum_contract_matches_python_utf8_and_int64 ... ok
+test tests::duplicate_source_key_rejected ... ok
+test tests::incomplete_or_tampered_batch_rejected_even_when_old ... ok
+test tests::duplicates_and_old_batches_skip_but_gaps_fail ... ok
+test tests::update_order_is_delete_then_insert_then_checkpoint ... ok
+test declaration::tests::native_strings_are_not_stringified_between_parse_and_parameterization ... ok
+test declaration::tests::four_equality_parameters_use_native_binding_metadata ... ok
+test declaration::tests::shape_does_not_ignore_predicates_or_projection ... ok
+test declaration::tests::declaration_requires_placeholders_and_rejects_extra_clauses ... ok
+test declaration::tests::unsupported_in_ranges_and_types_stay_closed ... ok
+test declaration::tests::native_in_matches_slots_and_preserves_grouping ... ok
+test declaration::tests::unsafe_shapes_types_and_sessions_are_misses ... ok
+test declaration::tests::native_rewrite_matches_literal_reads_and_builds_composite_keys ... ok
+test cache_control::tests::native_grammar_resolves_only_authorized_source ... ok
+test declaration::tests::native_numeric_ranges_share_create_read_rewrites ... ok
+test declaration::tests::read_parse_matches_declaration_parse_ast ... ok
+test cache_control::tests::unsupported_options_shapes_and_batches_fail_before_migration ... ok
+test cache_control::tests::duplicate_capacity_and_drop_guards ... ok
+test declaration::tests::in_expansion_uses_native_product_guard ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/bin/bench.rs (/data1/vmbox/readyset/target/debug/deps/databend_bench-f098e225a05490b4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/m1.rs (/data1/vmbox/readyset/target/debug/deps/databend_m1-d60b76c69af4d2f9)
+
+running 4 tests
+test tests::percentiles_use_nearest_rank ... ok
+test tests::null_and_utf8_survive_mapping ... ok
+test tests::duplicate_keys_rejected_before_engine_start ... ok
+test tests::deterministic_shuffle_is_full_permutation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/m2.rs (/data1/vmbox/readyset/target/debug/deps/databend_m2-7eaa70134770abbe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/server.rs (/data1/vmbox/readyset/target/debug/deps/readyset_databend-73525e0bc7f59976)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests readyset_databend
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

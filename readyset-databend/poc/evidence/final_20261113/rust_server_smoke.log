@@ -1,0 +1,23 @@
+   Compiling readyset-server v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.35s
+     Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_server-1bdd45ab1f913b6e)
+
+running 15 tests
+test integration::it_works_with_multiple_arithmetic_expressions ... ok
+test integration::it_works_with_simple_arithmetic ... ok
+test integration::it_works_w_partial_mat_below_empty ... ok
+test integration::it_works_with_duplicate_subquery ... ok
+test integration::it_works_with_arithmetic_aliases ... ok
+test integration::it_works_with_double_query_through ... ok
+test integration::it_works_with_vote ... ok
+test integration::it_works_with_identical_queries ... ok
+test integration::it_works_with_join_arithmetic ... ok
+test integration::it_works_with_sql_recipe ... ok
+test integration::it_works_with_function_arithmetic ... ok
+test integration::it_works_w_partial_mat ... ok
+test integration::it_works_w_mat ... ok
+test integration::it_works_with_reads_before_writes ... ok
+test integration::it_works_deletion ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 307 filtered out; finished in 6.15s
+

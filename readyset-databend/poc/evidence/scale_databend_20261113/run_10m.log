@@ -1,0 +1,171 @@
+database=readyset_gateway_scale_20261113_144428 results=/data1/vmbox/readyset-scale-results-20261113_144428/results.json
+[14:44:28] version: SELECT version()
+    ok rows=1 secs=0.024 first_row=0.023 bytes=1216 sample=[['Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)']]
+[14:44:28] timeout/txn settings: SELECT name, value, default FROM system.settings WHERE name LIKE '%timeout%' OR name LIKE '%txn%' OR name LIKE '%transaction%' ORDER BY name
+    ok rows=10 secs=0.01 first_row=0.009 bytes=1649 sample=[['acquire_lock_timeout', '30', '30'], ['external_server_connect_timeout_secs', '10', '10'], ['external_server_request_timeout_secs', '180', '180'], ['flight_client_timeout', '60', '60'], ['flight_query_leak_timeout_secs', '180', '180'], ['http_handler_result_timeout_secs', '60', '60']]
+[14:44:28] create database: CREATE DATABASE readyset_gateway_scale_20261113_144428
+    ok rows=0 secs=0.037 first_row=None bytes=1090 sample=[]
+[14:44:28] load 10000000 rows: CREATE TABLE readyset_gateway_scale_20261113_144428.t (id BIGINT NOT NULL, payload STRING NOT NULL, score BIGINT NOT NULL, note STRING NULL)
+    ok rows=0 secs=0.04 first_row=None bytes=1090 sample=[]
+[14:44:28] insert 10000000 rows: INSERT INTO readyset_gateway_scale_20261113_144428.t SELECT CAST(number AS BIGINT), concat('p-', to_string(number)), CAST(number % 1000 AS BIGINT), IF
+    ok rows=1 secs=1.081 first_row=1.079 bytes=1196 sample=[['10000000']]
+[14:44:29] table stats: SELECT count(*) FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=1 secs=0.012 first_row=0.01 bytes=1135 sample=[['10000000']]
+[14:44:29] create stream on 10M table: CREATE STREAM readyset_gateway_scale_20261113_144428.s ON TABLE readyset_gateway_scale_20261113_144428.t APPEND_ONLY = false
+    ok rows=0 secs=0.039 first_row=None bytes=1090 sample=[]
+[14:44:29] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.025 first_row=0.024 bytes=1196 sample=[['1', '124687067']]
+[14:44:29] U1M: UPDATE 1000000 rows: UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1 WHERE id % 10 = 0
+    ok rows=1 secs=1.342 first_row=1.34 bytes=1181 sample=[['1000000']]
+[14:44:30] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.028 first_row=0.027 bytes=1196 sample=[['1', '124687067']]
+[14:44:30] U1M: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=1.599 first_row=1.597 bytes=1302 sample=[['DELETE', '1', '1000000'], ['INSERT', '1', '1000000']]
+[14:44:32] U1M (repeat, warm): summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=1.624 first_row=1.622 bytes=1302 sample=[['DELETE', '1', '1000000'], ['INSERT', '1', '1000000']]
+[14:44:33] U1M: BEGIN: BEGIN
+    ok rows=0 secs=0.005 first_row=None bytes=1083 sample=[]
+[14:44:33] U1M: consuming read (all rows, client discards): SELECT id, payload, score, note, change$action, change$row_id, change$is_update FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME
+    ok rows=2000000 secs=2.902 first_row=1.179 bytes=177413123
+[14:44:36] U1M: COMMIT: COMMIT
+    ok rows=0 secs=0.017 first_row=None bytes=1090 sample=[]
+[14:44:36] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.024 first_row=0.023 bytes=1196 sample=[['0', '124687086']]
+[14:44:36] U10M: UPDATE 10000000 rows: UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1 
+    ok rows=1 secs=1.316 first_row=1.313 bytes=1182 sample=[['10000000']]
+[14:44:38] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.027 first_row=0.025 bytes=1196 sample=[['1', '124687086']]
+[14:44:38] U10M: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=1.692 first_row=1.689 bytes=1304 sample=[['DELETE', '1', '10000000'], ['INSERT', '1', '10000000']]
+[14:44:39] U10M (repeat, warm): summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=1.589 first_row=1.586 bytes=1304 sample=[['DELETE', '1', '10000000'], ['INSERT', '1', '10000000']]
+[14:44:41] U10M: BEGIN: BEGIN
+    ok rows=0 secs=0.005 first_row=None bytes=1083 sample=[]
+[14:44:41] U10M: consuming read (all rows, client discards): SELECT id, payload, score, note, change$action, change$row_id, change$is_update FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME
+    ok rows=20000000 secs=16.643 first_row=1.333 bytes=1764151715
+[14:44:58] U10M: COMMIT: COMMIT
+    ok rows=0 secs=0.017 first_row=None bytes=1090 sample=[]
+[14:44:58] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.029 first_row=0.028 bytes=1196 sample=[['0', '124687114']]
+[14:44:58] ADV-limit1: UPDATE 10000000 rows: UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1
+    ok rows=1 secs=1.315 first_row=1.313 bytes=1182 sample=[['10000000']]
+[14:44:59] ADV-limit1: autocommit consuming read: SELECT id FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME LIMIT 1
+    ok rows=1 secs=1.451 first_row=1.449 bytes=1170 sample=[['2500000']]
+[14:45:01] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.025 first_row=0.024 bytes=1196 sample=[['0', '124687179']]
+[14:45:01] ADV-limit1 after: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=0 secs=0.021 first_row=None bytes=1210 sample=[]
+[14:45:01] ADV-where-false: UPDATE 10000000 rows: UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1
+    ok rows=1 secs=1.342 first_row=1.34 bytes=1182 sample=[['10000000']]
+[14:45:02] ADV-where-false: autocommit consuming read: SELECT id FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME WHERE 1 = 0
+    ok rows=0 secs=0.036 first_row=None bytes=1127 sample=[]
+[14:45:02] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.024 first_row=0.023 bytes=1196 sample=[['0', '124687194']]
+[14:45:02] ADV-where-false after: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=0 secs=0.022 first_row=None bytes=1210 sample=[]
+[14:45:02] ADV-count: UPDATE 10000000 rows: UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1
+    ok rows=1 secs=1.348 first_row=1.347 bytes=1182 sample=[['10000000']]
+[14:45:03] ADV-count: autocommit consuming read: SELECT count(*) FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME
+    ok rows=1 secs=1.733 first_row=1.731 bytes=1168 sample=[['20000000']]
+[14:45:05] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.027 first_row=0.026 bytes=1196 sample=[['0', '124687208']]
+[14:45:05] ADV-count after: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=0 secs=0.019 first_row=None bytes=1210 sample=[]
+[14:45:05] U-small for idle test: UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1 WHERE id < 10
+    ok rows=1 secs=0.909 first_row=0.907 bytes=1173 sample=[['10']]
+[14:45:06] IDLE: BEGIN: BEGIN
+    ok rows=0 secs=0.005 first_row=None bytes=1083 sample=[]
+[14:45:06] IDLE: consuming read: SELECT id, payload, score, note, change$action, change$row_id, change$is_update FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME
+    ok rows=20 secs=1.097 first_row=1.095 bytes=2927
+    idle 300s inside transaction
+[14:50:07] IDLE: COMMIT after 300s idle: COMMIT
+    ok rows=0 secs=0.018 first_row=None bytes=1089 sample=[]
+[14:50:07] has_data s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'
+    ok rows=1 secs=0.027 first_row=0.026 bytes=1196 sample=[['0', '124687223']]
+[14:50:07] L-overwrite-same: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_same AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.083 first_row=None bytes=1136 sample=[]
+[14:50:08] L-overwrite-same: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_overwrite_same_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_same APPEND_ON
+    ok rows=0 secs=0.038 first_row=None bytes=1090 sample=[]
+[14:50:08] L-overwrite-same: op (real change: 0 rows): INSERT OVERWRITE readyset_gateway_scale_20261113_144428.c_l_overwrite_same SELECT * FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_same
+    ok rows=1 secs=1.026 first_row=1.024 bytes=1197 sample=[['10000000']]
+[14:50:09] has_data c_l_overwrite_same_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_overwrite_same_s'
+    ok rows=1 secs=0.027 first_row=0.025 bytes=1196 sample=[['1', '124688125']]
+[14:50:09] L-overwrite-same: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_same_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=1.324 first_row=1.322 bytes=1304 sample=[['DELETE', '0', '10000000'], ['INSERT', '0', '10000000']]
+[14:50:11] L-overwrite-1pct: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.057 first_row=None bytes=1136 sample=[]
+[14:50:12] L-overwrite-1pct: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct APPEND_ON
+    ok rows=0 secs=0.037 first_row=None bytes=1090 sample=[]
+[14:50:12] L-overwrite-1pct: op (real change: 1% of rows updated): INSERT OVERWRITE readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct SELECT id, payload, IF(id % 100 = 0, score + 1, score), note FROM readyset_
+    ok rows=1 secs=1.033 first_row=1.03 bytes=1197 sample=[['10000000']]
+[14:50:13] has_data c_l_overwrite_1pct_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_overwrite_1pct_s'
+    ok rows=1 secs=0.031 first_row=0.029 bytes=1197 sample=[['1', '124688156']]
+[14:50:13] L-overwrite-1pct: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=1.403 first_row=1.401 bytes=1304 sample=[['DELETE', '0', '10000000'], ['INSERT', '0', '10000000']]
+[14:50:14] L-replace-1M-half-same: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.176 first_row=None bytes=1136 sample=[]
+[14:50:15] L-replace-1M-half-same: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_sa
+    ok rows=0 secs=0.036 first_row=None bytes=1090 sample=[]
+[14:50:15] L-replace-1M-half-same: op (real change: 500k updated, 500k identical): REPLACE INTO readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same ON (id) SELECT id, payload, IF(id % 2 = 0, score + 1, score), note FROM r
+    ok rows=0 secs=0.966 first_row=None bytes=1295 sample=[]
+[14:50:16] has_data c_l_replace_1m_half_same_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_replace_1m_half_same_s'
+    ok rows=1 secs=0.034 first_row=0.033 bytes=1197 sample=[['1', '124688188']]
+[14:50:16] L-replace-1M-half-same: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=2 secs=0.747 first_row=0.745 bytes=1297 sample=[['DELETE', '0', '1000000'], ['INSERT', '0', '1000000']]
+[14:50:17] L-merge-500k-upd-500k-ins: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.125 first_row=None bytes=1136 sample=[]
+[14:50:18] L-merge-500k-upd-500k-ins: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_
+    ok rows=0 secs=0.036 first_row=None bytes=1090 sample=[]
+[14:50:18] L-merge-500k-upd-500k-ins: op (real change: 500k updated, 500k inserted): MERGE INTO readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins USING (SELECT CAST(number + 9500000 AS BIGINT) AS id, 'm' AS payload, CA
+    ok rows=1 secs=0.971 first_row=0.97 bytes=1249 sample=[['500000', '500000']]
+[14:50:19] has_data c_l_merge_500k_upd_500k_ins_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_merge_500k_upd_500k_ins_s'
+    ok rows=1 secs=0.028 first_row=0.027 bytes=1197 sample=[['1', '124688221']]
+[14:50:19] L-merge-500k-upd-500k-ins: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=3 secs=0.853 first_row=0.851 bytes=1319 sample=[['DELETE', '1', '500000'], ['INSERT', '0', '500000'], ['INSERT', '1', '500000']]
+[14:50:20] L-delete-1M: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_delete_1m AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.075 first_row=None bytes=1136 sample=[]
+[14:50:21] L-delete-1M: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_delete_1m_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_delete_1m APPEND_ONLY = false
+    ok rows=0 secs=0.036 first_row=None bytes=1090 sample=[]
+[14:50:21] L-delete-1M: op (real change: 1M deleted): DELETE FROM readyset_gateway_scale_20261113_144428.c_l_delete_1m WHERE id % 10 = 1
+    ok rows=1 secs=1.202 first_row=1.2 bytes=1180 sample=[['1000000']]
+[14:50:23] has_data c_l_delete_1m_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_delete_1m_s'
+    ok rows=1 secs=0.033 first_row=0.031 bytes=1197 sample=[['1', '124688258']]
+[14:50:23] L-delete-1M: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_delete_1m_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=1 secs=1.506 first_row=1.504 bytes=1277 sample=[['DELETE', '0', '1000000']]
+[14:50:24] L-truncate: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_truncate AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.047 first_row=None bytes=1136 sample=[]
+[14:50:25] L-truncate: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_truncate_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_truncate APPEND_ONLY = false
+    ok rows=0 secs=0.038 first_row=None bytes=1090 sample=[]
+[14:50:25] L-truncate: op (real change: all rows deleted): TRUNCATE TABLE readyset_gateway_scale_20261113_144428.c_l_truncate
+    ok rows=0 secs=0.068 first_row=None bytes=1090 sample=[]
+[14:50:25] has_data c_l_truncate_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_truncate_s'
+    ok rows=1 secs=0.03 first_row=0.029 bytes=1197 sample=[['1', '124688296']]
+[14:50:25] L-truncate: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_truncate_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=1 secs=1.354 first_row=1.351 bytes=1277 sample=[['DELETE', '0', '10000000']]
+[14:50:27] L-recluster: copy 10M: CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_recluster AS SELECT * FROM readyset_gateway_scale_20261113_144428.t
+    ok rows=0 secs=1.083 first_row=None bytes=1136 sample=[]
+[14:50:28] L-recluster: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_recluster_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_recluster APPEND_ONLY = false
+    ok rows=0 secs=0.038 first_row=None bytes=1090 sample=[]
+[14:50:28] L-recluster: op (real change: 0 rows (followed by RECLUSTER FINAL)): ALTER TABLE readyset_gateway_scale_20261113_144428.c_l_recluster CLUSTER BY (score)
+    ok rows=0 secs=0.039 first_row=None bytes=1090 sample=[]
+[14:50:28] L-recluster: RECLUSTER FINAL: ALTER TABLE readyset_gateway_scale_20261113_144428.c_l_recluster RECLUSTER FINAL
+    ok rows=0 secs=14.987 first_row=None bytes=2850 sample=[]
+[14:50:43] has_data c_l_recluster_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_recluster_s'
+    ok rows=1 secs=0.035 first_row=0.033 bytes=1197 sample=[['1', '124688326']]
+[14:50:43] L-recluster: summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_recluster_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=0 secs=0.088 first_row=None bytes=1236 sample=[]
+[14:50:43] COMPACT: create: CREATE TABLE readyset_gateway_scale_20261113_144428.frag (id BIGINT NOT NULL, payload STRING NOT NULL, score BIGINT NOT NULL, note STRING NULL)
+    ok rows=0 secs=0.042 first_row=None bytes=1090 sample=[]
+[14:51:01] COMPACT: blocks before: SELECT block_count, row_count FROM fuse_snapshot('readyset_gateway_scale_20261113_144428', 'frag') LIMIT 1
+    ok rows=1 secs=0.014 first_row=0.012 bytes=1181 sample=[['7', '1000000']]
+[14:51:01] COMPACT: stream: CREATE STREAM readyset_gateway_scale_20261113_144428.frag_s ON TABLE readyset_gateway_scale_20261113_144428.frag APPEND_ONLY = false
+    ok rows=0 secs=0.034 first_row=None bytes=1090 sample=[]
+[14:51:01] COMPACT: OPTIMIZE TABLE COMPACT: OPTIMIZE TABLE readyset_gateway_scale_20261113_144428.frag COMPACT
+    ok rows=0 secs=0.538 first_row=None bytes=1117 sample=[]
+[14:51:01] COMPACT: blocks after: SELECT block_count, row_count FROM fuse_snapshot('readyset_gateway_scale_20261113_144428', 'frag') LIMIT 1
+    ok rows=1 secs=0.013 first_row=0.012 bytes=1181 sample=[['1', '1000000']]
+[14:51:01] has_data frag_s: SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='frag_s'
+    ok rows=1 secs=0.034 first_row=0.033 bytes=1197 sample=[['1', '124689013']]
+[14:51:01] COMPACT (real change: 0): summary (non-consuming): SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.frag_s GROUP BY 1, 2 ORDER BY 1, 2
+    ok rows=0 secs=0.065 first_row=None bytes=1232 sample=[]
+DONE

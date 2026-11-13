@@ -1,0 +1,6 @@
+   Compiling readyset-version v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-version)
+   Compiling readyset-telemetry-reporter v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-telemetry-reporter)
+   Compiling replicators v0.1.0 (/data1/vmbox/readyset-single-binary/replicators)
+   Compiling readyset-server v0.7.0 (/data1/vmbox/readyset-single-binary/readyset-server)
+   Compiling readyset-databend v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-databend)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2m 07s

@@ -1,0 +1,1438 @@
+{
+  "database": "readyset_gateway_scale_20261113_144428",
+  "rows": 10000000,
+  "endpoint": "http://192.168.191.96:8000",
+  "started": "20261113_144428",
+  "steps": [
+    {
+      "name": "version",
+      "sql": "SELECT version()",
+      "rows": 1,
+      "secs": 0.024,
+      "first_row_secs": 0.023,
+      "pages": 1,
+      "bytes": 1216,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)"
+        ]
+      ]
+    },
+    {
+      "name": "timeout/txn settings",
+      "sql": "SELECT name, value, default FROM system.settings WHERE name LIKE '%timeout%' OR name LIKE '%txn%' OR name LIKE '%transaction%' ORDER BY name",
+      "rows": 10,
+      "secs": 0.01,
+      "first_row_secs": 0.009,
+      "pages": 1,
+      "bytes": 1649,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "acquire_lock_timeout",
+          "30",
+          "30"
+        ],
+        [
+          "external_server_connect_timeout_secs",
+          "10",
+          "10"
+        ],
+        [
+          "external_server_request_timeout_secs",
+          "180",
+          "180"
+        ],
+        [
+          "flight_client_timeout",
+          "60",
+          "60"
+        ],
+        [
+          "flight_query_leak_timeout_secs",
+          "180",
+          "180"
+        ],
+        [
+          "http_handler_result_timeout_secs",
+          "60",
+          "60"
+        ],
+        [
+          "idle_transaction_timeout_secs",
+          "14400",
+          "14400"
+        ],
+        [
+          "queries_queue_retry_timeout",
+          "300",
+          "300"
+        ],
+        [
+          "recluster_timeout_secs",
+          "43200",
+          "43200"
+        ],
+        [
+          "statement_queued_timeout_in_seconds",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "name": "create database",
+      "sql": "CREATE DATABASE readyset_gateway_scale_20261113_144428",
+      "rows": 0,
+      "secs": 0.037,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "load 10000000 rows",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.t (id BIGINT NOT NULL, payload STRING NOT NULL, score BIGINT NOT NULL, note STRING NULL)",
+      "rows": 0,
+      "secs": 0.04,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "insert 10000000 rows",
+      "sql": "INSERT INTO readyset_gateway_scale_20261113_144428.t SELECT CAST(number AS BIGINT), concat('p-', to_string(number)), CAST(number % 1000 AS BIGINT), IF(number % 2 = 0, NULL, 'n') FROM numbers(10000000)",
+      "rows": 1,
+      "secs": 1.081,
+      "first_row_secs": 1.079,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "table stats",
+      "sql": "SELECT count(*) FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 1,
+      "secs": 0.012,
+      "first_row_secs": 0.01,
+      "pages": 1,
+      "bytes": 1135,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "create stream on 10M table",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.s ON TABLE readyset_gateway_scale_20261113_144428.t APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.039,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.025,
+      "first_row_secs": 0.024,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124687067"
+        ]
+      ]
+    },
+    {
+      "name": "U1M: UPDATE 1000000 rows",
+      "sql": "UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1 WHERE id % 10 = 0",
+      "rows": 1,
+      "secs": 1.342,
+      "first_row_secs": 1.34,
+      "pages": 1,
+      "bytes": 1181,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.028,
+      "first_row_secs": 0.027,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124687067"
+        ]
+      ]
+    },
+    {
+      "name": "U1M: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 1.599,
+      "first_row_secs": 1.597,
+      "pages": 1,
+      "bytes": 1302,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "1",
+          "1000000"
+        ],
+        [
+          "INSERT",
+          "1",
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "U1M (repeat, warm): summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 1.624,
+      "first_row_secs": 1.622,
+      "pages": 1,
+      "bytes": 1302,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "1",
+          "1000000"
+        ],
+        [
+          "INSERT",
+          "1",
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "U1M: BEGIN",
+      "sql": "BEGIN",
+      "rows": 0,
+      "secs": 0.005,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1083,
+      "txn_state": "Active",
+      "sample": []
+    },
+    {
+      "name": "U1M: consuming read (all rows, client discards)",
+      "sql": "SELECT id, payload, score, note, change$action, change$row_id, change$is_update FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME",
+      "rows": 2000000,
+      "secs": 2.902,
+      "first_row_secs": 1.179,
+      "pages": 65,
+      "bytes": 177413123,
+      "txn_state": "Active",
+      "sample": []
+    },
+    {
+      "name": "U1M: COMMIT",
+      "sql": "COMMIT",
+      "rows": 0,
+      "secs": 0.017,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "U1M: transaction total",
+      "secs": 2.925,
+      "read_rows": 2000000,
+      "commit_error": null
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.024,
+      "first_row_secs": 0.023,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "0",
+          "124687086"
+        ]
+      ]
+    },
+    {
+      "name": "U10M: UPDATE 10000000 rows",
+      "sql": "UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1 ",
+      "rows": 1,
+      "secs": 1.316,
+      "first_row_secs": 1.313,
+      "pages": 1,
+      "bytes": 1182,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.027,
+      "first_row_secs": 0.025,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124687086"
+        ]
+      ]
+    },
+    {
+      "name": "U10M: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 1.692,
+      "first_row_secs": 1.689,
+      "pages": 1,
+      "bytes": 1304,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "1",
+          "10000000"
+        ],
+        [
+          "INSERT",
+          "1",
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "U10M (repeat, warm): summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 1.589,
+      "first_row_secs": 1.586,
+      "pages": 1,
+      "bytes": 1304,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "1",
+          "10000000"
+        ],
+        [
+          "INSERT",
+          "1",
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "U10M: BEGIN",
+      "sql": "BEGIN",
+      "rows": 0,
+      "secs": 0.005,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1083,
+      "txn_state": "Active",
+      "sample": []
+    },
+    {
+      "name": "U10M: consuming read (all rows, client discards)",
+      "sql": "SELECT id, payload, score, note, change$action, change$row_id, change$is_update FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME",
+      "rows": 20000000,
+      "secs": 16.643,
+      "first_row_secs": 1.333,
+      "pages": 642,
+      "bytes": 1764151715,
+      "txn_state": "Active",
+      "sample": []
+    },
+    {
+      "name": "U10M: COMMIT",
+      "sql": "COMMIT",
+      "rows": 0,
+      "secs": 0.017,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "U10M: transaction total",
+      "secs": 16.667,
+      "read_rows": 20000000,
+      "commit_error": null
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.029,
+      "first_row_secs": 0.028,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "0",
+          "124687114"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-limit1: UPDATE 10000000 rows",
+      "sql": "UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1",
+      "rows": 1,
+      "secs": 1.315,
+      "first_row_secs": 1.313,
+      "pages": 1,
+      "bytes": 1182,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-limit1: autocommit consuming read",
+      "sql": "SELECT id FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME LIMIT 1",
+      "rows": 1,
+      "secs": 1.451,
+      "first_row_secs": 1.449,
+      "pages": 1,
+      "bytes": 1170,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "2500000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.025,
+      "first_row_secs": 0.024,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "0",
+          "124687179"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-limit1 after: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 0,
+      "secs": 0.021,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1210,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "ADV-where-false: UPDATE 10000000 rows",
+      "sql": "UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1",
+      "rows": 1,
+      "secs": 1.342,
+      "first_row_secs": 1.34,
+      "pages": 1,
+      "bytes": 1182,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-where-false: autocommit consuming read",
+      "sql": "SELECT id FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME WHERE 1 = 0",
+      "rows": 0,
+      "secs": 0.036,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1127,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.024,
+      "first_row_secs": 0.023,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "0",
+          "124687194"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-where-false after: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 0,
+      "secs": 0.022,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1210,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "ADV-count: UPDATE 10000000 rows",
+      "sql": "UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1",
+      "rows": 1,
+      "secs": 1.348,
+      "first_row_secs": 1.347,
+      "pages": 1,
+      "bytes": 1182,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-count: autocommit consuming read",
+      "sql": "SELECT count(*) FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME",
+      "rows": 1,
+      "secs": 1.733,
+      "first_row_secs": 1.731,
+      "pages": 1,
+      "bytes": 1168,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "20000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.027,
+      "first_row_secs": 0.026,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "0",
+          "124687208"
+        ]
+      ]
+    },
+    {
+      "name": "ADV-count after: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 0,
+      "secs": 0.019,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1210,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "U-small for idle test",
+      "sql": "UPDATE readyset_gateway_scale_20261113_144428.t SET score = score + 1 WHERE id < 10",
+      "rows": 1,
+      "secs": 0.909,
+      "first_row_secs": 0.907,
+      "pages": 1,
+      "bytes": 1173,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10"
+        ]
+      ]
+    },
+    {
+      "name": "IDLE: BEGIN",
+      "sql": "BEGIN",
+      "rows": 0,
+      "secs": 0.005,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1083,
+      "txn_state": "Active",
+      "sample": []
+    },
+    {
+      "name": "IDLE: consuming read",
+      "sql": "SELECT id, payload, score, note, change$action, change$row_id, change$is_update FROM readyset_gateway_scale_20261113_144428.s WITH CONSUME",
+      "rows": 20,
+      "secs": 1.097,
+      "first_row_secs": 1.095,
+      "pages": 1,
+      "bytes": 2927,
+      "txn_state": "Active",
+      "sample": [
+        [
+          "0",
+          "p-0",
+          "5",
+          null,
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000000",
+          "1"
+        ],
+        [
+          "1",
+          "p-1",
+          "5",
+          "n",
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000001",
+          "1"
+        ],
+        [
+          "2",
+          "p-2",
+          "6",
+          null,
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000002",
+          "1"
+        ],
+        [
+          "3",
+          "p-3",
+          "7",
+          "n",
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000003",
+          "1"
+        ],
+        [
+          "4",
+          "p-4",
+          "8",
+          null,
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000004",
+          "1"
+        ],
+        [
+          "5",
+          "p-5",
+          "9",
+          "n",
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000005",
+          "1"
+        ],
+        [
+          "6",
+          "p-6",
+          "10",
+          null,
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000006",
+          "1"
+        ],
+        [
+          "7",
+          "p-7",
+          "11",
+          "n",
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000007",
+          "1"
+        ],
+        [
+          "8",
+          "p-8",
+          "12",
+          null,
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000008",
+          "1"
+        ],
+        [
+          "9",
+          "p-9",
+          "13",
+          "n",
+          "DELETE",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000009",
+          "1"
+        ],
+        [
+          "0",
+          "p-0",
+          "6",
+          null,
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000000",
+          "1"
+        ],
+        [
+          "1",
+          "p-1",
+          "6",
+          "n",
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000001",
+          "1"
+        ],
+        [
+          "2",
+          "p-2",
+          "7",
+          null,
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000002",
+          "1"
+        ],
+        [
+          "3",
+          "p-3",
+          "8",
+          "n",
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000003",
+          "1"
+        ],
+        [
+          "4",
+          "p-4",
+          "9",
+          null,
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000004",
+          "1"
+        ],
+        [
+          "5",
+          "p-5",
+          "10",
+          "n",
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000005",
+          "1"
+        ],
+        [
+          "6",
+          "p-6",
+          "11",
+          null,
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000006",
+          "1"
+        ],
+        [
+          "7",
+          "p-7",
+          "12",
+          "n",
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000007",
+          "1"
+        ],
+        [
+          "8",
+          "p-8",
+          "13",
+          null,
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000008",
+          "1"
+        ],
+        [
+          "9",
+          "p-9",
+          "14",
+          "n",
+          "INSERT",
+          "01a1d8cce1cd7a6bbcbdd9f31f354d07000009",
+          "1"
+        ]
+      ]
+    },
+    {
+      "name": "IDLE: COMMIT after 300s idle",
+      "sql": "COMMIT",
+      "rows": 0,
+      "secs": 0.018,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1089,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "has_data s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='s'",
+      "rows": 1,
+      "secs": 0.027,
+      "first_row_secs": 0.026,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "0",
+          "124687223"
+        ]
+      ]
+    },
+    {
+      "name": "L-overwrite-same: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_same AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.083,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-overwrite-same: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_overwrite_same_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_same APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.038,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-overwrite-same: op (real change: 0 rows)",
+      "sql": "INSERT OVERWRITE readyset_gateway_scale_20261113_144428.c_l_overwrite_same SELECT * FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_same",
+      "rows": 1,
+      "secs": 1.026,
+      "first_row_secs": 1.024,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data c_l_overwrite_same_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_overwrite_same_s'",
+      "rows": 1,
+      "secs": 0.027,
+      "first_row_secs": 0.025,
+      "pages": 1,
+      "bytes": 1196,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688125"
+        ]
+      ]
+    },
+    {
+      "name": "L-overwrite-same: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_same_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 1.324,
+      "first_row_secs": 1.322,
+      "pages": 1,
+      "bytes": 1304,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "0",
+          "10000000"
+        ],
+        [
+          "INSERT",
+          "0",
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "L-overwrite-1pct: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.057,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-overwrite-1pct: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.037,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-overwrite-1pct: op (real change: 1% of rows updated)",
+      "sql": "INSERT OVERWRITE readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct SELECT id, payload, IF(id % 100 = 0, score + 1, score), note FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct",
+      "rows": 1,
+      "secs": 1.033,
+      "first_row_secs": 1.03,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data c_l_overwrite_1pct_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_overwrite_1pct_s'",
+      "rows": 1,
+      "secs": 0.031,
+      "first_row_secs": 0.029,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688156"
+        ]
+      ]
+    },
+    {
+      "name": "L-overwrite-1pct: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_overwrite_1pct_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 1.403,
+      "first_row_secs": 1.401,
+      "pages": 1,
+      "bytes": 1304,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "0",
+          "10000000"
+        ],
+        [
+          "INSERT",
+          "0",
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "L-replace-1M-half-same: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.176,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-replace-1M-half-same: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.036,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-replace-1M-half-same: op (real change: 500k updated, 500k identical)",
+      "sql": "REPLACE INTO readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same ON (id) SELECT id, payload, IF(id % 2 = 0, score + 1, score), note FROM readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same WHERE id < 1000000",
+      "rows": 0,
+      "secs": 0.966,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1295,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "has_data c_l_replace_1m_half_same_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_replace_1m_half_same_s'",
+      "rows": 1,
+      "secs": 0.034,
+      "first_row_secs": 0.033,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688188"
+        ]
+      ]
+    },
+    {
+      "name": "L-replace-1M-half-same: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_replace_1m_half_same_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 2,
+      "secs": 0.747,
+      "first_row_secs": 0.745,
+      "pages": 1,
+      "bytes": 1297,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "0",
+          "1000000"
+        ],
+        [
+          "INSERT",
+          "0",
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "L-merge-500k-upd-500k-ins: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.125,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-merge-500k-upd-500k-ins: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.036,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-merge-500k-upd-500k-ins: op (real change: 500k updated, 500k inserted)",
+      "sql": "MERGE INTO readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins USING (SELECT CAST(number + 9500000 AS BIGINT) AS id, 'm' AS payload, CAST(-1 AS BIGINT) AS score, CAST(NULL AS STRING) AS note FROM numbers(1000000)) AS s ON readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins.id = s.id WHEN MATCHED THEN UPDATE SET score = s.score WHEN NOT MATCHED THEN INSERT *",
+      "rows": 1,
+      "secs": 0.971,
+      "first_row_secs": 0.97,
+      "pages": 1,
+      "bytes": 1249,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "500000",
+          "500000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data c_l_merge_500k_upd_500k_ins_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_merge_500k_upd_500k_ins_s'",
+      "rows": 1,
+      "secs": 0.028,
+      "first_row_secs": 0.027,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688221"
+        ]
+      ]
+    },
+    {
+      "name": "L-merge-500k-upd-500k-ins: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_merge_500k_upd_500k_ins_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 3,
+      "secs": 0.853,
+      "first_row_secs": 0.851,
+      "pages": 1,
+      "bytes": 1319,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "1",
+          "500000"
+        ],
+        [
+          "INSERT",
+          "0",
+          "500000"
+        ],
+        [
+          "INSERT",
+          "1",
+          "500000"
+        ]
+      ]
+    },
+    {
+      "name": "L-delete-1M: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_delete_1m AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.075,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-delete-1M: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_delete_1m_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_delete_1m APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.036,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-delete-1M: op (real change: 1M deleted)",
+      "sql": "DELETE FROM readyset_gateway_scale_20261113_144428.c_l_delete_1m WHERE id % 10 = 1",
+      "rows": 1,
+      "secs": 1.202,
+      "first_row_secs": 1.2,
+      "pages": 1,
+      "bytes": 1180,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data c_l_delete_1m_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_delete_1m_s'",
+      "rows": 1,
+      "secs": 0.033,
+      "first_row_secs": 0.031,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688258"
+        ]
+      ]
+    },
+    {
+      "name": "L-delete-1M: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_delete_1m_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 1,
+      "secs": 1.506,
+      "first_row_secs": 1.504,
+      "pages": 1,
+      "bytes": 1277,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "0",
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "L-truncate: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_truncate AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.047,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-truncate: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_truncate_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_truncate APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.038,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-truncate: op (real change: all rows deleted)",
+      "sql": "TRUNCATE TABLE readyset_gateway_scale_20261113_144428.c_l_truncate",
+      "rows": 0,
+      "secs": 0.068,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "has_data c_l_truncate_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_truncate_s'",
+      "rows": 1,
+      "secs": 0.03,
+      "first_row_secs": 0.029,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688296"
+        ]
+      ]
+    },
+    {
+      "name": "L-truncate: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_truncate_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 1,
+      "secs": 1.354,
+      "first_row_secs": 1.351,
+      "pages": 1,
+      "bytes": 1277,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "DELETE",
+          "0",
+          "10000000"
+        ]
+      ]
+    },
+    {
+      "name": "L-recluster: copy 10M",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.c_l_recluster AS SELECT * FROM readyset_gateway_scale_20261113_144428.t",
+      "rows": 0,
+      "secs": 1.083,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1136,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-recluster: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.c_l_recluster_s ON TABLE readyset_gateway_scale_20261113_144428.c_l_recluster APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.038,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-recluster: op (real change: 0 rows (followed by RECLUSTER FINAL))",
+      "sql": "ALTER TABLE readyset_gateway_scale_20261113_144428.c_l_recluster CLUSTER BY (score)",
+      "rows": 0,
+      "secs": 0.039,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "L-recluster: RECLUSTER FINAL",
+      "sql": "ALTER TABLE readyset_gateway_scale_20261113_144428.c_l_recluster RECLUSTER FINAL",
+      "rows": 0,
+      "secs": 14.987,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 2850,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "has_data c_l_recluster_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='c_l_recluster_s'",
+      "rows": 1,
+      "secs": 0.035,
+      "first_row_secs": 0.033,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124688326"
+        ]
+      ]
+    },
+    {
+      "name": "L-recluster: summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.c_l_recluster_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 0,
+      "secs": 0.088,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1236,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "COMPACT: create",
+      "sql": "CREATE TABLE readyset_gateway_scale_20261113_144428.frag (id BIGINT NOT NULL, payload STRING NOT NULL, score BIGINT NOT NULL, note STRING NULL)",
+      "rows": 0,
+      "secs": 0.042,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "COMPACT: blocks before",
+      "sql": "SELECT block_count, row_count FROM fuse_snapshot('readyset_gateway_scale_20261113_144428', 'frag') LIMIT 1",
+      "rows": 1,
+      "secs": 0.014,
+      "first_row_secs": 0.012,
+      "pages": 1,
+      "bytes": 1181,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "7",
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "COMPACT: stream",
+      "sql": "CREATE STREAM readyset_gateway_scale_20261113_144428.frag_s ON TABLE readyset_gateway_scale_20261113_144428.frag APPEND_ONLY = false",
+      "rows": 0,
+      "secs": 0.034,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1090,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "COMPACT: OPTIMIZE TABLE COMPACT",
+      "sql": "OPTIMIZE TABLE readyset_gateway_scale_20261113_144428.frag COMPACT",
+      "rows": 0,
+      "secs": 0.538,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1117,
+      "txn_state": "AutoCommit",
+      "sample": []
+    },
+    {
+      "name": "COMPACT: blocks after",
+      "sql": "SELECT block_count, row_count FROM fuse_snapshot('readyset_gateway_scale_20261113_144428', 'frag') LIMIT 1",
+      "rows": 1,
+      "secs": 0.013,
+      "first_row_secs": 0.012,
+      "pages": 1,
+      "bytes": 1181,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "1000000"
+        ]
+      ]
+    },
+    {
+      "name": "has_data frag_s",
+      "sql": "SELECT has_data, table_version FROM system.streams WHERE database='readyset_gateway_scale_20261113_144428' AND name='frag_s'",
+      "rows": 1,
+      "secs": 0.034,
+      "first_row_secs": 0.033,
+      "pages": 1,
+      "bytes": 1197,
+      "txn_state": "AutoCommit",
+      "sample": [
+        [
+          "1",
+          "124689013"
+        ]
+      ]
+    },
+    {
+      "name": "COMPACT (real change: 0): summary (non-consuming)",
+      "sql": "SELECT change$action, change$is_update, count(*) FROM readyset_gateway_scale_20261113_144428.frag_s GROUP BY 1, 2 ORDER BY 1, 2",
+      "rows": 0,
+      "secs": 0.065,
+      "first_row_secs": null,
+      "pages": 0,
+      "bytes": 1232,
+      "txn_state": "AutoCommit",
+      "sample": []
+    }
+  ],
+  "finished": "20261113_145101"
+}

@@ -8,6 +8,12 @@
 - [M2-A：Stream 增量同步、UPDATE / DELETE 与重复投递](poc/M2.md)
 - [声明式统一入口：Databend HTTP 本地查询与透传](poc/GATEWAY.md)
 
+**单二进制 `readyset-databend`（第 1 阶段）**：一个 Rust 进程同时提供 Databend HTTP 入口、进程内 ReadySet 缓存
+和基于 Stream 的增量同步，替代 `gateway.py` + `databend-m2` 子进程，可用 Docker 部署。
+Databend 侧只为每张同步表建一个 Stream，不建库、不建其他表。
+见 [部署说明](docker/README.md)、[设计](DESIGN.md) 和 [验证证据](poc/evidence/phase1_20261113/README.md)。
+千万行规模测试：[Databend 侧](poc/evidence/scale_databend_20261113/README.md)、[ReadySet 侧](poc/evidence/scale_readyset_20261113/README.md)。
+
 当前通过 HTTP SQL 动态声明同表多个缓存；复用 ReadySet 原生解析、rewrite/参数化、recipe 和 read_cache 查询链路，
 第三阶段扩展 IN 和数值范围：
 
