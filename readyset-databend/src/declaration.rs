@@ -103,7 +103,7 @@ impl Declaration {
     /// Unsupported syntax/types are conservative misses, never rewritten by this crate.
     pub fn read_query(&self, sql: &str, database: &str) -> Option<NativeQuery> {
         native_query::compile(
-            native_query::parse_select(sql).ok()?,
+            native_query::parse_read_select(sql).ok()?,
             self,
             database,
             native_query::LOCAL_TABLE,
@@ -405,6 +405,27 @@ mod tests {
             assert!(
                 d.template_for_sql("c".into(), sql, "poc", native_query::LOCAL_TABLE)
                     .is_err(),
+                "{sql}"
+            );
+        }
+    }
+
+    #[test]
+    fn read_parse_matches_declaration_parse_ast() {
+        // Reads skip nom-sql comparison; the AST must equal the BothPreferSqlparser result.
+        for sql in [
+            "SELECT id,payload,score,note FROM poc.source_rows WHERE id = 7",
+            "SELECT id,payload FROM poc.source_rows WHERE id = -9223372036854775808",
+            "SELECT id FROM poc.source_rows WHERE id = 9223372036854775807",
+            "SELECT id,payload FROM poc.source_rows WHERE id IN (1,2,2,-3)",
+            "SELECT payload FROM poc.source_rows WHERE payload IN ('a','b''c','\\\\x','é')",
+            "SELECT id FROM poc.source_rows WHERE score BETWEEN -5 AND 5 AND note='n'",
+            "SELECT id FROM poc.source_rows WHERE score >= 1 AND score < 9",
+            "SELECT note FROM source_rows WHERE payload = 'x' AND score = 3 AND id = 1",
+        ] {
+            assert_eq!(
+                native_query::parse_read_select(sql).unwrap(),
+                native_query::parse_select(sql).unwrap(),
                 "{sql}"
             );
         }

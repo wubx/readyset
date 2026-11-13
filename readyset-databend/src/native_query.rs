@@ -1,10 +1,12 @@
 //! ReadySet's native adapter rewrite/read path, with a bounded Databend source context.
 //! The validator below is an allowlist, NOT a parameterizer or query executor.
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 use anyhow::{Context, Result, bail, ensure};
 use readyset_client::View;
 use readyset_client::query::QueryId;
+use readyset_client::read::LocalReader;
 use readyset_data::{DfType, DfValue};
 use readyset_sql::ast::*;
 use readyset_sql::{Dialect, DialectDisplay};
@@ -64,6 +66,18 @@ pub fn check_sql(sql: &str) -> Result<()> {
 }
 
 pub fn parse_select(sql: &str) -> Result<SelectStatement> {
+    parse_select_with(sql, ParsingPreset::for_prod())
+}
+
+/// Read-path parse. `for_prod` (BothPreferSqlparser) already returns the sqlparser-derived
+/// AST whenever sqlparser succeeds; nom-sql only runs for divergence warnings and fallback.
+/// Reads skip that comparison, as ReadySet itself does in shallow mode. If sqlparser cannot
+/// parse a read it is a conservative miss (upstream), never a different local AST.
+pub fn parse_read_select(sql: &str) -> Result<SelectStatement> {
+    parse_select_with(sql, ParsingPreset::OnlySqlparser)
+}
+
+fn parse_select_with(sql: &str, preset: ParsingPreset) -> Result<SelectStatement> {
     check_sql(sql)?;
     // Guard syntax that conversion to the ReadySet AST might otherwise discard (time travel,
     // locks, table hints, etc.). This checks the raw statement envelope, not query identity.
@@ -108,7 +122,7 @@ pub fn parse_select(sql: &str) -> Result<SelectStatement> {
             .any(|t| matches!(t, Token::DoubleQuotedString(_))),
         "double-quoted string semantics not supported"
     );
-    match parse_query_with_config(ParsingPreset::for_prod(), Dialect::MySQL, sql)? {
+    match parse_query_with_config(preset, Dialect::MySQL, sql)? {
         SqlQuery::Select(select) => Ok(select),
         _ => bail!("single SELECT required"),
     }
@@ -132,6 +146,16 @@ impl SourceContext {
             body: table.body.map_err(anyhow::Error::msg)?,
         })
     }
+}
+
+/// The catalog is fixed DDL, so parse it once instead of on every compiled read.
+fn source_context() -> Result<&'static SourceContext> {
+    static CONTEXT: OnceLock<SourceContext> = OnceLock::new();
+    if let Some(context) = CONTEXT.get() {
+        return Ok(context);
+    }
+    let context = SourceContext::new()?;
+    Ok(CONTEXT.get_or_init(|| context))
 }
 impl AdapterRewriteContext for SourceContext {}
 impl RewriteDialectContext for SourceContext {
@@ -390,10 +414,10 @@ pub fn compile(
     // Use the existing native pass at the SAME boundary for CREATE and SELECT. Otherwise
     // adapter rewrites leave literal BETWEEN bounds inline until the later controller pass.
     select.rewrite_between();
-    let context = SourceContext::new()?;
+    let context = source_context()?;
     let mut flags = AdapterRewriteParams::new(Dialect::MySQL);
     flags.server_supports_mixed_comparisons = true;
-    let params = rewrite_query(&mut select, flags, &context)?;
+    let params = rewrite_query(&mut select, flags, context)?;
     ensure!(
         matches!(input, Input::Declaration) || params.user_param_placeholders()?.is_empty(),
         "HTTP text SELECT cannot bind placeholders"
@@ -444,11 +468,22 @@ pub async fn read(
     query: &NativeQuery,
     params: &DfQueryParameters,
 ) -> Result<Option<LocalResult>> {
+    read_with(view, None, query, params).await
+}
+
+/// Same as [`read`], optionally through the server's in-process reader (the production
+/// standalone adapter path) instead of the View's TCP RPC.
+pub async fn read_with(
+    view: &mut View,
+    local: Option<&mut (dyn LocalReader + '_)>,
+    query: &NativeQuery,
+    params: &DfQueryParameters,
+) -> Result<Option<LocalResult>> {
     let keys = params.make_keys::<DfValue>(&[])?;
     let (_, offset) = params.limit_offset_params(&[])?;
     let result = readyset_client::read::read_cache(
         view,
-        None,
+        local,
         keys,
         // A sentinel row detects overflow; it is NEVER returned as a truncated success.
         // This bounds returned rows, not the engine's range-scan work or total heap usage.

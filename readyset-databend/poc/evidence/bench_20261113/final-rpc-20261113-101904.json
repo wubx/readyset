@@ -1,0 +1,476 @@
+{
+  "cache_secs": 3.19,
+  "cpus": 32,
+  "duration_secs": 10,
+  "in_keys": 10,
+  "load_secs": 1.87,
+  "mode": "rpc",
+  "passed": true,
+  "range_rows": 50,
+  "rows": 1000000,
+  "rss_mib_after_load": 2090,
+  "rss_mib_end": 2090,
+  "scope": "in-process engine read path; load generator shares CPUs; no HTTP, no Databend",
+  "score_group": 10,
+  "steps": [
+    {
+      "concurrency": 1,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 810.32,
+        "mean_us": 114.48,
+        "p50_us": 112.9,
+        "p90_us": 121.62,
+        "p999_us": 165.3,
+        "p99_us": 143.77
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 8681.5,
+      "requests": 86815,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 848.28,
+        "mean_us": 137.41,
+        "p50_us": 135.98,
+        "p90_us": 159.43,
+        "p999_us": 225.64,
+        "p99_us": 183.03
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 57818.9,
+      "requests": 578189,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 2950.12,
+        "mean_us": 250.22,
+        "p50_us": 229.53,
+        "p90_us": 342.49,
+        "p999_us": 777.64,
+        "p99_us": 521.26
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 125279.0,
+      "requests": 1252790,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 128,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 10844.7,
+        "mean_us": 701.12,
+        "p50_us": 657.9,
+        "p90_us": 996.58,
+        "p999_us": 3644.98,
+        "p99_us": 1876.25
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 175244.8,
+      "requests": 1752448,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 1,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 261.34,
+        "mean_us": 44.16,
+        "p50_us": 43.19,
+        "p90_us": 49.71,
+        "p999_us": 83.44,
+        "p99_us": 64.43
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 22591.0,
+      "requests": 225910,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 861.99,
+        "mean_us": 48.73,
+        "p50_us": 47.25,
+        "p90_us": 60.92,
+        "p999_us": 112.97,
+        "p99_us": 77.83
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 163329.3,
+      "requests": 1633293,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 1267.96,
+        "mean_us": 92.84,
+        "p50_us": 89.99,
+        "p90_us": 117.68,
+        "p999_us": 397.79,
+        "p99_us": 180.59
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 340234.0,
+      "requests": 3402340,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 128,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 3706.25,
+        "mean_us": 244.55,
+        "p50_us": 226.52,
+        "p90_us": 356.55,
+        "p999_us": 1081.05,
+        "p99_us": 592.9
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 513323.8,
+      "requests": 5133238,
+      "workload": "point",
+      "writes": null
+    },
+    {
+      "concurrency": 1,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 288.17,
+        "mean_us": 150.0,
+        "p50_us": 147.98,
+        "p90_us": 158.23,
+        "p999_us": 219.12,
+        "p99_us": 187.04
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 6605.8,
+      "requests": 66058,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 868.33,
+        "mean_us": 173.38,
+        "p50_us": 171.47,
+        "p90_us": 200.42,
+        "p999_us": 292.23,
+        "p99_us": 227.39
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 45718.5,
+      "requests": 457185,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 9260.89,
+        "mean_us": 314.58,
+        "p50_us": 293.46,
+        "p90_us": 414.91,
+        "p999_us": 1057.37,
+        "p99_us": 599.65
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 99303.8,
+      "requests": 993038,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 128,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 21203.59,
+        "mean_us": 933.24,
+        "p50_us": 878.86,
+        "p90_us": 1322.67,
+        "p999_us": 4410.75,
+        "p99_us": 2585.73
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 130981.9,
+      "requests": 1309819,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 1,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 258.95,
+        "mean_us": 55.61,
+        "p50_us": 54.51,
+        "p90_us": 61.51,
+        "p999_us": 88.07,
+        "p99_us": 73.94
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 17947.4,
+      "requests": 179474,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 528.79,
+        "mean_us": 63.89,
+        "p50_us": 62.62,
+        "p90_us": 76.73,
+        "p999_us": 116.53,
+        "p99_us": 95.56
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 124731.6,
+      "requests": 1247316,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 1711.4,
+        "mean_us": 117.32,
+        "p50_us": 110.71,
+        "p90_us": 150.77,
+        "p999_us": 491.2,
+        "p99_us": 271.79
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 269093.1,
+      "requests": 2690931,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 128,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 11354.26,
+        "mean_us": 328.29,
+        "p50_us": 300.94,
+        "p90_us": 478.81,
+        "p999_us": 1795.57,
+        "p99_us": 905.45
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 379306.7,
+      "requests": 3793067,
+      "workload": "in",
+      "writes": null
+    },
+    {
+      "concurrency": 1,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 273.31,
+        "mean_us": 146.99,
+        "p50_us": 144.94,
+        "p90_us": 156.46,
+        "p999_us": 209.21,
+        "p99_us": 180.24
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 6762.9,
+      "requests": 67629,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 626.54,
+        "mean_us": 166.47,
+        "p50_us": 165.27,
+        "p90_us": 190.21,
+        "p999_us": 250.36,
+        "p99_us": 217.92
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 47758.1,
+      "requests": 477581,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 3359.24,
+        "mean_us": 306.33,
+        "p50_us": 285.4,
+        "p90_us": 407.98,
+        "p999_us": 959.58,
+        "p99_us": 593.08
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 102326.3,
+      "requests": 1023263,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 128,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 33778.37,
+        "mean_us": 924.27,
+        "p50_us": 840.83,
+        "p90_us": 1301.17,
+        "p999_us": 6216.1,
+        "p99_us": 3034.88
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 132814.9,
+      "requests": 1328149,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 1,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 286.47,
+        "mean_us": 70.92,
+        "p50_us": 68.98,
+        "p90_us": 78.59,
+        "p999_us": 110.94,
+        "p99_us": 95.9
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 14077.5,
+      "requests": 140775,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 2478.46,
+        "mean_us": 80.72,
+        "p50_us": 78.81,
+        "p90_us": 94.71,
+        "p999_us": 257.42,
+        "p99_us": 123.05
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 98788.5,
+      "requests": 987885,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 1878.32,
+        "mean_us": 145.89,
+        "p50_us": 136.07,
+        "p90_us": 189.01,
+        "p999_us": 561.82,
+        "p99_us": 331.6
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 216651.0,
+      "requests": 2166510,
+      "workload": "range",
+      "writes": null
+    },
+    {
+      "concurrency": 128,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 6156.56,
+        "mean_us": 445.8,
+        "p50_us": 409.83,
+        "p90_us": 643.76,
+        "p999_us": 2471.26,
+        "p99_us": 1240.83
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 278702.3,
+      "requests": 2787023,
+      "workload": "range",
+      "writes": null
+    }
+  ],
+  "warmup_secs": 2,
+  "worker_threads": null,
+  "write_rps_target": 0
+}

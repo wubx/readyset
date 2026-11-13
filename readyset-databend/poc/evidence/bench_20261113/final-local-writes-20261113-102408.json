@@ -1,0 +1,380 @@
+{
+  "cache_secs": 3.48,
+  "cpus": 32,
+  "duration_secs": 10,
+  "in_keys": 10,
+  "load_secs": 1.97,
+  "mode": "local",
+  "passed": true,
+  "range_rows": 50,
+  "rows": 1000000,
+  "rss_mib_after_load": 6774,
+  "rss_mib_end": 6774,
+  "scope": "in-process engine read path; load generator shares CPUs; no HTTP, no Databend",
+  "score_group": 10,
+  "steps": [
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 2994.9,
+        "mean_us": 56.91,
+        "p50_us": 55.03,
+        "p90_us": 61.97,
+        "p999_us": 115.54,
+        "p99_us": 93.41
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 139314.2,
+      "requests": 1393142,
+      "workload": "point",
+      "writes": {
+        "achieved_rps": 20012.98,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 387659.89,
+          "mean_us": 6046.98,
+          "p50_us": 5383.93,
+          "p90_us": 9373.28,
+          "p999_us": 10797.74,
+          "p99_us": 10437.29
+        }
+      }
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 57621.39,
+        "mean_us": 101.76,
+        "p50_us": 90.67,
+        "p90_us": 101.8,
+        "p999_us": 3105.08,
+        "p99_us": 193.99
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 311094.1,
+      "requests": 3110941,
+      "workload": "point",
+      "writes": {
+        "achieved_rps": 19954.1,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 13920.86,
+          "mean_us": 5512.55,
+          "p50_us": 5310.76,
+          "p90_us": 9777.22,
+          "p999_us": 13458.5,
+          "p99_us": 12052.47
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 216.25,
+        "mean_us": 2.29,
+        "p50_us": 2.18,
+        "p90_us": 2.8,
+        "p999_us": 8.38,
+        "p99_us": 3.68
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 3404463.5,
+      "requests": 34044635,
+      "workload": "point",
+      "writes": {
+        "achieved_rps": 20009.34,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 10990.66,
+          "mean_us": 5433.9,
+          "p50_us": 5270.35,
+          "p90_us": 9297.55,
+          "p999_us": 10527.28,
+          "p99_us": 10381.62
+        }
+      }
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 26175.43,
+        "mean_us": 3.89,
+        "p50_us": 3.51,
+        "p90_us": 4.07,
+        "p999_us": 24.38,
+        "p99_us": 5.21
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 8006007.7,
+      "requests": 80060077,
+      "workload": "point",
+      "writes": {
+        "achieved_rps": 20012.92,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 802739.56,
+          "mean_us": 7269.93,
+          "p50_us": 5882.4,
+          "p90_us": 9968.35,
+          "p999_us": 13925.9,
+          "p99_us": 12182.62
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 1515.84,
+        "mean_us": 88.44,
+        "p50_us": 86.25,
+        "p90_us": 96.98,
+        "p999_us": 139.57,
+        "p99_us": 124.74
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 89331.7,
+      "requests": 893317,
+      "workload": "in",
+      "writes": {
+        "achieved_rps": 19993.65,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 12184.18,
+          "mean_us": 5502.37,
+          "p50_us": 5414.04,
+          "p90_us": 9579.29,
+          "p999_us": 10980.21,
+          "p99_us": 10576.24
+        }
+      }
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 37501.97,
+        "mean_us": 152.3,
+        "p50_us": 136.43,
+        "p90_us": 150.88,
+        "p999_us": 3158.39,
+        "p99_us": 332.31
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 206907.6,
+      "requests": 2069076,
+      "workload": "in",
+      "writes": {
+        "achieved_rps": 19933.07,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 40495.92,
+          "mean_us": 5624.6,
+          "p50_us": 5554.64,
+          "p90_us": 9733.49,
+          "p999_us": 20117.08,
+          "p99_us": 12526.59
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 269.98,
+        "mean_us": 12.65,
+        "p50_us": 12.47,
+        "p90_us": 13.93,
+        "p999_us": 25.23,
+        "p99_us": 17.67
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 628606.4,
+      "requests": 6286064,
+      "workload": "in",
+      "writes": {
+        "achieved_rps": 20000.22,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 11383.64,
+          "mean_us": 5396.91,
+          "p50_us": 5336.61,
+          "p90_us": 9361.74,
+          "p999_us": 11129.11,
+          "p99_us": 10694.27
+        }
+      }
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 28863.78,
+        "mean_us": 18.69,
+        "p50_us": 17.45,
+        "p90_us": 19.19,
+        "p999_us": 168.25,
+        "p99_us": 30.46
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 1696302.3,
+      "requests": 16963023,
+      "workload": "in",
+      "writes": {
+        "achieved_rps": 19982.18,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 13294.85,
+          "mean_us": 5932.3,
+          "p50_us": 6015.27,
+          "p90_us": 10094.8,
+          "p999_us": 13217.38,
+          "p99_us": 12014.64
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 14179.12,
+        "mean_us": 80.94,
+        "p50_us": 76.18,
+        "p90_us": 94.81,
+        "p999_us": 160.27,
+        "p99_us": 143.12
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 98034.1,
+      "requests": 980341,
+      "workload": "range",
+      "writes": {
+        "achieved_rps": 19989.15,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 15164.71,
+          "mean_us": 5633.62,
+          "p50_us": 5602.56,
+          "p90_us": 9646.34,
+          "p999_us": 13194.42,
+          "p99_us": 11490.22
+        }
+      }
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 31124.61,
+        "mean_us": 130.67,
+        "p50_us": 116.6,
+        "p90_us": 130.17,
+        "p999_us": 3134.44,
+        "p99_us": 291.73
+      },
+      "mismatches": 0,
+      "path": "sql",
+      "qps": 242459.6,
+      "requests": 2424596,
+      "workload": "range",
+      "writes": {
+        "achieved_rps": 19986.5,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 16002.39,
+          "mean_us": 5386.43,
+          "p50_us": 5276.47,
+          "p90_us": 9774.93,
+          "p999_us": 13217.45,
+          "p99_us": 11769.59
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 1031.55,
+        "mean_us": 19.43,
+        "p50_us": 19.3,
+        "p90_us": 22.29,
+        "p999_us": 34.36,
+        "p99_us": 27.94
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 410017.4,
+      "requests": 4100174,
+      "workload": "range",
+      "writes": {
+        "achieved_rps": 20012.12,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 10871.21,
+          "mean_us": 5313.22,
+          "p50_us": 5294.9,
+          "p90_us": 9309.78,
+          "p999_us": 10739.2,
+          "p99_us": 10476.18
+        }
+      }
+    },
+    {
+      "concurrency": 32,
+      "errors": 0,
+      "first_error": null,
+      "latency": {
+        "max_us": 43390.01,
+        "mean_us": 31.05,
+        "p50_us": 28.73,
+        "p90_us": 33.0,
+        "p999_us": 402.51,
+        "p99_us": 45.99
+      },
+      "mismatches": 0,
+      "path": "prepared",
+      "qps": 1022147.1,
+      "requests": 10221471,
+      "workload": "range",
+      "writes": {
+        "achieved_rps": 19990.95,
+        "lag_resolution": "~1ms timer + 20ms probe interval",
+        "visibility_lag": {
+          "max_us": 1605086.86,
+          "mean_us": 9084.08,
+          "p50_us": 5832.86,
+          "p90_us": 10059.68,
+          "p999_us": 1605086.86,
+          "p99_us": 13009.07
+        }
+      }
+    }
+  ],
+  "warmup_secs": 2,
+  "worker_threads": null,
+  "write_rps_target": 20000
+}
