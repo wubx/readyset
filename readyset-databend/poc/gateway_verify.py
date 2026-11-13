@@ -294,9 +294,15 @@ class Verification:
             log=(self.output/'gateway_stderr.log').open('w')
             stdout=(self.output/'gateway_stdout.log').open('w')
             binding = ['--database', db, '--table', 'source_rows'] if self.args.sql_declarations else ['--declarations', str(declaration)]
-            self.child=subprocess.Popen([sys.executable,'-B',str(Path(__file__).with_name('gateway.py')),
-                '--endpoint',self.args.endpoint,'--user',self.args.user,*binding,
-                '--output',str(self.output/'service'),'--binary',self.args.binary,'--port','0','--interval','1','--confirm-create'],stdout=stdout,stderr=log)
+            common = ['--endpoint',self.args.endpoint,'--user',self.args.user,*binding,
+                      '--output',str(self.output/'service'),'--port','0','--interval','1','--confirm-create']
+            if self.args.gateway_binary:
+                # Single-binary front end: same HTTP contract, engine in-process.
+                command = [self.args.gateway_binary, *common, '--enable-fault-injection',
+                           *(['--oracle'] if self.args.oracle else [])]
+            else:
+                command = [sys.executable,'-B',str(Path(__file__).with_name('gateway.py')), *common, '--binary', self.args.binary]
+            self.child=subprocess.Popen(command,stdout=stdout,stderr=log)
             deadline=time.monotonic()+75
             while not (self.output/'service/listening.json').exists():
                 if self.child.poll() is not None:raise RuntimeError('gateway exited; inspect gateway_stderr.log')
@@ -402,7 +408,11 @@ class Verification:
             self.check('sync had no failure before fault injection',healthy['failed'],None)
             # Terminate ONLY the engine child owned by this newly started test gateway.
             # This tests fail-closed routing, NOT crash recovery or state restoration.
-            os.kill(healthy['engine_pid'],signal.SIGTERM)
+            if healthy.get('single_process'):
+                # The engine is in-process: fail it closed through the test-only hook.
+                self.check('fault injection hook accepted',self.http('POST','/__fault/engine',{})['status'],200)
+            else:
+                os.kill(healthy['engine_pid'],signal.SIGTERM)
             time.sleep(.1)
             rows,_,_=self.point(7,route='databend')
             self.check('engine unavailable falls back to correct source result',rows,[['7','via-gateway','0','']])
@@ -441,6 +451,8 @@ def main():
     p.add_argument('--endpoint',required=True)
     p.add_argument('--user',default='root')
     p.add_argument('--binary',default='target/debug/databend-m2')
+    p.add_argument('--gateway-binary',help='run the readyset-databend single binary instead of gateway.py + databend-m2')
+    p.add_argument('--oracle',action='store_true',help='with --gateway-binary: POC content-oracle mode (re-verify the whole replica per batch)')
     p.add_argument('--output',default='/tmp/readyset-databend-gateway')
     p.add_argument('--confirm-create',action='store_true')
     p.add_argument('--sql-declarations',action='store_true',help='start without JSON queries; exercise runtime CREATE/SHOW/DROP CACHE')

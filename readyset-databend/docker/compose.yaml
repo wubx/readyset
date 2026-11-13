@@ -1,0 +1,20 @@
+# Example: readyset-databend in front of an existing Databend.
+#
+#   DATABEND_PASSWORD=... docker compose -f readyset-databend/docker/compose.yaml up -d
+#
+# Applications then use http://<host>:8001 instead of the Databend address.
+services:
+  readyset-databend:
+    image: readyset-databend:dev
+    restart: unless-stopped
+    environment:
+      DATABEND_PASSWORD: ${DATABEND_PASSWORD:?set DATABEND_PASSWORD}
+      RUST_LOG: warn
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./readyset-databend.toml:/etc/readyset-databend/readyset-databend.toml:ro
+      - readyset-databend-data:/var/lib/readyset-databend
+
+volumes:
+  readyset-databend-data:

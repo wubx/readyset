@@ -6524,6 +6524,8 @@ name = "readyset-databend"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "axum",
+ "base64 0.23.1",
  "clap",
  "database-utils",
  "dataflow-state",
@@ -6535,13 +6537,17 @@ dependencies = [
  "readyset-sql",
  "readyset-sql-parsing",
  "readyset-sql-passes",
+ "readyset-util",
  "replication-offset",
+ "reqwest 0.13.5",
  "serde",
  "serde_json",
  "sha2 0.11.1",
  "sqlparser 0.63.0",
  "tokio",
+ "toml",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

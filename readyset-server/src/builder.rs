@@ -384,6 +384,24 @@ impl Builder {
         self,
         authority: Arc<Authority>,
     ) -> impl Future<Output = Result<(Handle, ShutdownSender), anyhow::Error>> {
+        self.start_inner(authority, None)
+    }
+
+    /// Like [`Builder::start`], but the worker and the reader RPC listener use the supplied
+    /// reader map, so the caller can also read it in-process (via `ReadRequestHandler`).
+    pub fn start_with_shared_readers(
+        self,
+        authority: Arc<Authority>,
+        readers: dataflow::Readers,
+    ) -> impl Future<Output = Result<(Handle, ShutdownSender), anyhow::Error>> {
+        self.start_inner(authority, Some(readers))
+    }
+
+    fn start_inner(
+        self,
+        authority: Arc<Authority>,
+        shared_readers: Option<dataflow::Readers>,
+    ) -> impl Future<Output = Result<(Handle, ShutdownSender), anyhow::Error>> {
         let Builder {
             listen_addr,
             external_addr,
@@ -415,6 +433,7 @@ impl Builder {
             wait_for_failpoint,
             unquery,
             dialect,
+            shared_readers,
         )
     }
 

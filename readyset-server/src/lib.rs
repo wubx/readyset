@@ -401,7 +401,7 @@ use controller::migrate::materialization;
 pub use controller::migrate::materialization::FrontierStrategy;
 use controller::sql;
 use database_utils::UpstreamConfig;
-pub use dataflow::{DurabilityMode, PersistenceParameters};
+pub use dataflow::{DurabilityMode, PersistenceParameters, Readers};
 pub use petgraph::graph::NodeIndex;
 pub use readyset_client::consensus::{Authority, LocalAuthority};
 pub use readyset_client::*;

@@ -1,9 +1,12 @@
-//! Experimental Databend outbox types and strictly serial single-table sink.
+//! Databend Stream change types and the strictly serial single-table ReadySet sink.
 //! No native Databend SQL frontend and no distributed consumer ownership protocol.
 pub mod cache_control;
 pub mod declaration;
+pub mod engine;
 pub mod native_query;
 pub mod reader_fence;
+pub mod replicator;
+pub mod upstream;
 
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
@@ -17,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceRow {
     pub id: i64,
@@ -182,8 +185,19 @@ impl Sink {
     }
 
     pub async fn wait_persisted(&self, controller: &mut ReadySetHandle, target: u64) -> Result<()> {
+        self.wait_persisted_for(controller, target, Duration::from_secs(30))
+            .await
+    }
+
+    /// As [`Sink::wait_persisted`], for bulk loads and large batches that need longer.
+    pub async fn wait_persisted_for(
+        &self,
+        controller: &mut ReadySetHandle,
+        target: u64,
+        limit: Duration,
+    ) -> Result<()> {
         let mut observed = String::from("no checkpoint observed");
-        tokio::time::timeout(Duration::from_secs(30), async {
+        tokio::time::timeout(limit, async {
             loop {
                 let current = self.checkpoint(controller).await?;
                 let persisted = controller.min_persisted_replication_offset().await?;

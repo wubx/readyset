@@ -391,6 +391,9 @@ pub(crate) async fn start_instance_inner(
 
 /// Start up a new instance and return a handle to it. Dropping the handle will stop the
 /// instance. Make sure that this method is run while on a runtime.
+///
+/// `shared_readers`, when given, is the reader map used by BOTH the reader RPC listener and
+/// the worker, so an in-process caller can also read it directly (as embedded adapters do).
 pub(super) async fn start_instance(
     authority: Arc<Authority>,
     listen_addr: IpAddr,
@@ -405,6 +408,7 @@ pub(super) async fn start_instance(
     wait_for_failpoint: bool,
     unquery: bool,
     dialect: Option<Dialect>,
+    shared_readers: Option<Readers>,
 ) -> Result<(Handle, ShutdownSender), anyhow::Error> {
     let Config {
         abort_on_task_failure,
@@ -414,7 +418,8 @@ pub(super) async fn start_instance(
 
     let (shutdown_tx, shutdown_rx) = shutdown::channel();
 
-    let readers: Readers = Arc::new(Mutex::new(Default::default()));
+    let readers: Readers =
+        shared_readers.unwrap_or_else(|| Arc::new(Mutex::new(Default::default())));
     let reader_addr = start_readers(
         listen_addr,
         external_addr,

@@ -1,33 +1,23 @@
-//! JSON-lines experiment driver for a live Databend capture process.
-//! Stdin/out are local test orchestration, NOT an authenticated application protocol.
-use std::collections::{HashMap, HashSet};
+//! M2 stdin/stdout experiment runner around the shared in-process engine.
+//! Protocol and JSON responses are unchanged; the ReadySet logic lives in `engine.rs`.
+use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use anyhow::{Context, Result, ensure};
 use clap::Parser;
-use dataflow_state::{DurabilityMode, PersistenceParameters};
-use readyset_client::recipe::changelist::{Change, ChangeList};
-use readyset_client::{ReaderHandle, ReadySetHandle, View};
-use readyset_data::{DfValue, Dialect};
-use readyset_databend::cache_control::{self, CacheControl};
-use readyset_databend::declaration::{Declaration, Template};
-use readyset_databend::native_query::{self, NativeQuery};
-use readyset_databend::{Batch, Sink, SourceRow, delivery, reader_fence};
-use readyset_server::{Builder, Handle};
-use readyset_sql::ast::TrxCachePolicy;
-use replication_offset::ReplicationOffset;
+use readyset_databend::declaration::Declaration;
+use readyset_databend::engine::{Engine, EngineConfig, ReadOutcome};
+use readyset_databend::native_query::LOCAL_TABLE;
+use readyset_databend::{Batch, SourceRow};
 use replication_offset::databend::DatabendPosition;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 
 use readyset_alloc as _;
-
-const TABLE: &str = "m2_source";
-const QUERY: &str = "m2_by_id";
 
 #[derive(Parser)]
 struct Args {
@@ -83,295 +73,13 @@ async fn emit(value: &Value) -> Result<()> {
     Ok(())
 }
 
-async fn wait_rows(reader: &mut ReaderHandle, count: usize) -> Result<()> {
-    tokio::time::timeout(Duration::from_secs(30), async {
-        loop {
-            if reader.len().await? == count {
-                return Ok::<_, anyhow::Error>(());
-            }
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    })
-    .await
-    .context("reader row-count convergence timeout")?
-}
-
-async fn verify(
-    reader: &mut ReaderHandle,
-    label: String,
-    rows: Vec<SourceRow>,
-    missing: Vec<i64>,
-) -> Result<Value> {
-    ensure!(
-        rows.len() + missing.len() <= 20000,
-        "verification request too large"
-    );
-    let ids: HashSet<_> = rows.iter().map(|r| r.id).collect();
-    ensure!(ids.len() == rows.len(), "expected source keys not unique");
-    ensure!(
-        missing.iter().all(|id| !ids.contains(id)),
-        "conflicting expected/missing keys"
-    );
-    let started = Instant::now();
-    // ReaderHandle::len counts key slots; deleted keys may retain empty slots.
-    // Validate live contents instead of equating that size to the source row count.
-    for (id, expected) in rows
-        .iter()
-        .map(|r| (r.id, vec![r.values()]))
-        .chain(missing.iter().map(|&id| (id, vec![])))
-    {
-        tokio::time::timeout(Duration::from_secs(5), async {
-            loop {
-                let actual = reader
-                    .lookup(&[id.into()], Dialect::DEFAULT_MYSQL)
-                    .await?
-                    .into_vec();
-                if actual == expected {
-                    return Ok::<_, anyhow::Error>(());
-                }
-                tokio::time::sleep(Duration::from_millis(5)).await;
-            }
-        })
-        .await
-        .with_context(|| format!("query result mismatch for {label}, key {id}"))??;
-    }
-    let keys = reader.keys().await?;
-    let mut extra_keys_checked = 0;
-    for key in &keys {
-        ensure!(key.len() == 1, "unexpected composite reader key");
-        let id = i64::try_from(key[0].clone())?;
-        if !ids.contains(&id) {
-            let actual = reader.lookup(key, Dialect::DEFAULT_MYSQL).await?.into_vec();
-            ensure!(
-                actual.is_empty(),
-                "unexpected extra live row at key {id}: {actual:?}"
-            );
-            extra_keys_checked += 1;
-        }
-    }
-    Ok(
-        json!({"ok":true,"label":label,"rows_verified":rows.len(),"missing_verified":missing.len(),
-              "live_rows_verified":rows.len(),"reader_key_slots":reader.len().await?,
-              "extra_keys_checked":extra_keys_checked,"elapsed_ms":started.elapsed().as_secs_f64()*1000.0}),
-    )
-}
-
-fn internal_query(declaration: &Declaration) -> Result<NativeQuery> {
-    Ok(declaration
-        .template_for_sql(
-            "barrier".into(),
-            &format!(
-                "SELECT id,payload,score,note FROM {}.{} WHERE id=?",
-                declaration.database, declaration.table
-            ),
-            &declaration.database,
-            TABLE,
-        )?
-        .query)
-}
-
-async fn create_reader(
-    handle: &mut Handle,
-    template: &Template,
-    internal: &NativeQuery,
-) -> Result<View> {
-    // Compare FULL native query identity, not merely its projection. All-column score lookups
-    // must never alias the protected id barrier. ReadySet DROP removes identical-query aliases.
-    let name = if template.query.same_shape(internal) {
-        QUERY
-    } else {
-        handle
-            .extend_recipe(ChangeList::from_change(
-                Change::create_cache(
-                    template.name.clone(),
-                    template.query.statement.clone(),
-                    TrxCachePolicy::Never,
-                    None,
-                    None,
-                ),
-                Dialect::DEFAULT_MYSQL,
-            ))
-            .await?;
-        template.name.as_str()
-    };
-    let view = handle.view(name).await?;
-    ensure!(
-        matches!(&view, View::Single(_)),
-        "single declared reader required"
-    );
-    ensure!(
-        handle
-            .materialization_info()
-            .await?
-            .iter()
-            .all(|m| !m.partial),
-        "partial query state"
-    );
-    Ok(view)
-}
-
-struct DeclaredReader {
-    view: View,
-    /// Every previously witnessed physical key is checked again, including keys vacated by
-    /// UPDATE/DELETE. This is an oracle only, never application key construction.
-    witnessed: HashSet<Vec<DfValue>>,
-}
-
-async fn fence_template(
-    template: &Template,
-    reader: &mut DeclaredReader,
-    rows: &[SourceRow],
-) -> Result<()> {
-    let mut expected: HashMap<Vec<DfValue>, Vec<Vec<DfValue>>> = HashMap::new();
-    for row in rows {
-        let key = reader_fence::physical_key(&reader.view, row)?;
-        // Equality/IN NULL predicates are not admitted; native point lookups skip NULL keys.
-        if !key.iter().any(DfValue::is_none) {
-            expected
-                .entry(key)
-                .or_default()
-                .push(template.query.project(row));
-        }
-    }
-    for bag in expected.values_mut() {
-        bag.sort();
-    }
-    reader.witnessed.extend(expected.keys().cloned());
-    // Inspect all comparable physical keys, including stale extras. NULL predicate slots
-    // remain unadmitted. No SQL predicate evaluator or inverse parameter mapping is needed.
-    let View::Single(handle) = &mut reader.view else {
-        anyhow::bail!("single reader required")
-    };
-    reader.witnessed.extend(
-        handle
-            .keys()
-            .await?
-            .into_iter()
-            .filter(|key| !key.iter().any(DfValue::is_none)),
-    );
-    ensure!(
-        reader.witnessed.len() <= 20000,
-        "POC oracle key history exceeds 20000; restart required"
-    );
-    for params in &reader.witnessed {
-        let wanted = expected.get(params).cloned().unwrap_or_default();
-        tokio::time::timeout(Duration::from_secs(5), async {
-            loop {
-                let mut actual = reader_fence::point_contents(&mut reader.view, params).await?;
-                actual.sort();
-                if actual == wanted {
-                    return Ok::<_, anyhow::Error>(());
-                }
-                tokio::time::sleep(Duration::from_millis(5)).await;
-            }
-        })
-        .await
-        .with_context(|| format!("declared reader barrier timeout: {}", template.name))??;
-    }
-    Ok(())
-}
-
-fn cache_listing(templates: &[Template]) -> Value {
-    json!({"ok":true,"schema":[{"name":"name","type":"String"},
-        {"name":"query","type":"String"},{"name":"state","type":"String"}],
-        "data":templates.iter().map(|t| vec![t.name.clone(),t.source_sql.clone(),"ready".into()]).collect::<Vec<_>>(),
-        "caches":templates.iter().map(|t| t.name.clone()).collect::<Vec<_>>()})
-}
-
-async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
-    let declaration: Option<Declaration> = args
-        .declarations
-        .as_ref()
-        .map(|p| -> Result<_> { Ok(serde_json::from_reader(File::open(p)?)?) })
-        .transpose()?;
-    let mut templates = declaration
-        .as_ref()
-        .map(|d| d.templates(TABLE))
-        .transpose()?
-        .unwrap_or_default();
-    handle.backend_ready().await;
-    handle
-        .extend_recipe(ChangeList::from_strings(
-            vec![native_query::LOCAL_DDL],
-            Dialect::DEFAULT_MYSQL,
-        )?)
-        .await?;
-    let fallback = Declaration {
-        database: "poc".into(),
-        table: "source_rows".into(),
-        queries: vec![],
-    };
-    let internal = internal_query(declaration.as_ref().unwrap_or(&fallback))?;
-    let rows: Vec<SourceRow> = BufReader::new(File::open(&args.input)?)
-        .lines()
-        .map(|line| Ok(serde_json::from_str(&line?)?))
-        .collect::<Result<_>>()?;
-    ensure!(
-        !rows.is_empty() && rows.len() <= 10000,
-        "M2 initial row count must be 1..10000"
-    );
-    ensure!(
-        rows.iter().map(|r| r.id).collect::<HashSet<_>>().len() == rows.len(),
-        "duplicate initial key"
-    );
-    let mut table = handle.table(TABLE).await?;
-    for chunk in rows.chunks(1000) {
-        table
-            .insert_many(chunk.iter().map(SourceRow::values))
-            .await?;
-    }
-    table
-        .set_replication_offset(ReplicationOffset::Databend(DatabendPosition::new(
-            &args.generation,
-            0,
-        )?))
-        .await?;
-    let mut sink = Sink::new(args.generation.clone(), TABLE.into())?;
-    sink.wait_persisted(handle, 0).await?;
-    handle
-        .extend_recipe(ChangeList::from_change(
-            Change::create_cache(
-                QUERY,
-                internal.statement.clone(),
-                TrxCachePolicy::Never,
-                None,
-                None,
-            ),
-            Dialect::DEFAULT_MYSQL,
-        ))
-        .await?;
-    let mut reader = handle
-        .view(QUERY)
-        .await?
-        .into_reader_handle()
-        .context("single reader required")?;
-    wait_rows(&mut reader, rows.len()).await?;
-    ensure!(
-        handle
-            .materialization_info()
-            .await?
-            .iter()
-            .all(|m| !m.partial),
-        "partial query state"
-    );
-    let mut declared_readers = Vec::new();
-    for template in &templates {
-        let mut r = DeclaredReader {
-            view: create_reader(handle, template, &internal).await?,
-            witnessed: HashSet::new(),
-        };
-        fence_template(template, &mut r, &rows).await?;
-        declared_readers.push(r);
-    }
-    let mut barrier_rows = rows;
-    let mut barrier_missing = Vec::new();
-    let mut barrier_checkpoint = 0;
-    emit(&json!({"ok":true,"ready":true,"rows":barrier_rows.len(),"checkpoint":0,"generation":args.generation})).await?;
+async fn experiment(args: &Args, engine: &Engine, interactive: bool) -> Result<Value> {
+    emit(&json!({"ok":true,"ready":true,"checkpoint":0,"generation":args.generation})).await?;
     let mut lines = tokio::io::BufReader::new(tokio::io::stdin()).lines();
     let mut results = Vec::new();
     loop {
         let line = tokio::time::timeout(
-            Duration::from_secs(if declaration.is_some() { 86400 } else { 120 }),
+            Duration::from_secs(if interactive { 86400 } else { 120 }),
             lines.next_line(),
         )
         .await
@@ -383,130 +91,29 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
         );
         let command: Command = serde_json::from_str(&line)?;
         let response = match command {
-            Command::Apply { batch } => {
-                let current = sink.checkpoint(handle).await?;
-                // Only preflight failures are recoverable in this test protocol. An uncertain
-                // Table RPC/persistence error exits the runner; it is never blindly retried.
-                match delivery(&current, &batch) {
-                    Err(error) => {
-                        json!({"ok":false,"rejected":true,"error":format!("{error:#}"),"checkpoint":current.sequence()})
-                    }
-                    Ok(_) => sink.apply(handle, &mut table, &batch).await?,
-                }
-            }
+            Command::Apply { batch } => engine.apply(&batch).await?,
             Command::Verify {
                 label,
                 rows,
                 missing,
-            } => verify(&mut reader, label, rows, missing).await?,
-            Command::Query { sql, database } => {
-                let query = declaration
-                    .as_ref()
-                    .and_then(|d| d.read_query(&sql, &database));
-                let found = query.as_ref().and_then(|q| {
-                    templates
-                        .iter()
-                        .enumerate()
-                        .find_map(|(i, t)| t.query.read_params(q).map(|params| (i, params)))
-                });
-                if let Some((i, params)) = found {
-                    let q = query.as_ref().unwrap();
-                    match native_query::read(&mut declared_readers[i].view, q, &params).await? {
-                        Some((data, schema)) => json!({"ok":true,"matched":true,
-                            "template":templates[i].name,"schema":schema,"data":data}),
-                        None => json!({"ok":true,"matched":false,"reason":"local result limit"}),
-                    }
-                } else {
-                    json!({"ok":true,"matched":false})
+            } => engine.verify(label, rows, missing).await?,
+            Command::Query { sql, database } => match engine.query(&sql, &database).await? {
+                ReadOutcome::Matched {
+                    template,
+                    schema,
+                    data,
+                } => {
+                    json!({"ok":true,"matched":true,"template":template,"schema":schema,"data":data})
                 }
-            }
-            Command::Barrier { rows, missing } => {
-                let result = verify(
-                    &mut reader,
-                    "replication barrier".into(),
-                    rows.clone(),
-                    missing.clone(),
-                )
-                .await?;
-                // Keep a fenced oracle for runtime cache construction. Never rescan the source.
-                for (t, r) in templates.iter().zip(&mut declared_readers) {
-                    fence_template(t, r, &rows).await?;
+                ReadOutcome::LimitMiss => {
+                    json!({"ok":true,"matched":false,"reason":"local result limit"})
                 }
-                barrier_rows = rows;
-                barrier_missing = missing;
-                barrier_checkpoint = sink.checkpoint(handle).await?.sequence();
-                result
-            }
-            Command::CacheDdl { sql, database } => {
-                let planned = declaration
-                    .as_ref()
-                    .context("source binding required")
-                    .and_then(|d| cache_control::plan(&sql, &database, d, &templates));
-                match planned {
-                    Err(error) => json!({"ok":false,"rejected":true,"error":format!("{error:#}")}),
-                    Ok(control) => {
-                        // After this point, an uncertain migration/RPC failure is fatal.
-                        // Do not publish the new route or retry a mutation with unknown outcome.
-                        ensure!(
-                            sink.checkpoint(handle).await?.sequence() == barrier_checkpoint,
-                            "cache DDL requires a completed replication barrier"
-                        );
-                        match control {
-                            CacheControl::Create(template) => {
-                                sink.wait_persisted(handle, barrier_checkpoint).await?;
-                                let mut r = DeclaredReader {
-                                    view: create_reader(handle, &template, &internal).await?,
-                                    witnessed: HashSet::new(),
-                                };
-                                fence_template(&template, &mut r, &barrier_rows).await?;
-                                templates.push(*template);
-                                declared_readers.push(r);
-                            }
-                            CacheControl::Drop(name) => {
-                                let i = templates.iter().position(|t| t.name == name).unwrap();
-                                if !templates[i].query.same_shape(&internal) {
-                                    ensure!(
-                                        handle.remove_query(&name.into()).await? == 1,
-                                        "cache missing in controller"
-                                    );
-                                }
-                                templates.remove(i);
-                                declared_readers.remove(i);
-                                // A drop must not invalidate any surviving query or the shared base.
-                                verify(
-                                    &mut reader,
-                                    "post-drop barrier".into(),
-                                    barrier_rows.clone(),
-                                    barrier_missing.clone(),
-                                )
-                                .await?;
-                                for (t, r) in templates.iter().zip(&mut declared_readers) {
-                                    fence_template(t, r, &barrier_rows).await?;
-                                }
-                            }
-                            CacheControl::Show => {}
-                        }
-                        cache_listing(&templates)
-                    }
-                }
-            }
-            Command::ResetSink => {
-                sink = Sink::new(args.generation.clone(), TABLE.into())?;
-                // Recreate controller client and table mutator too. Durable engine metadata,
-                // not any counter in the old sink/client, determines the next sequence.
-                let mut raw = ReadySetHandle::make_raw(
-                    handle.get_address().clone(),
-                    Some(Duration::from_secs(30)),
-                    None,
-                );
-                let current = sink.checkpoint(&mut raw).await?;
-                table = raw.table(TABLE).await?;
-                json!({"ok":true,"reset_sink":true,"checkpoint":current.sequence()})
-            }
-            Command::Checkpoint => {
-                let current = sink.checkpoint(handle).await?;
-                json!({"ok":true,"checkpoint":current.sequence()})
-            }
+                ReadOutcome::NotMatched => json!({"ok":true,"matched":false}),
+            },
+            Command::Barrier { rows, missing } => engine.barrier(rows, missing).await?,
+            Command::CacheDdl { sql, database } => engine.cache_ddl(&sql, &database).await?,
+            Command::ResetSink => engine.reset_sink().await?,
+            Command::Checkpoint => json!({"ok":true,"checkpoint":engine.checkpoint().await?}),
             Command::Shutdown => {
                 emit(&json!({"ok":true,"shutdown":true})).await?;
                 break;
@@ -519,8 +126,8 @@ async fn experiment(args: &Args, handle: &mut Handle) -> Result<Value> {
     }
     Ok(
         json!({"passed":true,"generation":args.generation,"commands":results,
-              "checkpoint":sink.checkpoint(handle).await?.sequence(),
-              "materializations":handle.materialization_info().await?,
+              "checkpoint":engine.checkpoint().await?,
+              "materializations":engine.materializations().await?,
               "persistent_base":true,"single_serial_consumer":true,
               "limitations":["No process/node crash test", "No multi-writer sink", "No SQL wire frontend", "No outbox cleanup"]}),
     )
@@ -535,45 +142,51 @@ async fn main() -> Result<()> {
         .with_writer(std::io::stderr)
         .init();
     let args = Args::parse();
+    let declaration: Option<Declaration> = args
+        .declarations
+        .as_ref()
+        .map(|p| -> Result<_> { Ok(serde_json::from_reader(File::open(p)?)?) })
+        .transpose()?;
     if args.validate_only {
-        let path = args
-            .declarations
+        declaration
             .as_ref()
-            .context("--declarations required for validation")?;
-        let declaration: Declaration = serde_json::from_reader(File::open(path)?)?;
-        declaration.templates(TABLE)?;
+            .context("--declarations required for validation")?
+            .templates(LOCAL_TABLE)?;
         return Ok(());
     }
     ensure!(!args.output.exists(), "output directory must not exist");
     DatabendPosition::new(&args.generation, 0)?;
     fs::create_dir_all(&args.output)?;
-    let mut builder = Builder::default();
-    builder.set_external_addr("127.0.0.1:0".parse()?);
-    builder.set_dialect(readyset_sql::Dialect::MySQL);
-    builder.disable_partial();
-    builder.set_mixed_comparisons(true);
-    // No upstream URL; do not use replication_enabled=false (shallow-only deep-state wipe).
-    builder.set_persistence(PersistenceParameters {
-        mode: DurabilityMode::Permanent,
-        db_filename_prefix: "m2".into(),
-        storage_dir: Some(args.output.join("storage")),
-        // Use the tracked background WAL-sync path. The synchronous (0) path currently
-        // leaves the durability watermark at Unflushed after offset-bearing writes.
-        wal_flush_interval_seconds: 1,
-        ..Default::default()
-    });
-    let (mut handle, shutdown) = builder.start_local().await?;
-    let outcome = tokio::time::timeout(
-        Duration::from_secs(if args.declarations.is_some() {
-            86400
-        } else {
-            600
-        }),
-        experiment(&args, &mut handle),
+    let rows: Vec<SourceRow> = BufReader::new(File::open(&args.input)?)
+        .lines()
+        .map(|line| Ok(serde_json::from_str(&line?)?))
+        .collect::<Result<_>>()?;
+    ensure!(
+        rows.iter().map(|r| r.id).collect::<HashSet<_>>().len() == rows.len(),
+        "duplicate initial key"
+    );
+    let interactive = declaration.is_some();
+    let started = Engine::start(
+        EngineConfig {
+            generation: args.generation.clone(),
+            storage_dir: args.output.join("storage"),
+            declaration,
+            // databend-m2 drives the POC content oracle through its stdin protocol.
+            oracle: true,
+        },
+        rows,
     )
-    .await
-    .context("M2 experiment timeout")
-    .and_then(|r| r);
+    .await;
+    let outcome = match &started {
+        Ok(engine) => tokio::time::timeout(
+            Duration::from_secs(if interactive { 86400 } else { 600 }),
+            experiment(&args, engine, interactive),
+        )
+        .await
+        .context("M2 experiment timeout")
+        .and_then(|r| r),
+        Err(error) => Err(anyhow::anyhow!("{error:#}")),
+    };
     let report = match &outcome {
         Ok(r) => r.clone(),
         Err(error) => json!({"passed":false,"error":format!("{error:#}")}),
@@ -582,8 +195,9 @@ async fn main() -> Result<()> {
         args.output.join("report.json"),
         serde_json::to_vec_pretty(&report)?,
     )?;
-    drop(handle);
-    shutdown.shutdown_timeout(Duration::from_secs(30)).await;
+    if let Ok(engine) = &started {
+        engine.shutdown().await;
+    }
     outcome?;
     Ok(())
 }

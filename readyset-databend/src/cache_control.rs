@@ -1,5 +1,7 @@
 //! Reuse ReadySet's CREATE/DROP/SHOW grammar, with explicit POC capability checks.
 //! The raw AST must be checked BEFORE ChangeList, which does not retain every adapter option.
+use std::borrow::Borrow;
+
 use anyhow::{Context, Result, bail, ensure};
 use readyset_sql::Dialect;
 use readyset_sql::ast::{CacheInner, CacheType, ShowStatement, SqlQuery, TrxCachePolicy};
@@ -27,11 +29,11 @@ fn public_name(name: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn plan(
+pub fn plan<T: Borrow<Template>>(
     sql: &str,
     database: &str,
     declaration: &Declaration,
-    templates: &[Template],
+    templates: &[T],
 ) -> Result<CacheControl> {
     ensure!(sql.len() <= 16384, "cache SQL exceeds 16 KiB");
     ensure!(
@@ -78,7 +80,9 @@ pub fn plan(
             public_name(&name)?;
             ensure!(templates.len() < 8, "at most 8 public caches supported");
             ensure!(
-                !templates.iter().any(|t| t.name.eq_ignore_ascii_case(&name)),
+                !templates
+                    .iter()
+                    .any(|t| t.borrow().name.eq_ignore_ascii_case(&name)),
                 "cache name already exists; DROP CACHE first"
             );
             let CacheInner::Statement {
@@ -93,7 +97,7 @@ pub fn plan(
             ensure!(
                 !templates
                     .iter()
-                    .any(|t| t.query.same_shape(&template.query)),
+                    .any(|t| t.borrow().query.same_shape(&template.query)),
                 "query template already cached"
             );
             Ok(CacheControl::Create(Box::new(template)))
@@ -105,7 +109,10 @@ pub fn plan(
             );
             let name = drop.name.name.to_string();
             public_name(&name)?;
-            ensure!(templates.iter().any(|t| t.name == name), "cache not found");
+            ensure!(
+                templates.iter().any(|t| t.borrow().name == name),
+                "cache not found"
+            );
             Ok(CacheControl::Drop(name))
         }
         SqlQuery::Show(ShowStatement::CachedQueries(None | Some(CacheType::Deep), None)) => {
@@ -120,6 +127,7 @@ pub fn plan(
 #[cfg(test)]
 mod tests {
     use super::*;
+    const NONE: &[Template] = &[];
 
     fn source() -> Declaration {
         Declaration {
@@ -136,7 +144,7 @@ mod tests {
             "CREATE CACHE full_row FROM SELECT id, payload, score, note FROM poc.users WHERE id = ?",
             "CREATE DEEP CACHE full_row FROM SELECT id, payload, score, note FROM users WHERE id = ?;",
         ] {
-            let CacheControl::Create(t) = plan(sql, "poc", &d, &[]).unwrap() else {
+            let CacheControl::Create(t) = plan(sql, "poc", &d, NONE).unwrap() else {
                 panic!()
             };
             assert_eq!(t.name, "full_row");
@@ -153,7 +161,7 @@ mod tests {
                 "CREATE CACHE c FROM SELECT payload FROM users WHERE id = ?",
                 "other",
                 &d,
-                &[]
+                NONE
             )
             .is_err()
         );
@@ -179,7 +187,7 @@ mod tests {
             "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE id = ?; DROP CACHE c",
             "/* hint */ CREATE CACHE c FROM SELECT payload FROM poc.users WHERE id = ?",
         ] {
-            assert!(plan(sql, "poc", &d, &[]).is_err(), "{sql}");
+            assert!(plan(sql, "poc", &d, NONE).is_err(), "{sql}");
         }
     }
 
@@ -190,7 +198,7 @@ mod tests {
             "CREATE CACHE c FROM SELECT payload FROM poc.users WHERE id=?",
             "poc",
             &d,
-            &[],
+            NONE,
         )
         .unwrap() else {
             panic!()

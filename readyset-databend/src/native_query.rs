@@ -27,7 +27,9 @@ use crate::declaration::Declaration;
 pub const COLUMNS: [&str; 4] = ["id", "payload", "score", "note"];
 pub const LOCAL_TABLE: &str = "m2_source";
 // Databend STRING equality must be byte/codepoint exact, NOT MySQL's default ai_ci.
-pub const LOCAL_DDL: &str = "CREATE TABLE m2_source (id BIGINT NOT NULL, payload TEXT COLLATE utf8mb4_0900_bin NOT NULL, score BIGINT NOT NULL, note TEXT COLLATE utf8mb4_0900_bin, PRIMARY KEY(id))";
+// No PRIMARY KEY: Databend does not enforce key uniqueness, so the local copy must accept the
+// same duplicate rows the source can hold. Every delete names a full row (bag semantics).
+pub const LOCAL_DDL: &str = "CREATE TABLE m2_source (id BIGINT NOT NULL, payload TEXT COLLATE utf8mb4_0900_bin NOT NULL, score BIGINT NOT NULL, note TEXT COLLATE utf8mb4_0900_bin)";
 
 #[derive(Clone, Copy)]
 pub enum Input {

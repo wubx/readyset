@@ -1,0 +1,21 @@
+# Package an already built (and stripped) binary. Used when the host already has a
+# release build; the result is the same runtime image as Dockerfile.
+#
+#   objcopy --strip-debug target/release/readyset-databend dist/readyset-databend
+#   docker build -f readyset-databend/docker/Dockerfile.prebuilt -t readyset-databend:dev dist/
+ARG RUNTIME_IMAGE=ubuntu:24.04
+FROM ${RUNTIME_IMAGE}
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl libssl3t64; \
+    rm -rf /var/lib/apt/lists/*; \
+    useradd --system --uid 10001 --home-dir /var/lib/readyset-databend readyset; \
+    install -d -o readyset -g readyset /var/lib/readyset-databend
+COPY readyset-databend /usr/local/bin/readyset-databend
+USER readyset
+VOLUME ["/var/lib/readyset-databend"]
+EXPOSE 8001
+HEALTHCHECK --interval=10s --timeout=3s --start-period=120s \
+    CMD curl -fsS http://127.0.0.1:8001/livez || exit 1
+ENTRYPOINT ["/usr/local/bin/readyset-databend"]
+CMD ["--config", "/etc/readyset-databend/readyset-databend.toml"]

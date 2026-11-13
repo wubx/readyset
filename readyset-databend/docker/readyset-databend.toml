@@ -1,0 +1,26 @@
+# readyset-databend configuration (phase 1: one fixed-schema table).
+# The Databend password is read ONLY from the DATABEND_PASSWORD environment variable.
+
+# Stable identity of this instance. Empty: generated once and kept in [storage].dir.
+instance_id = ""
+
+# Explicit consent to create this instance's Stream (readyset_<instance_id>_<table>) in the
+# table's database. That Stream is the only object readyset-databend creates in Databend.
+confirm_create = true
+
+[upstream]
+url  = "http://databend:8000"
+user = "readyset"
+
+[listen]
+http = "0.0.0.0:8001"
+
+[replication]
+# Phase 1 replicates exactly one table: id BIGINT NOT NULL, payload STRING NOT NULL,
+# score BIGINT NOT NULL, note STRING NULL.
+tables        = ["sales.orders"]
+poll_interval = "1s"
+max_staleness = "10s"
+
+[storage]
+dir = "/var/lib/readyset-databend"
