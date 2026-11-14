@@ -138,7 +138,7 @@ class Scenario:
         expected = self.source.sql(sql)
         self.check('A served from Databend with upstream bag', self.query(sql, 'databend'), expected)
 
-    def launch(self):
+    def launch(self, log_name='server.log'):
         service = self.output / 'service'
         config = self.output / 'config.toml'
         config.write_text(f'''instance_id = "{self.instance}"
@@ -157,7 +157,7 @@ partial = {str(self.mode == 'partial').lower()}
 {('memory_limit_mb = 512' if self.mode == 'partial' else '')}
 upquery_timeout_ms = 10000
 ''')
-        self.log = (self.output / 'server.log').open('w')
+        self.log = (self.output / log_name).open('w')
         env = dict(os.environ, RUST_LOG=os.environ.get('RUST_LOG', 'warn,readyset_server::controller=info'))
         self.proc = subprocess.Popen([self.args.gateway_binary, '--config', str(config), '--output', str(service),
                                       '--enable-fault-injection', '--route-journal'], stdout=self.log, stderr=subprocess.STDOUT, env=env)
@@ -189,6 +189,32 @@ upquery_timeout_ms = 10000
         self.check('one native server for both tables', self.health()['cache']['native_server_instances'], 1)
         self.check('engine not globally failed', self.health()['cache']['failed'], False)
         self.check('one retained Stream per table', [self.source.sql("SELECT count(*) FROM system.streams WHERE database='" + db + "'") for db in self.dbs], [[['1']], [['1']]])
+        # Restart on the same storage: A recovers from its own restart marker, B resumes.
+        self.restart_after_fault()
+
+    def restart_after_fault(self):
+        self.proc.send_signal(signal.SIGTERM)
+        self.check('SIGTERM exit after A fault', self.proc.wait(timeout=90), 0)
+        self.log.close()
+        listening = self.output / 'service' / 'listening.json'
+        listening.unlink()
+        self.source.sql("UPDATE " + self.b + " SET label='b-restart' WHERE id=18446744073709551615")
+        self.launch('server_restart.log')
+        self.fresh(self.a, 180)
+        self.fresh(self.b, 180)
+        states = self.states()
+        recovery = {t: states[t]['snapshot'].get('recovery') for t in (self.a, self.b)}
+        self.note('restart_recovery', **recovery)
+        # rejects_requests: A was stopped between batches -> resume, then consume the pending
+        # UPDATE. transient_crash: A died inside a batch that was never committed -> rebuild.
+        expected_a = 'resumed' if self.fault == 'rejects_requests' else 'rebuilt: interrupted batch was not committed'
+        self.check('A recovery after restart', recovery[self.a], expected_a)
+        self.check('B resumed after restart', recovery[self.b], 'resumed')
+        for sql in ("SELECT id,val FROM " + self.a + " WHERE id='bag'",
+                    'SELECT id,label FROM ' + self.b + ' WHERE id=18446744073709551615'):
+            self.check('after restart local equals Databend: ' + sql[:50],
+                       sorted(self.query(sql, 'readyset')), sorted(self.source.sql(sql)))
+        self.check('A rows after restart', str(states[self.a]['rows']), self.source.sql('SELECT count(*) FROM ' + self.a)[0][0])
 
     def run(self):
         error = None
@@ -283,6 +309,7 @@ upquery_timeout_ms = 10000
             if self.log:
                 self.log.close()
             log = (self.output / 'server.log').read_text(errors='replace') if (self.output / 'server.log').exists() else ''
+            # Only the life with the injected fault; the restart log must not inflate the counts.
             # Evidence that the fault was a real native domain failure handled by ReadySet.
             self.note('native_log', domain_failed=log.count('domain failed with an error'),
                       controller_recovery=log.count('Handling failure of domain'))

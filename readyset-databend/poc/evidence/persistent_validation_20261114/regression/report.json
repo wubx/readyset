@@ -1,0 +1,377 @@
+{
+  "output": "/data1/vmbox/readyset-persist-regression-20261114-174050",
+  "steps": [
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--check",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "dataflow-state",
+        "-p",
+        "readyset-server",
+        "-p",
+        "readyset-client"
+      ],
+      "exit_code": 0,
+      "seconds": 0.683
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-p",
+        "dataflow-state",
+        "-p",
+        "readyset-server",
+        "-p",
+        "readyset-client",
+        "--all-targets",
+        "--no-deps",
+        "-j",
+        "8",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 8.869
+    },
+    {
+      "name": "rust",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-j",
+        "8",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 16.46
+    },
+    {
+      "name": "sync_wal",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "dataflow-state",
+        "-j",
+        "8",
+        "--lib",
+        "sync_wal_tests"
+      ],
+      "exit_code": 0,
+      "seconds": 0.934
+    },
+    {
+      "name": "reopen",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "dataflow-state",
+        "-j",
+        "8",
+        "--lib",
+        "replication_offset_databend_rows_and_checkpoint_reopen"
+      ],
+      "exit_code": 0,
+      "seconds": 0.698
+    },
+    {
+      "name": "live_schema",
+      "command": [
+        "env",
+        "DATABEND_TEST_ENDPOINT=http://192.168.191.96:8000",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-databend",
+        "-j",
+        "8",
+        "--lib",
+        "engine::live_schema_tests",
+        "--",
+        "--ignored",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 2.349
+    },
+    {
+      "name": "release",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "readyset-databend",
+        "--bin",
+        "readyset-databend",
+        "-j",
+        "8"
+      ],
+      "exit_code": 0,
+      "seconds": 125.07
+    },
+    {
+      "name": "python",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "readyset-databend/poc",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.237
+    },
+    {
+      "name": "native_server_offsets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-server",
+        "-j",
+        "8",
+        "--lib",
+        "controller::tests::replication_offsets"
+      ],
+      "exit_code": 0,
+      "seconds": 22.226
+    },
+    {
+      "name": "native_client",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-client",
+        "-j",
+        "8",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "seconds": 125.572
+    },
+    {
+      "name": "native_dataflow",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "readyset-dataflow",
+        "-j",
+        "8",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "seconds": 13.644
+    },
+    {
+      "name": "multi_full",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/multitable_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/multi_full",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 10.275
+    },
+    {
+      "name": "multi_partial",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/multitable_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/multi_partial",
+        "--confirm-create",
+        "--partial"
+      ],
+      "exit_code": 0,
+      "seconds": 9.798
+    },
+    {
+      "name": "gateway_full",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/gateway_full",
+        "--confirm-create",
+        "--sql-declarations",
+        "--native-queries",
+        "--in-range-queries"
+      ],
+      "exit_code": 0,
+      "seconds": 53.437
+    },
+    {
+      "name": "gateway_partial",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/gateway_partial",
+        "--confirm-create",
+        "--sql-declarations",
+        "--native-queries",
+        "--in-range-queries",
+        "--partial"
+      ],
+      "exit_code": 0,
+      "seconds": 46.579
+    },
+    {
+      "name": "gateway_oracle",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/gateway_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/gateway_oracle",
+        "--confirm-create",
+        "--sql-declarations",
+        "--native-queries",
+        "--in-range-queries",
+        "--oracle"
+      ],
+      "exit_code": 0,
+      "seconds": 64.474
+    },
+    {
+      "name": "pk_full",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/pk_change_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/pk_full",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 38.332
+    },
+    {
+      "name": "pk_partial",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/pk_change_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--user",
+        "root",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/pk_partial",
+        "--confirm-create",
+        "--partial"
+      ],
+      "exit_code": 0,
+      "seconds": 38.102
+    },
+    {
+      "name": "restart_recovery",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/restart_recovery_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/restart_recovery",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 32.672
+    },
+    {
+      "name": "bootstrap_recovery",
+      "command": [
+        "python3",
+        "-B",
+        "readyset-databend/poc/bootstrap_recovery_verify.py",
+        "--endpoint",
+        "http://192.168.191.96:8000",
+        "--gateway-binary",
+        "/data1/vmbox/readyset/target/release/readyset-databend",
+        "--output",
+        "/data1/vmbox/readyset-persist-regression-20261114-174050/bootstrap_recovery",
+        "--confirm-create"
+      ],
+      "exit_code": 0,
+      "seconds": 49.455
+    }
+  ],
+  "passed": true
+}

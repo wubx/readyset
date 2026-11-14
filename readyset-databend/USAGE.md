@@ -105,6 +105,7 @@ DROP CACHE customers_by_region;
 
 **正常重启（SIGTERM 后再启动）：**
 - 基表数据、缓存声明和每张表的同步位置都保留，不重新做快照；
+- 实测两张各约 1,000 万行的表（partial 模式）：首次启动 64s，同目录重启 6.8s 就绪，重启后查询直接本地命中；
 - 停机期间 Databend 上的写入，会在启动后从 Stream 继续消费；
 - 缓存定义自动恢复，不需要重新 `CREATE CACHE`；
 - full 模式的缓存从本地基表重新物化，partial 模式按需回填，都不访问 Databend。

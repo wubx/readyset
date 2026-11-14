@@ -135,3 +135,6 @@ A 400 万变更批次从 62.8s 增至 73.6–73.7s；新版多了范围并发探
 尚无 cgroup/RSS 硬限额测试、真实断电测试、完整最小权限账户矩阵、任意 schema 迁移或本地 JOIN。
 `src/shared_engine_restart_tests.rs`（子进程真实重启，含 `abort()`）和 `poc/restart_recovery_verify.py`（真实 Databend，
 六次启动：正常重启、COMMIT 响应丢失、COMMIT 未执行时 SIGKILL、批次中途 SIGKILL）覆盖重启恢复。
+[持久化版本验证](poc/evidence/persistent_validation_20261114/README.md)：完整回归 20/20；A/B 原生 domain 故障隔离
+240/240（含故障后同目录重启）；千万行性能与上一版持平（B 写后 0.504s，A 写入期间 B 280/280 本地）；
+两表各千万行重启 64.1s → 6.8s。
