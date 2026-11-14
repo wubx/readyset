@@ -36,7 +36,8 @@ use tokio::sync::{Mutex, OwnedMutexGuard, OwnedRwLockReadGuard, OwnedRwLockWrite
 
 struct Source {
     schema: Arc<SourceSchema>,
-    /// Replaced only when the base table is dropped and recreated by a rebuild.
+    /// Refreshed on every resume/rebuild: a rebuilt table, or a native domain that was
+    /// recovered, needs a new handle (and connection).
     table: Arc<Mutex<Table>>,
     gate: Arc<RwLock<()>>,
     failed: AtomicBool,
@@ -44,9 +45,9 @@ struct Source {
     /// Last sequence whose batch completed (all native ACKs + fence). Only advanced while
     /// holding `table`; it orders this source's batches, not a durability claim.
     checkpoint: AtomicU64,
-    /// Whether the persisted native recipe already had this base table at startup.
+    /// The native base table already existed when this source was attached.
     existed: bool,
-    /// Last restart marker written to (or recovered from) this table's native offset.
+    /// Last restart marker acknowledged by (or recovered from) this table's native offset.
     /// Only changed while holding `table`, in the same ordered channel as row writes.
     marker: StdMutex<Option<Marker>>,
     digest: String,
@@ -58,20 +59,14 @@ impl Source {
             .unwrap_or_else(|e| e.into_inner())
             .clone()
     }
-    /// Store the next marker through the table's own synchronous native channel.
-    async fn write_marker(&self, table: &mut Table, phase: Phase) -> Result<()> {
-        let next = match self.marker() {
-            Some(m) if m.digest == self.digest => m.next(phase),
-            Some(m) => Marker {
-                digest: self.digest.clone(),
-                phase,
-                counter: m.counter + 1,
-            },
-            None => Marker {
-                digest: self.digest.clone(),
-                phase,
-                counter: 1,
-            },
+    /// Store the next marker through the table's own synchronous native channel. The
+    /// in-memory copy changes only after the native ACK.
+    async fn write_marker(&self, table: &mut Table, stream: u64, phase: Phase) -> Result<()> {
+        let next = Marker {
+            digest: self.digest.clone(),
+            stream,
+            phase,
+            counter: self.marker().map_or(1, |m| m.counter + 1),
         };
         table.set_replication_offset(next.offset()?).await?;
         *self.marker.lock().unwrap_or_else(|e| e.into_inner()) = Some(next);
@@ -86,6 +81,24 @@ struct Declaration {
     name: String,
     database: String,
     sql: String,
+}
+impl Declaration {
+    /// The configured-source id this declaration reads (`db.table`), without binding.
+    fn source(&self) -> Option<String> {
+        let select = native_query::parse_select(&self.sql).ok()?;
+        let TableExprInner::Table(relation) = &select.tables.first()?.inner else {
+            return None;
+        };
+        if relation.catalog.is_some() {
+            return None;
+        }
+        let database = relation
+            .schema
+            .as_ref()
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| self.database.clone());
+        Some(format!("{database}.{}", relation.name))
+    }
 }
 /// Dropping an HTTP request future is not evidence that its graph RPC was cancelled.
 struct MigrationGuard<'a> {
@@ -111,11 +124,16 @@ pub struct SharedEngine {
     shutdown: StdMutex<Option<ShutdownSender>>,
     handler: StdMutex<ReadRequestHandler>,
     readers: Readers,
-    catalog: SourceCatalog,
-    sources: BTreeMap<String, Arc<Source>>,
+    /// Sources are attached (and re-attached after a schema change) at runtime: a table
+    /// whose Databend schema is unknown at start (Databend down) attaches when it recovers.
+    catalog: StdRwLock<SourceCatalog>,
+    sources: StdRwLock<BTreeMap<String, Arc<Source>>>,
+    /// Restart markers of the native base tables found at start, by local relation name.
+    recovered: StdMutex<BTreeMap<String, Option<Marker>>>,
     routes: StdRwLock<Vec<Arc<Route>>>,
-    /// Batches hold a shared guard for their complete lifetime; only graph changes/snapshots
-    /// take the exclusive side. Per-source Table ownership orders writes, not this lock.
+    /// Batches hold a shared guard for their complete lifetime; user cache DDL takes the
+    /// exclusive side. Per-source recovery never takes it: its graph changes touch only its
+    /// own table and caches, serialized by the native handle lock and that source's Table.
     migrations: Arc<RwLock<()>>,
     cache: CacheConfig,
     /// `caches.json` next to the native storage; rewritten atomically.
@@ -131,15 +149,21 @@ pub fn source_id(schema: &SourceSchema) -> String {
     format!("{}.{}", schema.database, schema.table)
 }
 
+fn schema_digest(schema: &SourceSchema) -> String {
+    hex::encode(Sha256::digest(schema.ddl().as_bytes()))[..12].to_string()
+}
+
 impl SharedEngine {
-    /// Start (or reopen) the ONE native server in `storage`. ReadySet's standalone authority
-    /// restores the recipe; existing base tables reopen with their rows and restart
-    /// markers. Only missing base tables are created here. Callers then decide per table
-    /// ([`Self::decide`]) between [`Self::resume`] and [`Self::snapshot`].
+    /// Start (or reopen) the ONE native server in `storage`; Databend is not needed.
+    /// ReadySet's standalone authority restores the recipe; existing base tables reopen
+    /// with their rows and restart markers. Native caches that are undeclared, or declared
+    /// on a table no longer in `configured`, are removed (their declarations are kept, so
+    /// re-adding the table restores them). `schemas` are attached immediately.
     pub async fn start(
         storage: &Path,
         deployment: &str,
         cache: CacheConfig,
+        configured: Vec<String>,
         schemas: Vec<Arc<SourceSchema>>,
     ) -> Result<Arc<Self>> {
         // Synchronous native WAL: an ACKed Table RPC (rows or marker) survives a crash and
@@ -156,70 +180,45 @@ impl SharedEngine {
         } else {
             controller.replication_offsets().await?.tables
         };
-        let local = |schema: &SourceSchema| {
-            existing
-                .keys()
-                .find(|r| r.name.as_str() == schema.local)
-                .cloned()
-        };
-        let missing: Vec<_> = schemas
-            .iter()
-            .filter(|s| local(s).is_none())
-            .map(|s| s.ddl())
+        // An unparsable marker is treated like a missing one: that table is rebuilt.
+        let recovered = existing
+            .keys()
+            .map(|r| {
+                let marker = offsets
+                    .get(r)
+                    .cloned()
+                    .flatten()
+                    .and_then(|o| Marker::parse(&o).ok());
+                (r.name.to_string(), marker)
+            })
             .collect();
-        if !missing.is_empty() {
-            native
-                .handle
-                .extend_recipe(ChangeList::from_strings(missing, Dialect::DEFAULT_MYSQL)?)
-                .await?;
-        }
-        let mut catalog = SourceCatalog::default();
-        let mut sources = BTreeMap::new();
-        for schema in schemas {
-            catalog.insert((*schema).clone())?;
-            let relation = local(&schema);
-            // An unparsable marker is treated like a missing one: the table is rebuilt.
-            let marker = relation
-                .as_ref()
-                .and_then(|r| offsets.get(r).cloned().flatten())
-                .and_then(|o| Marker::parse(&o).ok());
-            let table = native.handle.table(schema.local.as_str()).await?;
-            let digest = hex::encode(Sha256::digest(schema.ddl().as_bytes()))[..12].to_string();
-            sources.insert(
-                source_id(&schema),
-                Arc::new(Source {
-                    schema,
-                    table: Arc::new(Mutex::new(table)),
-                    gate: Arc::new(RwLock::new(())),
-                    failed: AtomicBool::new(false),
-                    busy: AtomicBool::new(false),
-                    checkpoint: AtomicU64::new(0),
-                    existed: relation.is_some(),
-                    marker: StdMutex::new(marker),
-                    digest,
-                }),
-            );
-        }
         let declarations_path = storage.join("caches.json");
         let declarations: Vec<Declaration> = match std::fs::read(&declarations_path) {
             Ok(bytes) => serde_json::from_slice(&bytes).context("caches.json")?,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
             Err(e) => return Err(e).context("caches.json"),
         };
+        let mut configured = configured;
+        configured.extend(schemas.iter().map(|s| source_id(s)));
         // A native cache without a declaration was created without a durable acknowledgement
-        // (crash between the two steps) or was dropped by the user: remove it.
+        // (crash between the two steps) or was dropped by the user. One on an unconfigured
+        // table would hold memory invisibly. Remove both.
         for name in controller.views().await?.into_keys() {
-            if !declarations.iter().any(|d| d.name == name.name.as_str()) {
+            let keep = declarations.iter().any(|d| {
+                d.name == name.name.as_str() && d.source().is_some_and(|s| configured.contains(&s))
+            });
+            if !keep {
                 native.handle.remove_query(&name).await?;
             }
         }
-        Ok(Arc::new(Self {
+        let engine = Arc::new(Self {
             handle: Mutex::new(native.handle),
             shutdown: StdMutex::new(Some(native.shutdown)),
             handler: StdMutex::new(native.handler),
             readers: native.readers,
-            catalog,
-            sources,
+            catalog: StdRwLock::new(SourceCatalog::default()),
+            sources: StdRwLock::new(BTreeMap::new()),
+            recovered: StdMutex::new(recovered),
             routes: StdRwLock::new(Vec::new()),
             migrations: Arc::new(RwLock::new(())),
             cache,
@@ -229,47 +228,151 @@ impl SharedEngine {
             hits: AtomicU64::new(0),
             misses: AtomicU64::new(0),
             timeouts: AtomicU64::new(0),
-        }))
+        });
+        for schema in schemas {
+            engine.attach(schema).await?;
+        }
+        Ok(engine)
     }
-    /// Restart decision for one configured source from its recovered native marker.
-    pub fn decide(&self, id: &str, stream_version: u64) -> Result<Decision> {
-        let source = self.sources.get(id).context("source missing")?;
+    fn source(&self, id: &str) -> Result<Arc<Source>> {
+        self.sources
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(id)
+            .cloned()
+            .context("source missing")
+    }
+    #[cfg(test)]
+    fn src(&self, id: &str) -> Arc<Source> {
+        self.source(id).unwrap()
+    }
+    /// Bind (or rebind, after an upstream schema change) one configured source. Creates the
+    /// native base table only if the persisted recipe lacks it. Never takes the migration
+    /// guard: another table's batches continue meanwhile.
+    pub async fn attach(&self, schema: Arc<SourceSchema>) -> Result<()> {
+        self.alive()?;
+        let id = source_id(&schema);
+        let digest = schema_digest(&schema);
+        let previous = self
+            .sources
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(&id)
+            .cloned();
+        if previous.as_ref().is_some_and(|p| p.digest == digest) {
+            return Ok(());
+        }
+        let mut handle = self.handle.lock().await;
+        let mut controller = handle.c.clone().context("native controller missing")?;
+        let existed = controller
+            .tables()
+            .await?
+            .keys()
+            .any(|r| r.name.as_str() == schema.local);
+        if !existed {
+            handle
+                .extend_recipe(ChangeList::from_strings(
+                    vec![schema.ddl()],
+                    Dialect::DEFAULT_MYSQL,
+                )?)
+                .await?;
+        }
+        let table = handle.table(schema.local.as_str()).await?;
+        drop(handle);
+        // A rebound source keeps its acknowledged marker (with the OLD digest): the next
+        // decision rebuilds it for the new schema.
+        let marker = match &previous {
+            Some(p) => p.marker(),
+            None => self
+                .recovered
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(&schema.local)
+                .cloned()
+                .flatten(),
+        };
+        self.catalog
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .replace((*schema).clone());
+        self.sources
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(
+                id,
+                Arc::new(Source {
+                    schema,
+                    table: Arc::new(Mutex::new(table)),
+                    gate: Arc::new(RwLock::new(())),
+                    failed: AtomicBool::new(previous.is_some()),
+                    busy: AtomicBool::new(false),
+                    checkpoint: AtomicU64::new(0),
+                    existed,
+                    marker: StdMutex::new(marker),
+                    digest,
+                }),
+            );
+        Ok(())
+    }
+    /// Restart/recovery decision for one attached source from its acknowledged marker.
+    pub fn decide(&self, id: &str, stream: u64, stream_version: u64) -> Result<Decision> {
+        let source = self.source(id)?;
         Ok(decide(
-            source.existed,
+            source.existed || source.marker().is_some(),
             source.marker().as_ref(),
             &source.digest,
+            stream,
             stream_version,
         ))
     }
+    fn drop_routes(&self, id: &str) {
+        self.routes
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .retain(|r| r.source != id);
+    }
     /// Continue from the persisted rows: record `Applied(version)` if the last marker was an
-    /// interrupted-but-committed batch, then rebind this source's declared caches.
-    pub async fn resume(&self, id: &str, version: u64) -> Result<()> {
+    /// interrupted-but-committed batch, then rebind this source's declared caches. The
+    /// source reads/writes stay disabled until this completes.
+    pub async fn resume(&self, id: &str, stream: u64, version: u64) -> Result<()> {
         self.alive()?;
-        let _migration = self.migrations.write().await;
-        let source = self.sources.get(id).context("source missing")?;
-        let mut table = source.table.lock().await;
-        if source.marker().map(|m| m.phase) != Some(Phase::Applied(version)) {
-            source
-                .write_marker(&mut table, Phase::Applied(version))
+        let source = self.source(id)?;
+        source.failed.store(true, Release);
+        self.drop_routes(id);
+        {
+            let mut table = source.table.lock().await;
+            *table = self
+                .handle
+                .lock()
+                .await
+                .table(source.schema.local.as_str())
                 .await?;
+            let wanted = (stream, Phase::Applied(version));
+            if source.marker().map(|m| (m.stream, m.phase)) != Some(wanted) {
+                source
+                    .write_marker(&mut table, stream, Phase::Applied(version))
+                    .await?;
+            }
         }
-        self.restore_caches(id, source, &mut table).await?;
+        self.restore_caches(id, &source).await?;
         source.checkpoint.store(1, Release);
+        source.failed.store(false, Release);
         Ok(())
     }
     /// The Databend COMMIT of this source's batch succeeded at `version`.
-    pub async fn committed(&self, id: &str, version: u64) -> Result<()> {
-        let source = self.sources.get(id).context("source missing")?;
+    pub async fn committed(&self, id: &str, stream: u64, version: u64) -> Result<()> {
+        let source = self.source(id)?;
         let mut table = source.table.lock().await;
-        if source.marker().map(|m| m.phase) != Some(Phase::Applied(version)) {
+        let wanted = (stream, Phase::Applied(version));
+        if source.marker().map(|m| (m.stream, m.phase)) != Some(wanted) {
             source
-                .write_marker(&mut table, Phase::Applied(version))
+                .write_marker(&mut table, stream, Phase::Applied(version))
                 .await?;
         }
         Ok(())
     }
     pub fn marker_phase(&self, id: &str) -> Option<Phase> {
-        self.sources.get(id)?.marker().map(|m| m.phase)
+        self.source(id).ok()?.marker().map(|m| m.phase)
     }
     fn alive(&self) -> Result<()> {
         ensure!(
@@ -285,12 +388,11 @@ impl SharedEngine {
         self.failed.load(Acquire)
     }
     pub fn source_busy(&self, id: &str) -> bool {
-        self.sources
-            .get(id)
-            .is_some_and(|s| s.busy.load(Acquire) || s.gate.try_read().is_err())
+        self.source(id)
+            .is_ok_and(|s| s.busy.load(Acquire) || s.gate.try_read().is_err())
     }
     pub fn fail_source(&self, id: &str) {
-        if let Some(source) = self.sources.get(id) {
+        if let Ok(source) = self.source(id) {
             source.failed.store(true, Release);
         }
     }
@@ -303,6 +405,8 @@ impl SharedEngine {
             bail!("base table required")
         };
         self.catalog
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
             .resolve(relation, database)
             .cloned()
             .context("source is not configured or its schema is unsupported")
@@ -325,45 +429,58 @@ impl SharedEngine {
     /// Load a fresh snapshot. `rebuild` first drops the stale native base table (ReadySet
     /// deletes its RocksDB directory) and its caches, then recreates it from the current
     /// schema. A `Rebuilding` marker precedes every row, so a crash mid-load rebuilds again.
-    /// Declared caches of this source are recreated afterwards and fenced.
-    pub async fn snapshot(&self, id: &str, capture: &mut Replicator, rebuild: bool) -> Result<u64> {
+    /// Declared caches of this source are recreated afterwards and fenced. Only this source
+    /// is locked; other tables keep syncing and serving.
+    pub async fn snapshot(
+        &self,
+        id: &str,
+        capture: &mut Replicator,
+        rebuild: bool,
+        stream: u64,
+    ) -> Result<u64> {
         self.alive()?;
-        let _migration = self.migrations.write().await;
-        self.alive()?;
-        let source = self.sources.get(id).context("source missing")?;
+        let source = self.source(id)?;
+        source.failed.store(true, Release);
+        self.drop_routes(id);
         let mut table = source.table.lock().await;
-        if rebuild {
+        {
             let mut handle = self.handle.lock().await;
-            let mut controller = handle.c.clone().context("native controller missing")?;
-            let views = controller.views().await?;
-            for d in self.declarations_for(id) {
-                if let Some(name) = views.keys().find(|v| v.name.as_str() == d.name) {
-                    handle.remove_query(name).await?;
+            if rebuild {
+                let mut controller = handle.c.clone().context("native controller missing")?;
+                let views = controller.views().await?;
+                for d in self.declarations_for(id) {
+                    if let Some(name) = views.keys().find(|v| v.name.as_str() == d.name) {
+                        handle.remove_query(name).await?;
+                    }
                 }
+                let local: Relation = source.schema.local.as_str().into();
+                handle
+                    .extend_recipe(ChangeList::from_change(
+                        Change::Drop {
+                            name: local,
+                            if_exists: true,
+                        },
+                        Dialect::DEFAULT_MYSQL,
+                    ))
+                    .await?;
+                handle
+                    .extend_recipe(ChangeList::from_strings(
+                        vec![source.schema.ddl()],
+                        Dialect::DEFAULT_MYSQL,
+                    )?)
+                    .await?;
             }
-            let local: Relation = source.schema.local.as_str().into();
-            handle
-                .extend_recipe(ChangeList::from_change(
-                    Change::Drop {
-                        name: local,
-                        if_exists: true,
-                    },
-                    Dialect::DEFAULT_MYSQL,
-                ))
-                .await?;
-            handle
-                .extend_recipe(ChangeList::from_strings(
-                    vec![source.schema.ddl()],
-                    Dialect::DEFAULT_MYSQL,
-                )?)
-                .await?;
             *table = handle.table(source.schema.local.as_str()).await?;
         }
-        source.write_marker(&mut table, Phase::Rebuilding).await?;
+        source
+            .write_marker(&mut table, stream, Phase::Rebuilding)
+            .await?;
         let rows = capture.snapshot_into(&mut table).await?;
         capture.check_schema().await?;
-        self.restore_caches(id, source, &mut table).await?;
+        drop(table);
+        self.restore_caches(id, &source).await?;
         source.checkpoint.store(0, Release);
+        source.failed.store(false, Release);
         Ok(rows)
     }
     fn declarations_for(&self, id: &str) -> Vec<Declaration> {
@@ -371,74 +488,68 @@ impl SharedEngine {
             .lock()
             .unwrap_or_else(|e| e.into_inner())
             .iter()
-            .filter(|d| {
-                native_query::parse_select(&d.sql)
-                    .ok()
-                    .and_then(|s| self.bind(&s, &d.database).ok())
-                    .is_some_and(|s| source_id(&s) == id)
-            })
+            .filter(|d| d.source().is_some_and(|s| s == id))
             .cloned()
             .collect()
     }
-    /// Rebind (or recreate) this source's declared caches. Caller holds the exclusive
-    /// migration guard and the source's Table. A declaration that no longer compiles for
-    /// the current schema is removed from the native recipe and from `caches.json`.
-    async fn restore_caches(&self, id: &str, source: &Source, table: &mut Table) -> Result<()> {
-        let mut controller = self
-            .handle
-            .lock()
-            .await
-            .c
-            .clone()
-            .context("native controller missing")?;
-        let views = controller.views().await?;
+    /// Rebind (or recreate) this source's declared caches, then fence them and publish the
+    /// routes. Graph changes touch only this source's caches (the native handle lock
+    /// serializes them with user cache DDL); the fence holds only this source's Table and a
+    /// shared migration guard, exactly like a batch. A declaration that no longer compiles
+    /// for the current schema is removed from the native recipe and from `caches.json`.
+    async fn restore_caches(&self, id: &str, source: &Source) -> Result<()> {
+        let mut table = source.table.lock().await;
         let mut created = Vec::new();
         let mut stale = Vec::new();
-        for d in self.declarations_for(id) {
-            let native = views.keys().find(|v| v.name.as_str() == d.name).cloned();
-            let template = match self.template(d.name.clone(), &d.sql, &d.database) {
-                Ok(t) => t,
-                Err(_) => {
-                    if let Some(name) = native {
-                        self.handle.lock().await.remove_query(&name).await?;
-                    }
-                    stale.push(d.name);
-                    continue;
-                }
-            };
+        {
             let mut handle = self.handle.lock().await;
-            if native.is_none() {
-                handle
-                    .extend_recipe(ChangeList::from_change(
-                        Change::create_cache(
-                            template.name.clone(),
-                            template.query.statement.clone(),
-                            TrxCachePolicy::Never,
-                            None,
-                            None,
-                        ),
-                        Dialect::DEFAULT_MYSQL,
-                    ))
-                    .await?;
+            let mut controller = handle.c.clone().context("native controller missing")?;
+            let views = controller.views().await?;
+            for d in self.declarations_for(id) {
+                let native = views.keys().find(|v| v.name.as_str() == d.name).cloned();
+                let template = match self.template(d.name.clone(), &d.sql, &d.database) {
+                    Ok(t) => t,
+                    Err(_) => {
+                        if let Some(name) = native {
+                            handle.remove_query(&name).await?;
+                        }
+                        stale.push(d.name);
+                        continue;
+                    }
+                };
+                if native.is_none() {
+                    handle
+                        .extend_recipe(ChangeList::from_change(
+                            Change::create_cache(
+                                template.name.clone(),
+                                template.query.statement.clone(),
+                                TrxCachePolicy::Never,
+                                None,
+                                None,
+                            ),
+                            Dialect::DEFAULT_MYSQL,
+                        ))
+                        .await?;
+                }
+                let view = handle.view(template.name.as_str()).await?;
+                created.push(Arc::new(Route {
+                    source: id.into(),
+                    template: Arc::new(template),
+                    view,
+                }));
             }
-            let view = handle.view(template.name.as_str()).await?;
-            drop(handle);
-            created.push(Arc::new(Route {
-                source: id.into(),
-                template: Arc::new(template),
-                view,
-            }));
+        }
+        if !stale.is_empty() {
+            self.save_declarations(|all| all.retain(|d| !stale.contains(&d.name)))?;
         }
         if !created.is_empty() {
+            let _migration = Arc::clone(&self.migrations).read_owned().await;
             let mut views: Vec<View> = created.iter().map(|r| r.view.clone()).collect();
-            self.fence(source, table, &mut views).await?;
+            self.fence(source, &mut table, &mut views).await?;
             self.routes
                 .write()
                 .unwrap_or_else(|e| e.into_inner())
                 .extend(created);
-        }
-        if !stale.is_empty() {
-            self.save_declarations(|all| all.retain(|d| !stale.contains(&d.name)))?;
         }
         Ok(())
     }
@@ -464,7 +575,7 @@ impl SharedEngine {
         self.alive()?;
         let migration = Arc::clone(&self.migrations).read_owned().await;
         self.alive()?;
-        let source = Arc::clone(self.sources.get(id).context("source missing")?);
+        let source = self.source(id)?;
         // Lock BEFORE checking sequence/failed: two same-source begin calls must not both
         // validate an old sequence and subsequently apply the same batch twice.
         let table = Arc::clone(&source.table).lock_owned().await;
@@ -494,7 +605,9 @@ impl SharedEngine {
         let Some(id) = self.read_source(sql, database) else {
             return Ok(ReadOutcome::NotMatched);
         };
-        let source = &self.sources[&id];
+        let Ok(source) = self.source(&id) else {
+            return Ok(ReadOutcome::NotMatched);
+        };
         if source.failed.load(Acquire) || source.busy.load(Acquire) {
             return Ok(ReadOutcome::NotMatched);
         }
@@ -636,7 +749,7 @@ impl SharedEngine {
             let schema = self.bind(&select, database)?;
             let id = source_id(&schema);
             ensure!(
-                available(&id) && !self.sources[&id].failed.load(Acquire),
+                available(&id) && self.source(&id).is_ok_and(|s| !s.failed.load(Acquire)),
                 "source is not ready"
             );
             self.template(name, sql, database)
@@ -655,7 +768,8 @@ impl SharedEngine {
                     let select = native_query::parse_select(&template.source_sql)?;
                     let schema = self.bind(&select, database)?;
                     let id = source_id(&schema);
-                    let source = &self.sources[&id];
+                    let source = self.source(&id)?;
+                    let source = source.as_ref();
                     let mut handle = self.handle.lock().await;
                     handle
                         .extend_recipe(ChangeList::from_change(
@@ -701,7 +815,8 @@ impl SharedEngine {
                         .iter()
                         .find(|r| r.template.name == name)
                         .context("cache missing")?;
-                    let _gate = self.sources[&route.source].gate.write().await;
+                    let route_source = self.source(&route.source)?;
+                    let _gate = route_source.gate.write().await;
                     // Forget the declaration first: a crash after this leaves an undeclared
                     // native cache that the next start removes, never a dangling declaration.
                     self.save_declarations(|all| all.retain(|d| d.name != name))?;
@@ -730,7 +845,7 @@ impl SharedEngine {
     fn listing(&self) -> Value {
         let routes = self.routes.read().unwrap_or_else(|e| e.into_inner());
         json!({"ok":true,"schema":[{"name":"name","type":"String"},{"name":"query","type":"String"},{"name":"state","type":"String"}],
-            "data":routes.iter().map(|r| vec![r.template.name.clone(),r.template.source_sql.clone(),if self.sources[&r.source].failed.load(Acquire) {"error".into()} else {"ready".into()}]).collect::<Vec<_>>(),
+            "data":routes.iter().map(|r| vec![r.template.name.clone(),r.template.source_sql.clone(),if self.source(&r.source).map_or(true, |s| s.failed.load(Acquire)) {"error".into()} else {"ready".into()}]).collect::<Vec<_>>(),
             "caches":routes.iter().map(|r| &r.template.name).collect::<Vec<_>>()})
     }
     async fn fence(&self, source: &Source, table: &mut Table, targets: &mut [View]) -> Result<()> {
@@ -766,7 +881,12 @@ impl SharedEngine {
         let tables = controller.tables().await?;
         let info = controller.get_info().await?;
         let mut domains = BTreeMap::new();
-        for (id, source) in &self.sources {
+        let sources = self
+            .sources
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
+        for (id, source) in &sources {
             let node = tables
                 .iter()
                 .find(|(name, _)| name.name.as_str() == source.schema.local)
@@ -784,7 +904,7 @@ impl SharedEngine {
     }
     pub fn cache_status(&self) -> Value {
         let readers: Vec<_> = self.readers.lock().unwrap_or_else(|e| e.into_inner()).iter_mut().map(|(a,r)| json!({"name":a.name.name.as_str(),"key_slots":r.len(),"eviction_epoch":r.eviction_epoch()})).collect();
-        json!({"failed":self.is_failed(),"native_server_instances":1,"base_tables":self.sources.len(),"durability":"native_sync_wal","materialization":if self.cache.partial {"partial"} else {"full"},
+        json!({"failed":self.is_failed(),"native_server_instances":1,"base_tables":self.sources.read().unwrap_or_else(|e| e.into_inner()).len(),"durability":"native_sync_wal","materialization":if self.cache.partial {"partial"} else {"full"},
             "memory_limit_bytes":self.cache.memory_limit_bytes,"upquery_timeout_ms":self.cache.upquery_timeout.as_millis(),
             "allocated_bytes":readyset_alloc::fetch_stats().ok().map(|s| s.allocated),"readers":readers,
             "hit_queries":self.hits.load(Relaxed),"miss_keys":self.misses.load(Relaxed),"replay_timeouts":self.timeouts.load(Relaxed)})
@@ -824,9 +944,11 @@ impl SharedBatch {
         if self.marked {
             return Ok(());
         }
-        if let Some(Phase::Applied(version)) = self.source.marker().map(|m| m.phase) {
+        if let Some(marker) = self.source.marker()
+            && let Phase::Applied(version) = marker.phase
+        {
             self.source
-                .write_marker(&mut self.table, Phase::Applying(version))
+                .write_marker(&mut self.table, marker.stream, Phase::Applying(version))
                 .await?;
         }
         self.marked = true;

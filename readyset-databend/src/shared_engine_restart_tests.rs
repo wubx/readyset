@@ -29,6 +29,7 @@ async fn start() -> Arc<SharedEngine> {
             partial: std::env::var("RS_RESTART_PARTIAL").unwrap() == "true",
             ..Default::default()
         },
+        vec![],
         vec![schema()],
     )
     .await
@@ -87,13 +88,13 @@ async fn restart_child() {
         "first" => {
             // Snapshot-equivalent state at Stream version 10, then one committed batch of
             // duplicate rows (version 11) and one declared cache.
-            assert_eq!(engine.decide("a.items", 10).unwrap(), Decision::Create);
-            engine.committed("a.items", 10).await.unwrap();
+            assert_eq!(engine.decide("a.items", 77, 10).unwrap(), Decision::Create);
+            engine.committed("a.items", 77, 10).await.unwrap();
             let mut batch = insert(&engine, 1, &[("7", "kept"), ("7", "kept")]).await;
             batch.mark_applying().await.unwrap();
             assert_eq!(engine.marker_phase("a.items"), Some(Phase::Applying(10)));
             batch.finish().await.unwrap();
-            engine.committed("a.items", 11).await.unwrap();
+            engine.committed("a.items", 77, 11).await.unwrap();
             let created = engine
                 .cache_ddl(
                     "CREATE CACHE by_id FROM SELECT id,label FROM a.items WHERE id=?",
@@ -107,12 +108,15 @@ async fn restart_child() {
         }
         "clean" => {
             // Clean restart: nothing reloaded; rows, cache and marker survive.
-            assert_eq!(engine.decide("a.items", 11).unwrap(), Decision::Resume(11));
+            assert_eq!(
+                engine.decide("a.items", 77, 11).unwrap(),
+                Decision::Resume(11)
+            );
             assert!(matches!(
-                engine.decide("a.items", 12).unwrap(),
+                engine.decide("a.items", 77, 12).unwrap(),
                 Decision::Rebuild(_)
             ));
-            engine.resume("a.items", 11).await.unwrap();
+            engine.resume("a.items", 77, 11).await.unwrap();
             assert_eq!(local_rows(&engine, SQL).await, kept());
             assert_eq!(engine.listing()["caches"], json!(["by_id"]));
             // Crash mid-batch: a row reaches the base, then the process dies hard.
@@ -124,17 +128,28 @@ async fn restart_child() {
         "after_crash" => {
             // Stream unmoved: batch not committed, only this table is rebuilt.
             assert!(matches!(
-                engine.decide("a.items", 11).unwrap(),
+                engine.decide("a.items", 77, 11).unwrap(),
                 Decision::Rebuild(_)
             ));
             // Stream moved: COMMIT executed (response possibly lost) after all native ACKs.
-            assert_eq!(engine.decide("a.items", 12).unwrap(), Decision::Resume(12));
-            engine.resume("a.items", 12).await.unwrap();
+            // The same move on a RECREATED Stream (new id) proves nothing: rebuild.
+            assert_eq!(
+                engine.decide("a.items", 78, 12).unwrap(),
+                Decision::Rebuild("stream recreated")
+            );
+            assert_eq!(
+                engine.decide("a.items", 77, 12).unwrap(),
+                Decision::Resume(12)
+            );
+            engine.resume("a.items", 77, 12).await.unwrap();
             assert_eq!(engine.marker_phase("a.items"), Some(Phase::Applied(12)));
             assert_eq!(local_rows(&engine, SQL).await, kept());
         }
         "final" => {
-            assert_eq!(engine.decide("a.items", 12).unwrap(), Decision::Resume(12));
+            assert_eq!(
+                engine.decide("a.items", 77, 12).unwrap(),
+                Decision::Resume(12)
+            );
         }
         other => panic!("unknown phase {other}"),
     }

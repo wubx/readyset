@@ -46,7 +46,8 @@ server.rs：现有 HTTP auth/session/分页/lifecycle/透明代理
 - 上游位置只由每张表的 Databend Stream 记录。本地用一个**重启标记**说明本地行与 Stream 位置的关系，
   写在该基表自身的原生 replication offset 里（`src/restart_marker.rs`，不修改原生类型）：
   `Applied(v)` 本地等于 Stream 版本 v；`Applying(p)` 在 p 之上有未完成批次；`Rebuilding` 快照加载中。
-  版本取 `system.streams.table_version`（源表 meta seq）。标记和行走同一个有序 Table 通道，同步 WAL 落盘。
+  版本取 `system.streams.table_version`（源表 meta seq），并记录 `stream_id`：Stream 被删除重建后不信任旧位置，整表重建。
+  标记和行走同一个有序 Table 通道，同步 WAL 落盘。
 - 每批：首行写入前记 `Applying`，全部 Table RPC 确认、reader fence 完成后 COMMIT，再读 Stream 版本记 `Applied`。
   空批次 ROLLBACK（不动 Stream 和标记），最多每 60s 提交一次空批次，让 Stream 位置跟上源表。
   同表批次顺序由 Table mutex 和进程内序号保证，不再读回原生 offset，因此 A 的 domain 故障不会拖住 B 的批次。
@@ -61,7 +62,10 @@ server.rs：现有 HTTP auth/session/分页/lifecycle/透明代理
 - 缓存读不拿 migration guard；A 的 batch gate 不排除 B 的读。空批次不抢该表读 gate。
 - 旧单表/声明/oracle 启动仍选择原来的 1s 后台 WAL 和 global Persisted barrier，不改其语义。
 - 实际数据变更期间禁用该表本地读，直到持久化和该表全部 reader 的内容 fence 完成。
-- 未完成/取消的批次 fail closed 该来源；图变更结果不确定（含请求 future 取消）可能影响共享图，仍全局 fail closed，health/readiness 同步反映。
+- 未完成/取消的批次 fail closed 该来源，随后该表的 worker 按 `retry_backoff` 退避（翻倍，最长 5 分钟），用新的 Databend 会话
+  重走"发现 schema → attach → 读 Stream 身份/版本 → 续接或只重建该表"。单表恢复不取 migration 排他锁：
+  其图变更（删建本表、重建本表缓存）只由原生 handle 锁与本表 Table 锁串行，其他表的批次照常进行。
+  图变更结果不确定（含请求 future 取消）仍全局 fail closed，此时进程主动退出（非零退出码），由进程守护按持久化状态重启。
 - 并行复用原生 Table 写入，不代表 CPU/磁盘/内存公平隔离；图迁移或资源争用仍可能推迟 B。超过自身 max_staleness 仍回源。
   同步 WAL 每页都落盘，有吞吐成本；不是分片或硬实时 SLA。
 
@@ -106,7 +110,8 @@ DESCRIBE 复核不是原子 DDL 订阅；外部 DDL 仍可在检查之间发生�
 - 证明为普通、类型兼容单表 SELECT 的未命中/失败表读不使 B 失效；分页生命周期单独跟踪且有容量/TTL 限制。
   未经证明的请求、写操作和 session 生命周期保留原有 conservative global forward-epoch/uncertainty fence。
 - auth/session/header 检查与旧前端相同，不绕过角色、事务和 settings 检查；仍是一个配置账号，不是多用户权限隔离。
-- 启动先逐表恢复（续接 / 新建 / 只重建该表），再监听 HTTP；不承诺加载期间对外服务。
+- 启动只打开原生存储（不需要 Databend）就开始监听 HTTP，各表在后台并行恢复（续接 / 新建 / 只重建该表）；
+  未就绪的表读请求转发 Databend，`/livez` 始终可用。
   逐表判定规则与崩溃窗口见 [USAGE.md](USAGE.md#5-重启与持久化)，`/health.tables[].snapshot.recovery` 报告每表结果。
 
 ## 验证与剩余边界
@@ -138,3 +143,6 @@ A 400 万变更批次从 62.8s 增至 73.6–73.7s；新版多了范围并发探
 [持久化版本验证](poc/evidence/persistent_validation_20261114/README.md)：完整回归 20/20；A/B 原生 domain 故障隔离
 240/240（含故障后同目录重启）；千万行性能与上一版持平（B 写后 0.504s，A 写入期间 B 280/280 本地）；
 两表各千万行重启 64.1s → 6.8s。
+[单表自恢复与先监听启动](poc/evidence/self_recovery_20261114/README.md)：13 次启动重启/自恢复 394/394（含 Databend 不可用启动、
+运行中 Databend 中断、Stream 重建、在线加列）；A/B 隔离 244/244（A 进程内自恢复，B 全程不受影响）；完整回归 20/20；
+千万行 A 在线重建 50s 期间 B 15/15 轮本地且新鲜。

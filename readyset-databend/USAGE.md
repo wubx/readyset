@@ -47,6 +47,7 @@ http = "0.0.0.0:8001"
 tables        = ["sales.orders", "crm.customers"]   # 最多 32 张，必须已存在
 poll_interval = "1s"         # 每张表拉取 Stream 的间隔
 max_staleness = "10s"        # 超过这个时间没完成同步，该表的读转发给 Databend
+retry_backoff = "5s"         # 某张表失败后首次自动恢复的等待时间，之后翻倍，最长 5 分钟
 
 [storage]
 dir = "/var/lib/readyset-databend"   # 本地数据目录，必须放在持久卷上
@@ -68,9 +69,20 @@ export DATABEND_PASSWORD='<password>'
 readyset-databend --config /etc/readyset-databend/config.toml
 ```
 
-- **启动：** 依次恢复或加载每张表，完成后才开始监听 HTTP。首次启动要做全量快照，大表需要时间。
-- **停止：** 发送 SIGTERM，进程会正常关闭原生存储。
-- **单实例：** 一个存储目录同一时间只能被一个进程打开，第二个进程会因 RocksDB 文件锁启动失败。
+- **启动：** 先打开本地存储并监听 HTTP，再在后台并行恢复各表。打开本地存储不需要 Databend，
+  但要等原生存储重新打开后才开始监听（实测两张千万行表约 6 秒），这段时间 `/livez` 不可用。
+  还没就绪的表，查询转发给 Databend；启动时连不上 Databend 也不影响进程启动，表会在 Databend 恢复后自行接入。
+  首次启动要做全量快照，大表需要时间，期间 `/livez` 正常返回。
+- **停止：** 发送 SIGTERM。服务等进行中的批次完成并提交（最多 60 秒），再关闭原生存储。
+  容器或 k8s 的停止宽限期要大于这个时间（compose 示例为 120s）；宽限期太短，进行中的批次会被强杀，
+  这张表下次启动时整表重新加载。
+- **进程守护：** 必须由 systemd、Docker（`restart: unless-stopped`）或 k8s 负责拉起。原生运行时遇到无法在进程内恢复的错误时，
+  服务会主动退出，重启后从本地数据续接，一般只需几秒。
+- **k8s 探针：** liveness 用 `/livez`；readiness 用 `/readyz`。大表重建期间 `/readyz` 可能是 503，
+  不要把 readiness 失败当作重启条件。
+- **单实例：** 同一个 `instance_id` 任何时候只能运行一个进程。同一存储目录的第二个进程会因 RocksDB 文件锁启动失败；
+  但用不同存储卷同时运行两个相同 `instance_id` 的实例无法被检测，会互相消费 Stream、导致数据错误。
+  发布时用单副本和"先停后起"（Recreate）策略。
 - **构建：** `cargo build --release -p readyset-databend --bin readyset-databend`。Docker 镜像构建见 docker/README.md。
 
 ## 4. 声明和使用缓存
@@ -100,12 +112,12 @@ DROP CACHE customers_by_region;
 
 - `engine/`：ReadySet 原生持久化，包括基表的 RocksDB 文件和保存 recipe 的 standalone authority；
 - `engine/caches.json`：缓存声明；
-- `instance_id`：自动生成的实例标识（配置里没写 `instance_id` 时才有）；
+- `instance_id`：自动生成的实例标识（配置里没写 `instance_id` 时才有；只用 `--output` 时保存在输出目录）；
 - `runs/<时间>/`：每次启动的状态和日志。
 
 **正常重启（SIGTERM 后再启动）：**
 - 基表数据、缓存声明和每张表的同步位置都保留，不重新做快照；
-- 实测两张各约 1,000 万行的表（partial 模式）：首次启动 64s，同目录重启 6.8s 就绪，重启后查询直接本地命中；
+- 实测两张各约 1,000 万行的表（partial 模式）：首次启动 43s（两表并行加载），同目录重启 6.4s 就绪，重启后查询直接本地命中；
 - 停机期间 Databend 上的写入，会在启动后从 Stream 继续消费；
 - 缓存定义自动恢复，不需要重新 `CREATE CACHE`；
 - full 模式的缓存从本地基表重新物化，partial 模式按需回填，都不访问 Databend。
@@ -119,17 +131,27 @@ DROP CACHE customers_by_region;
 | COMMIT 已执行但没收到响应 | 直接续接，不重复应用 |
 | 首次快照没做完 | 重新加载这一张表 |
 | 表结构变了 | 重新加载这一张表，按新结构重建它的缓存，不再适用的缓存声明自动删除 |
+| Stream 被删除或重建过 | 重新加载这一张表（无法证明之前的提交，绝不续接） |
 
 其他表不受影响。
+
+**运行中的故障自动恢复（不需要重启）：** 某张表同步失败（Databend 不可用或重启、网络中断、COMMIT 结果不确定、
+表结构变化、该表的原生存储短暂故障等）后，只有这张表停止本地服务，查询转发给 Databend。
+等待 `retry_backoff`（之后翻倍，最长 5 分钟）后，它按上表的规则自动续接或重新加载自己；其他表一直正常同步和服务。
+连续健康 5 分钟后，退避时间重置。
 
 **位置判断依据：** 每张表的同步位置记录在原生基表自身的 replication offset 里，与数据一起写入 RocksDB，
 使用同步 WAL 落盘。COMMIT 只在本批所有写入都已确认之后才发出，因此 Stream 前进了就说明本批已完整写入本地。
 
-**不会自动修复的情况：**
-- 某张表运行中同步失败（例如 COMMIT 结果不确定、schema 漂移）后会停止同步，查询转发给 Databend。
-  重启后按上表自动恢复。
-- Stream 失效（`system.streams.invalid_reason` 非空）时，这张表启动失败，查询转发给 Databend。
-  人工删除该 Stream 后重启即可：服务会重建 Stream，并按位置比较结果续接或重新加载这张表。
+**需要人工处理的情况：**
+- **Stream 失效**（`system.streams.invalid_reason` 非空，例如停机时间超过 Databend 的快照保留期，偏移量所在的快照被清理）：
+  这张表会一直恢复失败。由 DBA 删除该 Stream（`DROP STREAM <库>.readyset_<instance_id>_<表>`）即可，
+  服务下次重试时会重建 Stream 并重新加载这张表。因此停机时间要小于 Databend 的数据保留期。
+- **某张表的本地原生存储持续损坏**：原生运行时恢复失败时进程会退出，重启后仍会失败。
+  停止服务，删除 `[storage].dir/engine` 后重启，所有表重新加载。
+- **升级版本后启动失败**（本地存储格式不兼容）：同样删除 `engine` 目录后重启。升级前先确认停机窗口能容纳全量加载。
+- **从配置中移除的表**：它的缓存会在启动时从内存中移除，声明和本地基表保留，重新加入配置后自动恢复；
+  移除期间 Databend 上的 Stream 会持续积累变更。确定不再使用时，由 DBA 删除对应 Stream，并在停机时删除整个 `engine` 目录回收空间。
 
 ## 6. 监控
 
@@ -144,12 +166,14 @@ DROP CACHE customers_by_region;
 - `last_sync_age_ms`：距上次同步完成的时间；
 - `rows`：本地行数；
 - `syncing`、`applying`：是否正在拉取、是否正在写入本地；
-- `snapshot.recovery`：本次启动对这张表的处理，取值为 `created`、`resumed` 或 `rebuilt: <原因>`。
+- `snapshot.recovery`：最近一次恢复对这张表的处理，取值为 `created`、`resumed` 或 `rebuilt: <原因>`；
+  `snapshot.attempt` 是第几次尝试，`snapshot.previous_failure` 是恢复前的失败原因。
 
 `all_tables_ready` 表示所有表是否都已就绪。
 
 建议告警：
-- 任一表 `failed` 非空；
+- 任一表 `failed` 持续非空（短暂非空是正在自动恢复）；
+- 进程频繁重启；
 - `last_sync_age_ms` 持续超过 `max_staleness`；
 - 进程 RSS 接近容器上限。
 
@@ -161,5 +185,6 @@ DROP CACHE customers_by_region;
 - **同步开销：** 同步 WAL 让每次写入都落盘。多张表共享磁盘和 CPU，没有公平性保证；某张表的大批次可能拖慢其他表，
   超过 `max_staleness` 后对应的查询转发给 Databend。
 - **部署：** 单进程、单节点，不提供高可用。只有一个配置账号，没有多用户权限隔离。
-- **DDL：** schema 变化在每轮同步前后检查，不是原子的 DDL 协调；检测到变化后这张表停止同步，重启时重新加载。
+- **数据安全：** 本地存储目录保存业务表的明文完整副本，要限制目录权限，必要时使用加密卷。
+- **DDL：** schema 变化在每轮同步前后检查，不是原子的 DDL 协调；检测到变化后这张表停止同步，随后按新结构自动重新加载。
 - **客户端：** JDBC 暂不能连接；bendsql 和 Python driver 可用。

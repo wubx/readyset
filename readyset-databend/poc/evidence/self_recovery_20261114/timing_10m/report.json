@@ -1,0 +1,94 @@
+{
+  "instance": "rt82e582cb963d",
+  "tables": [
+    "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items",
+    "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items"
+  ],
+  "lives": [
+    {
+      "life": 1,
+      "listen_secs": 0.2,
+      "ready_secs": 43.172,
+      "recovery": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": "created",
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": "created"
+      },
+      "load_secs": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": 42.469867831,
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": 26.926801943
+      },
+      "rows": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": 10000002,
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": 10000003
+      },
+      "memory_mib": {
+        "VmHWM": 1682,
+        "VmRSS": 1494
+      }
+    },
+    {
+      "life": 2,
+      "listen_secs": 6.403,
+      "ready_secs": 6.418,
+      "recovery": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": "resumed",
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": "resumed"
+      },
+      "load_secs": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": 0.107395234,
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": 0.107544029
+      },
+      "rows": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": 10000002,
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": 10000003
+      },
+      "memory_mib": {
+        "VmHWM": 240,
+        "VmRSS": 236
+      }
+    }
+  ],
+  "checks": [
+    {
+      "name": "cache created 0",
+      "passed": true
+    },
+    {
+      "name": "cache created 1",
+      "passed": true
+    },
+    {
+      "name": "life1 local: SELECT id,bucket,amount,active,payload FROM readyset_gateway",
+      "passed": true
+    },
+    {
+      "name": "life1 local: SELECT id,grp,label,revision FROM readyset_gateway_multiscal",
+      "passed": true
+    },
+    {
+      "name": "life1 clean exit",
+      "passed": true
+    },
+    {
+      "name": "life2 resumed both",
+      "passed": true
+    },
+    {
+      "name": "life2 local after resume: SELECT id,bucket,amount,active,payload FROM readyset_gateway",
+      "passed": true
+    },
+    {
+      "name": "life2 local after resume: SELECT id,grp,label,revision FROM readyset_gateway_multiscal",
+      "passed": true
+    },
+    {
+      "name": "life2 clean exit",
+      "passed": true
+    }
+  ],
+  "first_local_secs": {
+    "SELECT id,bucket,amount,active,payload FROM readyset_gateway": 0.105,
+    "SELECT id,grp,label,revision FROM readyset_gateway_multiscal": 0.072
+  },
+  "passed": true
+}

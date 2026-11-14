@@ -152,6 +152,7 @@ http = "127.0.0.1:0"
 tables = ["{self.a}", "{self.b}"]
 poll_interval = "100ms"
 max_staleness = "5s"
+retry_backoff = "45s"
 [cache]
 partial = {str(self.mode == 'partial').lower()}
 {('memory_limit_mb = 512' if self.mode == 'partial' else '')}
@@ -184,8 +185,21 @@ upquery_timeout_ms = 10000
         self.check('engine not globally failed during A fault', self.health()['cache']['failed'], False)
         self.failpoint('off')
         self.b_round('b-after')
-        self.check('A remains failed closed after fault cleared', self.states()[self.a]['failed'] is not None)
-        self.a_upstream()
+        # A recovers ITSELF (no restart) after its backoff: a table stopped between batches
+        # resumes; one whose batch died before COMMIT is rebuilt alone. B is never touched.
+        started = time.monotonic()
+        def self_recovered():
+            state = self.states()[self.a]
+            return (not state['failed'] and state['ready'] and state['last_sync_age_ms'] is not None
+                    and state['last_sync_age_ms'] <= (time.monotonic() - started) * 1000)
+        self.wait(self_recovered, 240, 'A self-recovery')
+        recovery = self.states()[self.a]['snapshot'].get('recovery')
+        self.note('a_self_recovery', seconds=round(time.monotonic() - started, 3), recovery=recovery)
+        expected = 'resumed' if self.fault == 'rejects_requests' else 'rebuilt: interrupted batch was not committed'
+        self.check('A recovered in-process', recovery, expected)
+        sql = "SELECT id,val FROM " + self.a + " WHERE id='bag'"
+        self.check('A local equals Databend after self-recovery', sorted(self.query(sql, 'readyset')), sorted(self.source.sql(sql)))
+        self.check('B never failed', self.states()[self.b]['failed'], None)
         self.check('one native server for both tables', self.health()['cache']['native_server_instances'], 1)
         self.check('engine not globally failed', self.health()['cache']['failed'], False)
         self.check('one retained Stream per table', [self.source.sql("SELECT count(*) FROM system.streams WHERE database='" + db + "'") for db in self.dbs], [[['1']], [['1']]])
@@ -205,10 +219,8 @@ upquery_timeout_ms = 10000
         states = self.states()
         recovery = {t: states[t]['snapshot'].get('recovery') for t in (self.a, self.b)}
         self.note('restart_recovery', **recovery)
-        # rejects_requests: A was stopped between batches -> resume, then consume the pending
-        # UPDATE. transient_crash: A died inside a batch that was never committed -> rebuild.
-        expected_a = 'resumed' if self.fault == 'rejects_requests' else 'rebuilt: interrupted batch was not committed'
-        self.check('A recovery after restart', recovery[self.a], expected_a)
+        # A already recovered in-process, so both tables simply resume.
+        self.check('A recovery after restart', recovery[self.a], 'resumed')
         self.check('B resumed after restart', recovery[self.b], 'resumed')
         for sql in ("SELECT id,val FROM " + self.a + " WHERE id='bag'",
                     'SELECT id,label FROM ' + self.b + ' WHERE id=18446744073709551615'):

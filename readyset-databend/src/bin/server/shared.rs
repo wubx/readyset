@@ -15,94 +15,29 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
     let http = http_client()?;
     let auth = basic_auth(&s.user, &s.password);
     let generation = format!("rs_{}_{}", s.instance_id, new_id(12));
-    let client = |label: &str| {
-        DatabendClient::new(
-            http.clone(),
-            &s.endpoint,
-            &auth,
-            label,
-            Some(Arc::clone(&journal)),
-        )
-    };
     let mut tables = std::collections::BTreeMap::new();
-    let mut captures = Vec::new();
-    let mut schemas = Vec::new();
-    let mut default_role = None;
     for (db, table) in &s.tables {
         let names = Names::new(db, table, &s.instance_id, &generation);
-        let id = names.source.clone();
-        let mut capture =
-            Replicator::new(names.clone(), client("bootstrap"), client("capture"), false);
-        let prepared = capture.prepare_schema().await;
-        if default_role.is_none() {
-            default_role = capture.default_role.clone();
-        }
-        let mut state = RouteState::default();
-        match prepared {
-            Ok(schema) => {
-                schemas.push(schema);
-                captures.push((id.clone(), capture));
-            }
-            Err(e) => {
-                state.failed = Some(format!("source preparation failed: {e:#}"));
-            }
-        }
         tables.insert(
-            id,
+            names.source.clone(),
             Arc::new(TableState {
                 syncing: std::sync::atomic::AtomicBool::new(false),
                 names,
-                state: StdMutex::new(state),
+                state: StdMutex::new(RouteState::default()),
             }),
         );
     }
     // Exactly ONE native server. Its standalone authority and base RocksDB live in a stable
-    // directory per instance, so a restart reopens rows, caches and restart markers.
+    // directory per instance, so a restart reopens rows, caches and restart markers. This
+    // needs no Databend: tables attach and recover in the background below.
     let engine = SharedEngine::start(
         s.engine_dir.as_path(),
         &format!("rs_{}", s.instance_id),
         s.cache,
-        schemas,
+        tables.keys().cloned().collect(),
+        vec![],
     )
     .await?;
-    for (id, capture) in &mut captures {
-        let started = Instant::now();
-        let decision = match capture.stream_version().await {
-            Ok(version) => engine.decide(id, version),
-            Err(e) => Err(e),
-        };
-        let recovered = match decision {
-            Ok(Decision::Resume(version)) => async {
-                engine.resume(id, version).await?;
-                capture.resume().await
-            }
-            .await
-            .map(|rows| (rows, "resumed".to_string())),
-            Ok(decision) => {
-                let reason = match decision {
-                    Decision::Rebuild(reason) => format!("rebuilt: {reason}"),
-                    _ => "created".into(),
-                };
-                let rebuild = matches!(decision, Decision::Rebuild(_));
-                match engine.snapshot(id, capture, rebuild).await {
-                    Ok(rows) => Ok((rows, reason)),
-                    Err(e) => Err(capture.abort_capture(e).await),
-                }
-            }
-            Err(e) => Err(e),
-        };
-        match recovered {
-            Ok((rows, recovery)) => {
-                let mut state = tables[id].lock();
-                state.rows = rows;
-                state.snapshot = json!({"rows":rows,"recovery":recovery,"total_secs":started.elapsed().as_secs_f64()});
-            }
-            Err(e) => {
-                tables[id].lock().failed = Some(format!("startup recovery failed: {e:#}"));
-                engine.fail_source(id);
-            }
-        }
-    }
     let names = tables
         .values()
         .next()
@@ -122,7 +57,7 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
         engine: CacheEngine::Shared(Arc::clone(&engine)),
         tables,
         names,
-        default_role,
+        default_role: StdMutex::new(None),
         state: StdMutex::new(RouteState::default()),
         results: StdMutex::new(HashMap::new()),
         passive: StdMutex::new(HashMap::new()),
@@ -131,34 +66,157 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
         routes_journal,
         stop,
     });
-    let mut workers = Vec::new();
-    for (id, mut capture) in captures {
-        if app.tables[&id].lock().failed.is_some() {
-            continue;
+    // HTTP starts immediately: until a table is ready its reads go to Databend, so a long
+    // snapshot or rebuild never takes the whole service (or its liveness probe) down.
+    let workers = app
+        .tables
+        .iter()
+        .map(|(id, table)| {
+            let capture = {
+                let (app, names, journal) =
+                    (Arc::clone(&app), table.names.clone(), Arc::clone(&journal));
+                move || {
+                    let client = |label: &str| {
+                        DatabendClient::new(
+                            app.http.clone(),
+                            &app.s.endpoint,
+                            &app.auth,
+                            label,
+                            Some(Arc::clone(&journal)),
+                        )
+                    };
+                    Replicator::new(names.clone(), client("bootstrap"), client("capture"), false)
+                }
+            };
+            tokio::spawn(table_worker(
+                Arc::clone(&app),
+                Arc::clone(&engine),
+                id.clone(),
+                capture,
+            ))
+        })
+        .collect();
+    app.write_status("status.json");
+    serve(app, workers).await
+}
+
+/// Longest wait between recovery attempts of one failed table.
+const RETRY_MAX: Duration = Duration::from_secs(300);
+/// A table that stayed healthy this long starts its next failure at the initial backoff.
+const HEALTHY_RESET: Duration = Duration::from_secs(300);
+
+/// One table's whole life: recover (resume / create / rebuild only this table), sync until
+/// a failure, then back off and recover again. Any error is confined to this table: its
+/// reads go to Databend, other tables keep syncing and serving. A fresh capture session is
+/// used for every attempt, so a failed or uncertain Databend transaction is never reused.
+async fn table_worker(
+    app: Arc<App>,
+    engine: Arc<SharedEngine>,
+    id: String,
+    new_capture: impl Fn() -> Replicator,
+) {
+    let mut stop = app.stop.subscribe();
+    let mut backoff = app.s.retry_backoff;
+    let mut attempt = 0u64;
+    loop {
+        if *stop.borrow() {
+            return;
         }
-        if let Err(e) = sync_source(&app, &engine, &id, &mut capture).await {
-            app.fail_source(&id, format!("initial capture failed: {e:#}"));
-            continue;
-        }
-        let app = Arc::clone(&app);
-        let engine = Arc::clone(&engine);
-        let mut stop = app.stop.subscribe();
-        workers.push(tokio::spawn(async move {
+        attempt += 1;
+        let mut capture = new_capture();
+        let healthy_since = match recover(&app, &engine, &id, &mut capture, attempt).await {
+            Ok(()) => Some(Instant::now()),
+            Err(e) => {
+                app.fail_source(&id, format!("recovery failed (attempt {attempt}): {e:#}"));
+                None
+            }
+        };
+        if healthy_since.is_some() {
             loop {
                 tokio::select! { _=tokio::time::sleep(app.s.interval)=>{}, _=stop.changed()=>{} }
-                if *stop.borrow() || app.tables[&id].lock().failed.is_some() {
-                    break;
+                if *stop.borrow() {
+                    return;
                 }
-                if let Err(e) = sync_source(&app, &engine, &id, &mut capture).await {
+                // An external fail-closed (fault injection, engine) also ends this run.
+                let failed = app.tables[&id].lock().failed.clone();
+                let result = match failed {
+                    Some(reason) => Err(anyhow::anyhow!("{reason}")),
+                    None => sync_source(&app, &engine, &id, &mut capture).await,
+                };
+                if let Err(e) = result {
                     app.fail_source(&id, format!("sync failure: {e:#}"));
-                    app.write_status("status.json");
                     break;
                 }
             }
-        }));
+        }
+        app.write_status("status.json");
+        if healthy_since.is_some_and(|t| t.elapsed() >= HEALTHY_RESET) {
+            backoff = app.s.retry_backoff;
+        }
+        tokio::select! { _=tokio::time::sleep(backoff)=>{}, _=stop.changed()=>{} }
+        backoff = (backoff * 2).min(RETRY_MAX);
+    }
+}
+
+/// Bring one table to a consistent, synced state from whatever it was: discover its schema
+/// (and Stream), (re)attach it to the native runtime, then resume or reload it according
+/// to its restart marker, and run the first round. The table stays failed (reads upstream)
+/// until the first round succeeds.
+async fn recover(
+    app: &App,
+    engine: &Arc<SharedEngine>,
+    id: &str,
+    capture: &mut Replicator,
+    attempt: u64,
+) -> Result<()> {
+    let started = Instant::now();
+    let schema = capture.prepare_schema().await?;
+    if let Some(role) = &capture.default_role {
+        app.default_role
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_or_insert_with(|| role.clone());
+    }
+    engine.attach(schema).await?;
+    let (stream, version) = capture.stream_version().await?;
+    let (rows, recovery) = match engine.decide(id, stream, version)? {
+        Decision::Resume(version) => {
+            engine.resume(id, stream, version).await?;
+            (capture.resume().await?, "resumed".to_string())
+        }
+        decision => {
+            let reason = match decision {
+                Decision::Rebuild(reason) => format!("rebuilt: {reason}"),
+                _ => "created".into(),
+            };
+            let rebuild = matches!(decision, Decision::Rebuild(_));
+            // The local table is rebuilt from scratch; only after a schema change must the
+            // Stream first move past the DDL so the snapshot can read the new columns.
+            // Crash after this and before the load: the old digest still forces a rebuild.
+            let stream = if decision == Decision::Rebuild("source schema changed") {
+                capture.fast_forward().await?;
+                capture.stream_version().await?.0
+            } else {
+                stream
+            };
+            match engine.snapshot(id, capture, rebuild, stream).await {
+                Ok(rows) => (rows, reason),
+                Err(e) => return Err(capture.abort_capture(e).await),
+            }
+        }
+    };
+    {
+        let mut state = app.tables[id].lock();
+        let previous = state.failed.take();
+        state.rows = rows;
+        state.snapshot = json!({"rows":rows,"recovery":recovery,"attempt":attempt,
+            "previous_failure":previous,"total_secs":started.elapsed().as_secs_f64()});
+    }
+    if let Err(e) = sync_source(app, engine, id, capture).await {
+        return Err(e.context("first round after recovery"));
     }
     app.write_status("status.json");
-    serve(app, workers).await
+    Ok(())
 }
 
 struct Polling<'a>(&'a std::sync::atomic::AtomicBool);
@@ -262,7 +320,7 @@ async fn source_round(
     if commit || bootstrap {
         // Read-only and safe to retry; the Stream only moves by this instance's COMMITs.
         let mut attempt = 0;
-        let version = loop {
+        let (stream, version) = loop {
             match capture.stream_version().await {
                 Ok(v) => break v,
                 Err(e) if attempt >= 2 => return Err(e.context("stream version after commit")),
@@ -272,7 +330,7 @@ async fn source_round(
                 }
             }
         };
-        engine.committed(id, version).await?;
+        engine.committed(id, stream, version).await?;
     }
     capture.check_schema().await?;
     Ok(

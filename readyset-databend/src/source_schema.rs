@@ -398,6 +398,13 @@ impl SourceCatalog {
         self.sources.insert(key, Arc::clone(&source));
         Ok(source)
     }
+    /// Bind or rebind one configured source (its schema may have changed upstream).
+    pub fn replace(&mut self, source: SourceSchema) -> Arc<SourceSchema> {
+        let key = (source.database.clone(), source.table.clone());
+        let source = Arc::new(source);
+        self.sources.insert(key, Arc::clone(&source));
+        source
+    }
     pub fn resolve(&self, relation: &Relation, database: &str) -> Option<&Arc<SourceSchema>> {
         if relation.catalog.is_some() {
             return None;

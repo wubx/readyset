@@ -22,6 +22,9 @@ http = "0.0.0.0:8001"
 tables        = ["sales.orders"]
 poll_interval = "1s"
 max_staleness = "10s"
+# A failed table recovers itself after this delay (doubling up to 5 minutes); other
+# tables are never paused. Range 1s..300s.
+retry_backoff = "5s"
 
 [storage]
 dir = "/var/lib/readyset-databend"

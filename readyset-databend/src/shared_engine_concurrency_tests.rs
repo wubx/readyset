@@ -29,6 +29,7 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
                 partial,
                 ..Default::default()
             },
+            vec![],
             schemas.clone(),
         )
         .await
@@ -93,8 +94,8 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
         })
         .await
         .expect("B must not wait for A's incomplete batch");
-        assert_eq!(engine.sources["a.items"].checkpoint.load(Acquire), 0);
-        assert_eq!(engine.sources["b.items"].checkpoint.load(Acquire), 2);
+        assert_eq!(engine.src("a.items").checkpoint.load(Acquire), 0);
+        assert_eq!(engine.src("b.items").checkpoint.load(Acquire), 2);
         match engine.query(bq, "b").await.unwrap() {
             ReadOutcome::Matched { data, .. } => {
                 assert_eq!(data, vec![vec![json!("b-key"), json!("published")]; 2])
@@ -117,7 +118,7 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
                 .unwrap()
                 .is_err()
         );
-        assert!(!engine.sources["b.items"].failed.load(Acquire));
+        assert!(!engine.src("b.items").failed.load(Acquire));
         // A queued migration cannot run over A's partial batch. Cancelling before the
         // exclusive guard is acquired has no native side effect and must not poison.
         let migrate_engine = Arc::clone(&engine);
@@ -142,7 +143,7 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
             engine.query(aq, "a").await.unwrap(),
             ReadOutcome::Matched { .. }
         ));
-        assert_eq!(engine.sources["a.items"].checkpoint.load(Acquire), 1);
+        assert_eq!(engine.src("a.items").checkpoint.load(Acquire), 1);
         // An abandoned A batch poisons only A; B can still progress its durable offset.
         let mut abandoned = engine.begin_batch("a.items", 2).await.unwrap();
         abandoned
@@ -164,8 +165,8 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
         })
         .await
         .unwrap();
-        assert!(engine.sources["a.items"].failed.load(Acquire));
-        assert!(!engine.sources["b.items"].failed.load(Acquire));
+        assert!(engine.src("a.items").failed.load(Acquire));
+        assert!(!engine.src("b.items").failed.load(Acquire));
         assert!(!engine.is_failed());
         engine.shutdown().await;
         std::fs::remove_dir_all(dir).unwrap();

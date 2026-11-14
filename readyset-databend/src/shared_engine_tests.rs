@@ -45,6 +45,7 @@ async fn shared_runtime_checkpoints_gates_eviction_and_failure_isolation() {
                 partial,
                 ..Default::default()
             },
+            vec![],
             vec![Arc::clone(&a), Arc::clone(&b)],
         )
         .await
@@ -148,8 +149,8 @@ async fn shared_runtime_checkpoints_gates_eviction_and_failure_isolation() {
             ReadOutcome::NotMatched
         ));
         batch.finish().await.unwrap();
-        assert_eq!(engine.sources["a.items"].checkpoint.load(Acquire), 1);
-        assert_eq!(engine.sources["b.items"].checkpoint.load(Acquire), 2);
+        assert_eq!(engine.src("a.items").checkpoint.load(Acquire), 1);
+        assert_eq!(engine.src("b.items").checkpoint.load(Acquire), 2);
         let expected = bag(vec![
             vec![json!("18446744073709551615"), Value::Null],
             vec![json!("18446744073709551615"), json!("changed")],
@@ -194,8 +195,8 @@ async fn shared_runtime_checkpoints_gates_eviction_and_failure_isolation() {
             .await
             .unwrap();
         drop(abandoned);
-        assert!(engine.sources["a.items"].failed.load(Acquire));
-        assert!(!engine.sources["b.items"].failed.load(Acquire));
+        assert!(engine.src("a.items").failed.load(Acquire));
+        assert!(!engine.src("b.items").failed.load(Acquire));
         assert!(matches!(
             engine.query(aq, "a").await.unwrap(),
             ReadOutcome::NotMatched
@@ -236,6 +237,7 @@ async fn shared_zero_wait_replay_and_cancelled_migration_fail_closed() {
             upquery_timeout: Duration::ZERO,
             ..Default::default()
         },
+        vec![],
         vec![Arc::clone(&schema)],
     )
     .await
@@ -281,7 +283,7 @@ async fn shared_zero_wait_replay_and_cancelled_migration_fail_closed() {
     .await
     .unwrap();
     assert!(!engine.failed.load(Acquire));
-    assert!(!engine.sources["a.items"].failed.load(Acquire));
+    assert!(!engine.src("a.items").failed.load(Acquire));
     // Cancel a cache migration while it owns the coordinator. A dropped request must
     // fail closed, not silently leave an unknown native graph behind live HTTP routes.
     let handle = engine.handle.lock().await;

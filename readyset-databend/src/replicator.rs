@@ -211,9 +211,10 @@ impl Replicator {
         self.bootstrap_started
     }
 
-    /// The Stream offset as the source table's meta seq (`system.streams.table_version`).
-    /// Only this instance consumes the Stream, so between our own COMMITs it is stable.
-    pub async fn stream_version(&mut self) -> Result<u64> {
+    /// The Stream's identity and offset: (`system.streams.stream_id`, `table_version` = the
+    /// source table's meta seq). Only this instance consumes the Stream, so between our own
+    /// COMMITs both are stable; a dropped and recreated Stream has a new id.
+    pub async fn stream_version(&mut self) -> Result<(u64, u64)> {
         let (database, stream) = self
             .names
             .stream
@@ -222,18 +223,23 @@ impl Replicator {
         let rows = self
             .admin
             .sql(&format!(
-                "SELECT table_version, invalid_reason FROM system.streams WHERE database = '{database}' AND name = '{stream}'"
+                "SELECT stream_id, table_version, invalid_reason FROM system.streams WHERE database = '{database}' AND name = '{stream}'"
             ))
             .await?;
         ensure!(rows.len() == 1, "stream missing");
-        let reason = rows[0][1].as_str().unwrap_or_default();
+        let reason = rows[0][2].as_str().unwrap_or_default();
         ensure!(reason.is_empty(), "stream invalid: {reason}");
-        let version = match &rows[0][0] {
-            Value::String(s) => s.parse()?,
-            Value::Number(n) => n.as_u64().context("stream version")?,
-            _ => bail!("stream version missing"),
+        let number = |v: &Value, what: &str| -> Result<u64> {
+            match v {
+                Value::String(s) => Ok(s.parse()?),
+                Value::Number(n) => n.as_u64().with_context(|| what.to_string()),
+                _ => bail!("{what} missing"),
+            }
         };
-        Ok(version)
+        Ok((
+            number(&rows[0][0], "stream id")?,
+            number(&rows[0][1], "stream version")?,
+        ))
     }
 
     /// Continue from persisted local rows that equal the source at the Stream offset: no
@@ -258,6 +264,27 @@ impl Replicator {
         self.sequence = 1;
         self.rows = rows;
         Ok(rows)
+    }
+
+    /// Advance the Stream to the source table's current snapshot, discarding its pending
+    /// changes (native consuming read in its own transaction). Only for a table that is about
+    /// to be rebuilt because its schema changed: a snapshot AT the old Stream offset predates
+    /// the DDL and cannot produce the new columns. The rebuild then snapshots AT the new
+    /// offset as usual. Stream version CAS still rejects a concurrent consumer.
+    pub async fn fast_forward(&mut self) -> Result<()> {
+        let stream = self.names.stream.clone();
+        let a = &mut self.admin;
+        a.sql("BEGIN").await?;
+        match a
+            .sql(&format!("SELECT count(*) FROM {stream} WITH CONSUME"))
+            .await
+        {
+            Ok(_) => a.sql("COMMIT").await.map(|_| ()),
+            Err(e) => {
+                let _ = a.sql("ROLLBACK").await;
+                Err(e)
+            }
+        }
     }
 
     /// An empty consuming read: ROLLBACK keeps the Stream (and the local restart marker)

@@ -6,7 +6,12 @@
 services:
   readyset-databend:
     image: readyset-databend:dev
+    # Restarts are cheap (persisted state resumes in seconds); the process also exits on
+    # purpose when the native runtime fails closed, so always bring it back.
     restart: unless-stopped
+    # SIGTERM lets an in-flight table batch finish and commit (up to 60s) before shutdown;
+    # a shorter grace period SIGKILLs it and that table is rebuilt on start.
+    stop_grace_period: 120s
     environment:
       DATABEND_PASSWORD: ${DATABEND_PASSWORD:?set DATABEND_PASSWORD}
       RUST_LOG: warn

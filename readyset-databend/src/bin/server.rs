@@ -139,6 +139,8 @@ struct ReplicationSection {
     tables: Option<Vec<String>>,
     poll_interval: Option<String>,
     max_staleness: Option<String>,
+    /// Shared runtime: first delay before a failed table recovers itself (doubles, max 5m).
+    retry_backoff: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -161,6 +163,7 @@ struct Settings {
     listen: SocketAddr,
     interval: Duration,
     max_staleness: Duration,
+    retry_backoff: Duration,
     route_journal: bool,
     fault_injection: bool,
     oracle: bool,
@@ -229,6 +232,7 @@ fn settings(cli: Cli) -> Result<Settings> {
         tables: None,
         poll_interval: None,
         max_staleness: None,
+        retry_backoff: None,
     });
     let endpoint = cli
         .endpoint
@@ -358,6 +362,11 @@ fn settings(cli: Cli) -> Result<Settings> {
         Some(s) => duration(&format!("{s}s"))?,
         None => duration(replication.max_staleness.as_deref().unwrap_or("10s"))?,
     };
+    let retry_backoff = duration(replication.retry_backoff.as_deref().unwrap_or("5s"))?;
+    ensure!(
+        retry_backoff >= Duration::from_secs(1) && retry_backoff <= Duration::from_secs(300),
+        "replication.retry_backoff must be within 1s..300s"
+    );
     let cache_file = file.cache.unwrap_or_default();
     let partial = cli.partial || cache_file.partial.unwrap_or(false);
     let memory_limit_bytes = cli
@@ -375,7 +384,17 @@ fn settings(cli: Cli) -> Result<Settings> {
         ),
     };
     cache.validate(cli.oracle)?;
-    let instance_id = instance_id(file.instance_id, storage.as_deref())?;
+    // The shared runtime reopens storage keyed by instance_id: a generated id must persist
+    // even when only --output is given, or every start would silently begin from scratch.
+    let id_dir = match (&storage, shared) {
+        (Some(dir), _) => Some(dir.clone()),
+        (None, true) => {
+            fs::create_dir_all(&run_dir)?;
+            Some(run_dir.clone())
+        }
+        (None, false) => None,
+    };
+    let instance_id = instance_id(file.instance_id, id_dir.as_deref())?;
     Ok(Settings {
         tables,
         endpoint: endpoint.trim_end_matches('/').to_owned(),
@@ -388,6 +407,7 @@ fn settings(cli: Cli) -> Result<Settings> {
         listen,
         interval,
         max_staleness,
+        retry_backoff,
         route_journal: cli.route_journal,
         fault_injection: cli.enable_fault_injection,
         oracle: cli.oracle,
@@ -472,7 +492,9 @@ struct App {
     engine: CacheEngine,
     tables: std::collections::BTreeMap<String, Arc<TableState>>,
     names: Names,
-    default_role: Option<String>,
+    /// Upstream account's default role, learned from the first successful DESCRIBE.
+    /// Shared mode learns it in the background (Databend may be down at start).
+    default_role: StdMutex<Option<String>>,
     state: StdMutex<RouteState>,
     results: StdMutex<LocalResults>,
     passive: StdMutex<HashMap<String, Instant>>,
@@ -814,7 +836,8 @@ impl App {
         if let Some(table) = self.tables.get(id) {
             let mut state = table.lock();
             state.ready = false;
-            state.failed.get_or_insert(reason);
+            // Latest reason: a table may fail, recover itself and fail again.
+            state.failed = Some(reason);
         }
         if let CacheEngine::Shared(engine) = &self.engine {
             engine.fail_source(id);
@@ -1095,7 +1118,12 @@ impl App {
         }
         let sql = body.get("sql").and_then(Value::as_str).unwrap_or_default();
         let database = session_database(&body);
-        let sane = safe_session(&body, self.default_role.as_deref())
+        let default_role = self
+            .default_role
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
+        let sane = safe_session(&body, default_role.as_deref())
             && safe_headers(&headers)
             && (!self.tables.is_empty()
                 || database == "default"
@@ -1793,7 +1821,7 @@ async fn run(s: Settings) -> Result<()> {
         engine: CacheEngine::Legacy(Arc::clone(&engine)),
         tables: Default::default(),
         names: names.clone(),
-        default_role: replicator.default_role.clone(),
+        default_role: StdMutex::new(replicator.default_role.clone()),
         state: StdMutex::new(state),
         results: StdMutex::new(HashMap::new()),
         passive: StdMutex::new(HashMap::new()),
@@ -1834,8 +1862,21 @@ async fn serve(app: Arc<App>, workers: Vec<tokio::task::JoinHandle<()>>) -> Resu
         .fallback(dispatch)
         .with_state(Arc::clone(&app));
     let (signal_tx, signal_rx) = watch::channel(false);
+    let watched = Arc::clone(&app);
     tokio::spawn(async move {
-        shutdown_signal().await;
+        tokio::select! {
+            _ = shutdown_signal() => {}
+            // Shared runtime: a global fail-closed (uncertain graph change) has no in-process
+            // recovery. Exit so the supervisor restarts on the persisted state (seconds).
+            _ = async {
+                loop {
+                    if matches!(&watched.engine, CacheEngine::Shared(e) if e.is_failed()) {
+                        break;
+                    }
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                }
+            } => eprintln!("shared native engine failed closed; shutting down for restart"),
+        }
         let _ = signal_tx.send(true);
     });
     let graceful = {
@@ -1866,6 +1907,9 @@ async fn serve(app: Arc<App>, workers: Vec<tokio::task::JoinHandle<()>>) -> Resu
     app.engine.shutdown().await;
     app.write_status("final_status.json");
     served?;
+    if matches!(&app.engine, CacheEngine::Shared(e) if e.is_failed()) {
+        bail!("shared native engine failed closed; restart required");
+    }
     Ok(())
 }
 

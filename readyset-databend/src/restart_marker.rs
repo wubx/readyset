@@ -1,19 +1,22 @@
 //! Restart marker stored as each base table's native ReadySet replication offset.
 //!
 //! The marker lives in the base table's own RocksDB (synchronous WAL) and records how the
-//! local rows relate to the table's Databend Stream position (`system.streams.table_version`,
-//! the source table's meta seq at the Stream offset):
+//! local rows relate to the table's Databend Stream position: `stream` is the Stream's
+//! identity (`system.streams.stream_id`) and versions are `system.streams.table_version`,
+//! the source table's meta seq at the Stream offset.
 //!
 //! - `Applied(v)`: local rows equal the source at Stream version `v`.
 //! - `Applying(p)`: local rows may contain an unfinished batch on top of version `p`. A batch
-//!   is COMMITted only after every native write ACKed, so if the Stream has moved past `p`
-//!   (only this instance consumes it) the batch is complete; otherwise it is not.
+//!   is COMMITted only after every native write ACKed, so if THE SAME Stream has moved past
+//!   `p` (only this instance consumes it) the batch is complete; otherwise it is not.
 //! - `Rebuilding`: a snapshot load is in progress; local rows are unusable.
 //!
+//! A recreated Stream (new `stream_id`) proves nothing about earlier COMMITs: rebuild.
+//!
 //! Encoded in `DatabendPosition` without native changes: generation =
-//! `{schema digest}_{a|p|r}{version}`, sequence = a counter that grows on every write. The
-//! native base drops an offset only if it compares `<=` within ONE generation, so a phase
-//! change (new generation) or a larger counter is always stored.
+//! `{schema digest}_{stream id}_{a|p|r}{version}`, sequence = a counter that grows on every
+//! write. The native base drops an offset only if it compares `<=` within ONE generation,
+//! so a phase change (new generation) or a larger counter is always stored.
 use anyhow::{Result, bail, ensure};
 use replication_offset::ReplicationOffset;
 use replication_offset::databend::DatabendPosition;
@@ -28,6 +31,7 @@ pub enum Phase {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Marker {
     pub digest: String,
+    pub stream: u64,
     pub phase: Phase,
     pub counter: u64,
 }
@@ -40,7 +44,7 @@ impl Marker {
             Phase::Applied(v) => format!("a{v}"),
         };
         Ok(ReplicationOffset::Databend(DatabendPosition::new(
-            format!("{}_{phase}", self.digest),
+            format!("{}_{}_{phase}", self.digest, self.stream),
             self.counter,
         )?))
     }
@@ -49,10 +53,15 @@ impl Marker {
         let ReplicationOffset::Databend(position) = offset else {
             bail!("non-Databend restart marker");
         };
-        let Some((digest, phase)) = position.generation().rsplit_once('_') else {
+        let mut parts = position.generation().splitn(3, '_');
+        let (Some(digest), Some(stream), Some(phase)) = (parts.next(), parts.next(), parts.next())
+        else {
             bail!("malformed restart marker");
         };
-        ensure!(!digest.is_empty(), "malformed restart marker");
+        ensure!(
+            !digest.is_empty() && digest.bytes().all(|b| b.is_ascii_hexdigit()),
+            "malformed restart marker"
+        );
         let version = |s: &str| -> Result<u64> { Ok(s.parse()?) };
         let phase = match phase.split_at_checked(1) {
             Some(("r", "")) => Phase::Rebuilding,
@@ -62,18 +71,10 @@ impl Marker {
         };
         Ok(Self {
             digest: digest.into(),
+            stream: version(stream)?,
             phase,
             counter: position.sequence(),
         })
-    }
-
-    /// The next marker for this table: same digest, strictly larger counter.
-    pub fn next(&self, phase: Phase) -> Self {
-        Self {
-            digest: self.digest.clone(),
-            phase,
-            counter: self.counter + 1,
-        }
     }
 }
 
@@ -87,12 +88,13 @@ pub enum Decision {
     Rebuild(&'static str),
 }
 
-/// Restart decision for one table. `stream_version` is read from Databend after the
-/// Stream is ensured to exist; nobody but this instance consumes that Stream.
+/// Restart decision for one table. `stream`/`stream_version` are read from Databend after
+/// the Stream is ensured to exist; nobody but this instance consumes that Stream.
 pub fn decide(
     table_exists: bool,
     marker: Option<&Marker>,
     digest: &str,
+    stream: u64,
     stream_version: u64,
 ) -> Decision {
     if !table_exists {
@@ -103,6 +105,9 @@ pub fn decide(
     };
     if marker.digest != digest {
         return Decision::Rebuild("source schema changed");
+    }
+    if marker.stream != stream {
+        return Decision::Rebuild("stream recreated");
     }
     match marker.phase {
         Phase::Applied(v) if v == stream_version => Decision::Resume(v),
@@ -121,6 +126,7 @@ mod tests {
     fn marker(phase: Phase, counter: u64) -> Marker {
         Marker {
             digest: "0123456789ab".into(),
+            stream: 77,
             phase,
             counter,
         }
@@ -136,23 +142,28 @@ mod tests {
             let m = marker(phase, 42);
             assert_eq!(Marker::parse(&m.offset().unwrap()).unwrap(), m);
         }
-        let bad = ReplicationOffset::Databend(DatabendPosition::new("nophase", 1).unwrap());
-        assert!(Marker::parse(&bad).is_err());
-        let bad = ReplicationOffset::Databend(DatabendPosition::new("d_x1", 1).unwrap());
-        assert!(Marker::parse(&bad).is_err());
+        for bad in ["nophase", "d_x1", "0a_a1", "0a_1_x1", "zz_1_a1"] {
+            let bad = ReplicationOffset::Databend(DatabendPosition::new(bad, 1).unwrap());
+            assert!(Marker::parse(&bad).is_err(), "{bad:?}");
+        }
     }
 
     #[test]
     fn every_next_marker_is_stored_by_the_native_base() {
         // The base drops an offset only when new <= current inside one generation.
         let a = marker(Phase::Applied(10), 5);
-        let p = a.next(Phase::Applying(10));
-        let back = p.next(Phase::Applied(10));
+        let next = |m: &Marker, phase| Marker {
+            phase,
+            counter: m.counter + 1,
+            ..m.clone()
+        };
+        let p = next(&a, Phase::Applying(10));
+        let back = next(&p, Phase::Applied(10));
         for (old, new) in [(&a, &p), (&p, &back)] {
             let (old, new) = (old.offset().unwrap(), new.offset().unwrap());
             assert!(!matches!(new.try_partial_cmp(&old), Ok(o) if o.is_le()));
         }
-        let same = back.next(Phase::Applied(10));
+        let same = next(&back, Phase::Applied(10));
         assert!(
             same.offset()
                 .unwrap()
@@ -165,36 +176,53 @@ mod tests {
     #[test]
     fn restart_decisions_cover_every_crash_window() {
         let d = "0123456789ab";
-        assert_eq!(decide(false, None, d, 9), Decision::Create);
-        assert!(matches!(decide(true, None, d, 9), Decision::Rebuild(_)));
+        let decide = |exists, m: Option<&Marker>, v| decide(exists, m, d, 77, v);
+        assert_eq!(decide(false, None, 9), Decision::Create);
+        assert!(matches!(decide(true, None, 9), Decision::Rebuild(_)));
         let mut other = marker(Phase::Applied(9), 1);
         other.digest = "ffffffffffff".into();
         assert!(matches!(
-            decide(true, Some(&other), d, 9),
+            decide(true, Some(&other), 9),
             Decision::Rebuild(_)
         ));
         // Clean stop / crash between batches.
         assert_eq!(
-            decide(true, Some(&marker(Phase::Applied(9), 1)), d, 9),
+            decide(true, Some(&marker(Phase::Applied(9), 1)), 9),
             Decision::Resume(9)
         );
         assert!(matches!(
-            decide(true, Some(&marker(Phase::Applied(8), 1)), d, 9),
+            decide(true, Some(&marker(Phase::Applied(8), 1)), 9),
             Decision::Rebuild(_)
         ));
         // Crash mid-batch, or COMMIT never executed: rebuild only this table.
         assert!(matches!(
-            decide(true, Some(&marker(Phase::Applying(9), 1)), d, 9),
+            decide(true, Some(&marker(Phase::Applying(9), 1)), 9),
             Decision::Rebuild(_)
         ));
         // COMMIT executed but its response or the applied marker was lost.
         assert_eq!(
-            decide(true, Some(&marker(Phase::Applying(8), 1)), d, 9),
+            decide(true, Some(&marker(Phase::Applying(8), 1)), 9),
             Decision::Resume(9)
         );
         assert!(matches!(
-            decide(true, Some(&marker(Phase::Rebuilding, 1)), d, 9),
+            decide(true, Some(&marker(Phase::Rebuilding, 1)), 9),
             Decision::Rebuild(_)
         ));
+    }
+
+    #[test]
+    fn recreated_stream_never_resumes_an_interrupted_batch() {
+        // Crash mid-batch at version 8, then the Stream is dropped and recreated (new id,
+        // new version). The moved version must NOT be read as "our COMMIT happened".
+        let m = marker(Phase::Applying(8), 3);
+        assert_eq!(
+            decide(true, Some(&m), "0123456789ab", 78, 9),
+            Decision::Rebuild("stream recreated")
+        );
+        let m = marker(Phase::Applied(9), 3);
+        assert_eq!(
+            decide(true, Some(&m), "0123456789ab", 78, 9),
+            Decision::Rebuild("stream recreated")
+        );
     }
 }

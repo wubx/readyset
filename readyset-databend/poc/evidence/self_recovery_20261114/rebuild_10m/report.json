@@ -1,0 +1,198 @@
+{
+  "checks": [
+    {
+      "name": "start resumed both",
+      "passed": true,
+      "recovery": {
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_a.items": "resumed",
+        "readyset_gateway_multiscale_20261114_181927_e58f2f_b.items": "resumed"
+      },
+      "secs": 0.246
+    },
+    {
+      "name": "A rebuilt itself for the new schema",
+      "passed": true,
+      "a_back_after_secs": 50.201
+    },
+    {
+      "name": "B kept syncing and serving locally during A rebuild",
+      "passed": true,
+      "rounds": 15,
+      "local": 15,
+      "label_ok": 15,
+      "fresh_p50_secs": 1.589,
+      "fresh_max_secs": 1.739
+    },
+    {
+      "name": "A local and correct after rebuild",
+      "passed": true
+    },
+    {
+      "name": "clean exit",
+      "passed": true
+    }
+  ],
+  "b_rounds": [
+    {
+      "n": 1,
+      "fresh_secs": 1.371,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 2,
+      "fresh_secs": 1.705,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 3,
+      "fresh_secs": 1.525,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 4,
+      "fresh_secs": 1.578,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 5,
+      "fresh_secs": 1.655,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 6,
+      "fresh_secs": 1.589,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 7,
+      "fresh_secs": 1.697,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 8,
+      "fresh_secs": 1.591,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 9,
+      "fresh_secs": 1.739,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 10,
+      "fresh_secs": 1.57,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 11,
+      "fresh_secs": 1.579,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 12,
+      "fresh_secs": 1.589,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 13,
+      "fresh_secs": 1.579,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 14,
+      "fresh_secs": 1.576,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 15,
+      "fresh_secs": 1.636,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": true,
+      "a_applying": false,
+      "a_syncing": false
+    },
+    {
+      "n": 16,
+      "fresh_secs": 1.523,
+      "route": "readyset",
+      "label_ok": true,
+      "a_failed": false,
+      "a_applying": false,
+      "a_syncing": false
+    }
+  ],
+  "a_failed_after_secs": 0.13,
+  "a_recovery": {
+    "attempt": 2,
+    "previous_failure": "sync failure: source schema changed; rebuild this table before resuming capture",
+    "recovery": "rebuilt: source schema changed",
+    "rows": 10000002,
+    "total_secs": 44.549939617
+  },
+  "b_during_a_rebuild": {
+    "rounds": 15,
+    "local": 15,
+    "label_ok": 15,
+    "fresh_p50_secs": 1.589,
+    "fresh_max_secs": 1.739
+  },
+  "a_back_after_secs": 50.201,
+  "passed": true
+}

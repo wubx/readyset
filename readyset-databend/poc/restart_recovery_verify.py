@@ -112,7 +112,8 @@ class Scenario:
             return state['ready'] and state['last_sync_age_ms'] <= (time.monotonic() - started) * 1000
         self.wait(condition, timeout, table + ' fresh')
 
-    def launch(self, life):
+    def launch(self, life, tables=None, wait=True):
+        tables = tables or [self.a, self.b]
         config = self.output / 'config.toml'
         config.write_text(f'''instance_id = "{self.instance}"
 confirm_create = true
@@ -122,7 +123,7 @@ user = "{self.args.user}"
 [listen]
 http = "127.0.0.1:0"
 [replication]
-tables = ["{self.a}", "{self.b}"]
+tables = [{', '.join(json.dumps(t) for t in tables)}]
 poll_interval = "100ms"
 max_staleness = "5s"
 [cache]
@@ -139,16 +140,40 @@ upquery_timeout_ms = 10000
                                      stdout=self.log, stderr=subprocess.STDOUT)
         self.wait(lambda: listening.exists(), 600, 'listening')
         self.origin = json.loads(listening.read_text())['origin']
-        self.fresh(self.a, 600)
-        self.fresh(self.b, 600)
+        self.check('life%d liveness up as soon as listening' % life, self.livez(), 200)
+        if not wait:
+            return None
+        for t in tables:
+            self.fresh(t, 600)
         states = self.states()
         info = {'life': life, 'ready_secs': round(time.monotonic() - started, 3),
-                'recovery': {t: states[t]['snapshot'].get('recovery') for t in (self.a, self.b)},
-                'load_secs': {t: states[t]['snapshot'].get('total_secs') for t in (self.a, self.b)},
-                'rows': {t: states[t]['rows'] for t in (self.a, self.b)}}
+                'recovery': {t: states[t]['snapshot'].get('recovery') for t in tables},
+                'load_secs': {t: states[t]['snapshot'].get('total_secs') for t in tables},
+                'rows': {t: states[t]['rows'] for t in tables}}
         self.lives.append(info)
         self.note('life', **info)
         return info['recovery']
+
+    def livez(self, path='/livez'):
+        try:
+            with urllib.request.urlopen(self.origin + path, timeout=10) as r:
+                return r.status
+        except urllib.error.HTTPError as e:
+            return e.code
+
+    def recovered(self, table, timeout=180):
+        """Wait for a failed table to recover ITSELF (no restart): ready and fresh again."""
+        started = time.monotonic()
+        def condition():
+            state = self.states()[table]
+            return (not state['failed'] and state['ready'] and state['last_sync_age_ms'] is not None
+                    and state['last_sync_age_ms'] <= (time.monotonic() - started) * 1000)
+        self.wait(condition, timeout, table + ' self-recovery')
+        state = self.states()[table]
+        self.note('self_recovered', table=table, seconds=round(time.monotonic() - started, 3),
+                  recovery=state['snapshot'].get('recovery'), attempt=state['snapshot'].get('attempt'),
+                  previous_failure=(state['snapshot'].get('previous_failure') or '')[:200])
+        return state['snapshot'].get('recovery')
 
     def stop(self, kill=False):
         if self.proc and self.proc.poll() is None:
@@ -263,6 +288,73 @@ upquery_timeout_ms = 10000
             r = self.launch(6)
             self.check('final restart resumes both', r, {self.a: 'resumed', self.b: 'resumed'})
             self.verify('life6')
+
+            # 7. B removed from the config: its native cache must not linger (memory);
+            #    its declaration and base rows are kept.
+            self.stop()
+            r = self.launch(7, tables=[self.a])
+            self.check('only A configured: A resumed', r, {self.a: 'resumed'})
+            self.check('cache of unconfigured B removed natively, A cache kept',
+                       sorted(row[0] for row in self.query('SHOW CACHES', 'readyset')), ['a_id'])
+            self.stop()
+            # 8. B added back: its rows resume from the Stream (changes made meanwhile are
+            #    consumed) and its declared cache is recreated without CREATE CACHE.
+            self.write('v8', 'b8')
+            r = self.launch(8)
+            self.check('re-added B resumes, A resumes', r, {self.a: 'resumed', self.b: 'resumed'})
+            self.check('B cache restored from its declaration',
+                       sorted(row[0] for row in self.query('SHOW CACHES', 'readyset')), ['a_id', 'b_id'])
+            self.verify('life8')
+
+            # 9. Databend unavailable at start: HTTP still serves, tables recover by
+            #    themselves once Databend is back (no restart).
+            self.stop()
+            self.proxy.down = True
+            self.launch(9, wait=False)
+            self.wait(lambda: all(self.states()[t]['failed'] for t in (self.a, self.b)), 60, 'tables fail while Databend down')
+            self.check('readyz 503 while every table is down', self.livez('/readyz'), 503)
+            self.write('v9', 'b9')
+            time.sleep(3)
+            self.proxy.down = False
+            for t in (self.a, self.b):
+                self.check('Databend back at start: ' + t[-7:] + ' resumed by itself', self.recovered(t), 'resumed')
+            self.verify('life9')
+
+            # 10. Databend outage while running: both tables fail, then recover in-process.
+            self.proxy.down = True
+            self.wait(lambda: all(self.states()[t]['failed'] for t in (self.a, self.b)), 60, 'tables fail during outage')
+            self.write('v10', 'b10')
+            time.sleep(3)
+            self.proxy.down = False
+            for t in (self.a, self.b):
+                self.check('outage over: ' + t[-7:] + ' resumed by itself', self.recovered(t), 'resumed')
+            self.verify('life10')
+
+            # 11. SIGKILL mid A batch, then the Stream is dropped (as a DBA would after it
+            #     became invalid) and recreated by the next start. A must NOT resume.
+            self.source.sql("UPDATE " + self.a + " SET val='v11'")
+            self.wait(lambda: self.states()[self.a]['applying'], 120, 'A applying')
+            self.stop(kill=True)
+            self.source.sql('DROP STREAM ' + self.stream_a)
+            r = self.launch(11)
+            self.check('recreated Stream after mid-batch crash: A rebuilt, B resumed', r,
+                       {self.a: 'rebuilt: stream recreated', self.b: 'resumed'})
+            self.verify('life11')
+
+            # 12. Upstream schema change while running: A stops (drift), then rebuilds itself
+            #     for the new schema; its cache is recompiled and kept. B is untouched.
+            self.source.sql('ALTER TABLE ' + self.a + ' ADD COLUMN extra BIGINT DEFAULT 0')
+            self.wait(lambda: self.states()[self.a]['failed'], 60, 'A stops on schema drift')
+            self.check('B unaffected by A schema drift', self.states()[self.b]['failed'], None)
+            self.check('schema change: A rebuilt by itself', self.recovered(self.a), 'rebuilt: source schema changed')
+            self.check('A cache kept for the new schema',
+                       sorted(row[0] for row in self.query('SHOW CACHES', 'readyset')), ['a_id', 'b_id'])
+            self.write('v12', 'b12')
+            self.verify('life12')
+            self.stop()
+            r = self.launch(13)
+            self.check('restart after schema rebuild resumes both', r, {self.a: 'resumed', self.b: 'resumed'})
+            self.verify('life13')
             self.check('one native server', self.health()['cache']['native_server_instances'], 1)
             self.check('one Stream per table', [self.source.sql("SELECT count(*) FROM system.streams WHERE database='" + db + "'") for db in self.dbs], [[['1']], [['1']]])
             self.check('no helper tables', [self.source.sql("SELECT count(*) FROM system.tables WHERE database='" + db + "'") for db in self.dbs], [[['1']], [['1']]])

@@ -37,6 +37,7 @@ class FaultProxy:
         self.capture_session = None
         self.capture_node = None
         self.armed = True
+        self.down = False
         self.consume_count = 0
         self.commit_count = 0
         proxy = self
@@ -52,6 +53,10 @@ class FaultProxy:
                 self.dispatch()
 
             def dispatch(self):
+                if proxy.down:
+                    # Simulated Databend outage: refuse every request, nothing forwarded.
+                    self.send_error(503, 'simulated Databend outage')
+                    return
                 try:
                     raw = self.rfile.read(int(self.headers.get('Content-Length', 0)))
                     body = json.loads(raw) if raw else {}
@@ -255,6 +260,7 @@ http = "127.0.0.1:0"
 tables = ["{self.a}", "{self.b}"]
 poll_interval = "100ms"
 max_staleness = "5s"
+retry_backoff = "60s"
 [cache]
 partial = {str(self.mode == 'partial').lower()}
 {('memory_limit_mb = 512' if self.mode == 'partial' else '')}
