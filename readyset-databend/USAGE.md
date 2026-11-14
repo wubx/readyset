@@ -64,10 +64,161 @@ upquery_timeout_ms = 5000    # 冷数据回填的等待时间，超时这次查�
 
 ## 3. 启动与停止
 
+### 3.1 从编译到启动：单进程、多表、持久化、部分物化
+
+下面的例子用一个进程同步 `sales.orders` 和 `crm.customers` 两张表，本地数据持久化到 `/var/lib/readyset-databend`，
+并开启部分物化。两张表共享同一个原生 ReadySet 运行时和同一份内存预算。
+
+**第 1 步：编译**
+
+在仓库根目录执行。需要 Rust 1.99.0（仓库的 `rust-toolchain` 已指定，rustup 会自动切换）、C/C++ 编译器和 libclang
+（RocksDB 绑定需要；找不到时用 `LIBCLANG_PATH` 指向 libclang 所在目录）。
+
+```bash
+cargo build --release --locked -p readyset-databend --bin readyset-databend
+sudo install -m 755 target/release/readyset-databend /usr/local/bin/readyset-databend
+```
+
+Docker 镜像的构建方式见 [docker/README.md](docker/README.md)。
+
+**第 2 步：Databend 侧准备**
+
+按第 1 节创建账号，并对两个库都授予 `SELECT` 和 `CREATE`：
+
+```sql
+GRANT SELECT ON sales.* TO ROLE readyset_role;
+GRANT CREATE ON sales.* TO ROLE readyset_role;
+GRANT SELECT ON crm.*   TO ROLE readyset_role;
+GRANT CREATE ON crm.*   TO ROLE readyset_role;
+```
+
+**第 3 步：准备目录和配置文件**
+
+```bash
+sudo useradd --system --home /var/lib/readyset-databend --shell /usr/sbin/nologin readyset
+sudo install -d -m 700 -o readyset -g readyset /var/lib/readyset-databend   # 存放业务数据明文副本，限制权限
+sudo install -d -m 755 /etc/readyset-databend
+```
+
+`/etc/readyset-databend/config.toml`：
+
+```toml
+# 固定实例标识：决定 Stream 名称（readyset_shop01_<表名>）和本地存储。上线后不要修改。
+instance_id    = "shop01"
+confirm_create = true          # 同意在每张表所在的库里创建本实例的 Stream
+
+[upstream]
+url  = "http://databend:8000"  # 改成你的 Databend 地址
+user = "readyset"              # 密码只从环境变量 DATABEND_PASSWORD 读取
+
+[listen]
+http = "0.0.0.0:8001"          # 应用改连这个地址
+
+[replication]
+tables        = ["sales.orders", "crm.customers"]   # 多张表共享一个进程，最多 32 张
+poll_interval = "1s"
+max_staleness = "10s"
+retry_backoff = "5s"           # 单表失败后自动恢复的首次等待时间
+
+[storage]
+dir = "/var/lib/readyset-databend"   # 开启持久化；必须是持久盘，重启后从这里续接
+
+[cache]
+partial            = true      # 部分物化：只缓存被查询过的键，基表仍全量保存在本地磁盘
+memory_limit_mb    = 2048      # 内存软目标，不是 RSS 硬上限
+upquery_timeout_ms = 5000      # 冷键回填等待时间，超时这次查询转发 Databend
+```
+
+密码放在单独的文件里，不要写进配置：
+
+```bash
+sudo install -m 600 -o root -g root /dev/null /etc/readyset-databend/env
+echo "DATABEND_PASSWORD='<password>'" | sudo tee /etc/readyset-databend/env > /dev/null
+```
+
+**第 4 步：用 systemd 启动**
+
+生产环境必须有进程守护（原因见 3.2 节）。`/etc/systemd/system/readyset-databend.service`：
+
+```ini
+[Unit]
+Description=readyset-databend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=readyset
+Group=readyset
+EnvironmentFile=/etc/readyset-databend/env
+Environment=RUST_LOG=warn
+ExecStart=/usr/local/bin/readyset-databend --config /etc/readyset-databend/config.toml
+Restart=always
+RestartSec=5
+# SIGTERM 后最多等 60 秒让进行中的批次提交，宽限期要大于这个时间
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now readyset-databend
+journalctl -u readyset-databend -f
+```
+
+临时在前台试运行，可以不用 systemd：
+
 ```bash
 export DATABEND_PASSWORD='<password>'
 readyset-databend --config /etc/readyset-databend/config.toml
 ```
+
+**第 5 步：确认启动成功**
+
+`/health` 和查询需要认证，用配置里的账号：
+
+```bash
+export DATABEND_PASSWORD='<password>'
+curl -s http://127.0.0.1:8001/livez     # {"ok":true}：进程已在监听
+curl -s http://127.0.0.1:8001/readyz    # {"ready":true}：至少一张表可本地读
+curl -s -u "readyset:$DATABEND_PASSWORD" http://127.0.0.1:8001/health \
+  | jq '.tables[] | {table, ready, failed, recovery: .snapshot.recovery}'
+```
+
+首次启动每张表要做一次全量快照，`recovery` 为 `created`。快照完成后 `ready` 变为 `true`。
+
+**第 6 步：声明缓存并验证命中**
+
+列名按你的表结构修改。这里用 Databend HTTP 接口，bendsql 和 Python driver 连 8001 端口也可以：
+
+```bash
+q() { curl -s -i -u "readyset:$DATABEND_PASSWORD" -H 'Content-Type: application/json' \
+        -d "{\"sql\": \"$1\"}" http://127.0.0.1:8001/v1/query; }
+
+q "CREATE CACHE orders_by_id FROM SELECT id, status, amount FROM sales.orders WHERE id = ?"
+q "CREATE CACHE customers_by_region FROM SELECT id, name FROM crm.customers WHERE region = ?"
+q "SELECT id, status, amount FROM sales.orders WHERE id = 42" | grep -i x-readyset-route
+# X-ReadySet-Route: readyset   表示本地命中；databend 表示转发
+```
+
+partial 模式下，某个键第一次被查询时要从本地磁盘回填，之后才在内存里命中。
+
+**第 7 步：验证持久化**
+
+```bash
+sudo systemctl restart readyset-databend
+curl -s -u "readyset:$DATABEND_PASSWORD" http://127.0.0.1:8001/health \
+  | jq '.tables[] | {table, ready, recovery: .snapshot.recovery}'
+```
+
+两张表的 `recovery` 都应该是 `resumed`：不重新做快照，缓存声明自动恢复，不需要重新 `CREATE CACHE`。
+停机期间 Databend 上的写入，会在启动后从 Stream 继续消费。
+
+**容量估算：** 本地磁盘要能放下所有同步表的全部行。内存的 2048 MiB 是软目标，
+实测千万行场景 RSS 可能比它高出 2–3 GiB，容器或 systemd 的内存上限要按这个留余量（见第 7 节）。
+
+### 3.2 运行行为
 
 - **启动：** 先打开本地存储并监听 HTTP，再在后台并行恢复各表。打开本地存储不需要 Databend，
   但要等原生存储重新打开后才开始监听（实测两张千万行表约 6 秒），这段时间 `/livez` 不可用。
@@ -83,7 +234,6 @@ readyset-databend --config /etc/readyset-databend/config.toml
 - **单实例：** 同一个 `instance_id` 任何时候只能运行一个进程。同一存储目录的第二个进程会因 RocksDB 文件锁启动失败；
   但用不同存储卷同时运行两个相同 `instance_id` 的实例无法被检测，会互相消费 Stream、导致数据错误。
   发布时用单副本和"先停后起"（Recreate）策略。
-- **构建：** `cargo build --release -p readyset-databend --bin readyset-databend`。Docker 镜像构建见 docker/README.md。
 
 ## 4. 声明和使用缓存
 
