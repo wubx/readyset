@@ -4,15 +4,26 @@
 //!
 //! Reads use the server's shared `Readers` map through `ReadRequestHandler` (the standalone
 //! adapter's in-process path). The reader RPC listener still runs for the barrier oracle.
+#[cfg(test)]
+#[path = "live_schema_tests.rs"]
+mod live_schema_tests;
+#[cfg(test)]
+#[path = "engine_multitable_tests.rs"]
+mod multitable_tests;
+#[cfg(test)]
+#[path = "engine_tests.rs"]
+mod tests;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex, RwLock as StdRwLock};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail, ensure};
-use readyset_client::consensus::{Authority, LocalAuthority, LocalAuthorityStore};
+use readyset_client::consensus::{
+    Authority, LocalAuthority, LocalAuthorityStore, StandaloneAuthority,
+};
 use readyset_client::recipe::changelist::{Change, ChangeList};
-use readyset_client::{ReaderHandle, ReadySetHandle, Table, TableOperation, View};
+use readyset_client::{ReaderAddress, ReaderHandle, ReadySetHandle, Table, TableOperation, View};
 use readyset_data::{DfValue, Dialect};
 use readyset_server::worker::readers::{ReadRequestHandler, retry_misses};
 use readyset_server::{Builder, DurabilityMode, Handle, PersistenceParameters, Readers};
@@ -37,6 +48,44 @@ pub struct EngineConfig {
     /// verifiers). `false`: production mode. No per-batch work proportional to table size;
     /// each batch is fenced with one marker row instead.
     pub oracle: bool,
+    pub cache: CacheConfig,
+}
+
+/// Partial readers use ReadySet's native replay and eviction, never a second cache engine.
+#[derive(Clone, Copy, Debug)]
+pub struct CacheConfig {
+    pub partial: bool,
+    /// Process allocated-memory soft target, NOT an RSS/cgroup hard cap.
+    pub memory_limit_bytes: Option<usize>,
+    pub upquery_timeout: Duration,
+}
+
+impl Default for CacheConfig {
+    fn default() -> Self {
+        Self {
+            partial: false,
+            memory_limit_bytes: None,
+            upquery_timeout: Duration::from_secs(5),
+        }
+    }
+}
+
+impl CacheConfig {
+    pub fn validate(&self, oracle: bool) -> Result<()> {
+        ensure!(
+            !oracle || !self.partial,
+            "oracle requires full materialization"
+        );
+        ensure!(
+            self.memory_limit_bytes != Some(0),
+            "memory limit must be positive"
+        );
+        ensure!(
+            self.partial || self.memory_limit_bytes.is_none(),
+            "memory limit requires partial materialization (full readers cannot be evicted)"
+        );
+        Ok(())
+    }
 }
 
 /// Oracle mode keeps every row in memory and re-verifies all of them per batch.
@@ -86,6 +135,7 @@ struct Core {
     barrier_missing: Vec<i64>,
     barrier_checkpoint: u64,
     generation: String,
+    shared_readers: Readers,
 }
 
 pub struct Engine {
@@ -101,6 +151,11 @@ pub struct Engine {
     declaration: Option<Declaration>,
     /// Set after any uncertain engine failure. No further engine RPC is attempted.
     poisoned: std::sync::atomic::AtomicBool,
+    cache: CacheConfig,
+    query_hits: std::sync::atomic::AtomicU64,
+    query_misses: std::sync::atomic::AtomicU64,
+    query_timeouts: std::sync::atomic::AtomicU64,
+    shared_readers: Readers,
 }
 
 async fn wait_rows(reader: &mut ReaderHandle, count: usize) -> Result<()> {
@@ -218,14 +273,6 @@ async fn create_reader(
     ensure!(
         matches!(&view, View::Single(_)),
         "single declared reader required"
-    );
-    ensure!(
-        handle
-            .materialization_info()
-            .await?
-            .iter()
-            .all(|m| !m.partial),
-        "partial query state"
     );
     Ok(view)
 }
@@ -415,55 +462,41 @@ async fn wait_readable(view: &mut View, projection: &Projection) -> Result<()> {
     .map(|_| ())
 }
 
-async fn wait_copies(
+/// Production barrier, O(readers), including partial readers. Warm each marker key BEFORE
+/// inserting the marker. After that, use ONLY non-replaying local probes: a marker filled
+/// from a new base snapshot is NOT evidence that older hot keys consumed the preceding
+/// deltas. An unchanged eviction epoch proves the warmed key stayed materialized, hence
+/// the observed marker came through ordered forward propagation, not a new replay.
+///
+/// Any hole or epoch change invalidates the attempt. Delete the marker and retry with a new
+/// key while the application's read gate remains exclusive. Never publish a partial fence.
+/// This proof is restricted to the admitted single-base, plain-projection query shapes.
+async fn marker_fence(
+    table: &mut Table,
     targets: &mut [(View, Projection)],
-    probes: &[(Vec<DfValue>, Vec<DfValue>, usize)],
-    added: usize,
-    until: Instant,
+    readers: &Readers,
 ) -> Result<()> {
-    for ((view, _), (key, wanted, before)) in targets.iter_mut().zip(probes) {
-        while copies_retrying(view, key, wanted, until).await? != before + added {
-            ensure!(Instant::now() < until, "marker fence timeout");
-            tokio::time::sleep(Duration::from_millis(5)).await;
-        }
-    }
-    Ok(())
-}
-
-/// Production barrier, O(readers) instead of O(rows). Every reader fully materializes every
-/// base row (plain projections with parameter-only predicates), and each reader applies base
-/// updates in order. So once a marker row written AFTER the batch is visible in a reader, and
-/// then gone again, that reader reflects the whole batch. Readers that the caller is
-/// publishing must be excluded from application reads while this runs (the marker is a real
-/// base row for a moment). Copies are counted, so a marker equal to real data is harmless.
-async fn marker_fence(table: &mut Table, targets: &mut [(View, Projection)]) -> Result<()> {
-    let nonce = uuid::Uuid::new_v4();
-    let bits = nonce.as_u128();
-    let text = format!("readyset-fence-{nonce}");
-    let marker = SourceRow {
-        id: bits as i64,
-        payload: text.clone(),
-        score: (bits >> 64) as i64,
-        note: Some(text),
-    };
-    let until = Instant::now() + FENCE_TIMEOUT;
-    let mut probes = Vec::with_capacity(targets.len());
-    for (view, projection) in targets.iter_mut() {
-        let key = reader_fence::physical_key(view, &marker)?;
-        let wanted = projection.apply(&marker);
-        let before = copies_retrying(view, &key, &wanted, until).await?;
-        probes.push((key, wanted, before));
-    }
-    table
-        .perform_all(vec![TableOperation::Insert(marker.values())])
-        .await?;
-    wait_copies(targets, &probes, 1, until).await?;
-    table
-        .perform_all(vec![TableOperation::DeleteRow {
-            row: marker.values(),
-        }])
-        .await?;
-    wait_copies(targets, &probes, 0, until).await
+    let mut views: Vec<_> = targets.iter().map(|(view, _)| view.clone()).collect();
+    crate::engine_fence::fence(
+        table,
+        &mut views,
+        &native_query::COLUMNS,
+        readers,
+        || {
+            let nonce = uuid::Uuid::new_v4();
+            let bits = nonce.as_u128();
+            let text = format!("readyset-fence-{nonce}");
+            Ok(SourceRow {
+                id: bits as i64,
+                payload: text.clone(),
+                score: (bits >> 64) as i64,
+                note: Some(text),
+            }
+            .values())
+        },
+        FENCE_TIMEOUT,
+    )
+    .await
 }
 
 /// Bulk snapshot loader returned by [`Engine::loader`].
@@ -472,6 +505,7 @@ pub struct Loader {
     shutdown: ShutdownSender,
     table: Table,
     handler: ReadRequestHandler,
+    shared_readers: Readers,
     config: EngineConfig,
     loaded: usize,
 }
@@ -503,6 +537,7 @@ impl Loader {
             shutdown,
             mut table,
             handler,
+            shared_readers,
             config,
             loaded,
         } = self;
@@ -562,14 +597,16 @@ impl Loader {
         if config.oracle {
             wait_rows(&mut reader, rows.len()).await?;
         }
-        ensure!(
-            handle
-                .materialization_info()
-                .await?
-                .iter()
-                .all(|m| !m.partial),
-            "partial query state"
-        );
+        if !config.cache.partial {
+            ensure!(
+                handle
+                    .materialization_info()
+                    .await?
+                    .iter()
+                    .all(|m| !m.partial),
+                "unexpected partial query state in full mode"
+            );
+        }
         let mut templates = Vec::new();
         let mut declared = Vec::new();
         for template in initial {
@@ -599,13 +636,15 @@ impl Loader {
             barrier_missing: Vec::new(),
             barrier_checkpoint: 0,
             generation: config.generation,
+            shared_readers,
         };
         if !core.oracle {
             // Nothing is published yet, so the marker cannot be read by an application.
             let mut targets = fence_targets(&core);
-            marker_fence(&mut core.table, &mut targets).await?;
+            marker_fence(&mut core.table, &mut targets, &core.shared_readers).await?;
         }
         Ok(Engine {
+            shared_readers: Arc::clone(&core.shared_readers),
             core: Arc::new(tokio::sync::Mutex::new(core)),
             gate: Arc::new(tokio::sync::RwLock::new(())),
             large_batch: std::sync::atomic::AtomicBool::new(false),
@@ -613,6 +652,10 @@ impl Loader {
             handlers: StdMutex::new((handler, Vec::new())),
             declaration: config.declaration,
             poisoned: std::sync::atomic::AtomicBool::new(false),
+            cache: config.cache,
+            query_hits: Default::default(),
+            query_misses: Default::default(),
+            query_timeouts: Default::default(),
         })
     }
 }
@@ -695,7 +738,7 @@ impl BatchWriter {
         let persisted_ms = started.elapsed().as_secs_f64() * 1000.0;
         if self.inserts + self.deletes > 0 {
             let mut targets = fence_targets(core);
-            marker_fence(&mut core.table, &mut targets).await?;
+            marker_fence(&mut core.table, &mut targets, &core.shared_readers).await?;
         }
         core.barrier_checkpoint = self.sequence;
         Ok(
@@ -718,6 +761,96 @@ impl Drop for BatchWriter {
     }
 }
 
+/// One native server boot, reused by legacy/oracle and multi-source HTTP runtimes.
+pub(crate) struct NativeParts {
+    pub handle: Handle,
+    pub shutdown: ShutdownSender,
+    pub handler: ReadRequestHandler,
+    pub readers: Readers,
+}
+
+pub(crate) async fn start_native(
+    storage_dir: &std::path::Path,
+    cache: CacheConfig,
+) -> Result<NativeParts> {
+    start_native_with_wal_interval(storage_dir, cache, 1).await
+}
+
+/// A zero interval selects ReadySet's native synchronous RocksDB WAL writes. In that mode
+/// the base Table RPC acknowledges only after `write_opt(sync=true)` succeeds; no adapter
+/// flush, replacement storage, or background global low-watermark barrier is required.
+pub(crate) async fn start_native_with_wal_interval(
+    storage_dir: &std::path::Path,
+    cache: CacheConfig,
+    wal_flush_interval_seconds: u64,
+) -> Result<NativeParts> {
+    let authority = Arc::new(Authority::from(LocalAuthority::new_with_store(Arc::new(
+        LocalAuthorityStore::new(),
+    ))));
+    boot_native(
+        storage_dir,
+        cache,
+        wal_flush_interval_seconds,
+        "m2",
+        authority,
+    )
+    .await
+}
+
+/// Restartable native server: ReadySet's own standalone authority (`{deployment}.auth`
+/// RocksDB in `storage_dir`) persists the recipe (base tables and caches) and the base
+/// tables reopen their RocksDB files under the same deployment prefix. Synchronous WAL.
+pub(crate) async fn start_native_persistent(
+    storage_dir: &std::path::Path,
+    deployment: &str,
+    cache: CacheConfig,
+) -> Result<NativeParts> {
+    let path = storage_dir.to_str().context("storage dir must be UTF-8")?;
+    let authority = Arc::new(Authority::from(StandaloneAuthority::new(path, deployment)?));
+    boot_native(storage_dir, cache, 0, deployment, authority).await
+}
+
+async fn boot_native(
+    storage_dir: &std::path::Path,
+    cache: CacheConfig,
+    wal_flush_interval_seconds: u64,
+    db_filename_prefix: &str,
+    authority: Arc<Authority>,
+) -> Result<NativeParts> {
+    cache.validate(false)?;
+    let mut builder = Builder::default();
+    builder.set_external_addr("127.0.0.1:0".parse()?);
+    builder.set_dialect(readyset_sql::Dialect::MySQL);
+    if !cache.partial {
+        builder.disable_partial();
+    }
+    if let Some(limit) = cache.memory_limit_bytes {
+        builder.set_memory_limit(limit, Duration::from_millis(100));
+    }
+    builder.set_mixed_comparisons(true);
+    builder.set_persistence(PersistenceParameters {
+        mode: DurabilityMode::Permanent,
+        db_filename_prefix: db_filename_prefix.into(),
+        storage_dir: Some(storage_dir.to_owned()),
+        wal_flush_interval_seconds,
+        ..Default::default()
+    });
+    let readers: Readers = Default::default();
+    let (mut handle, shutdown) = builder
+        .start_with_shared_readers(authority, Arc::clone(&readers))
+        .await?;
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+    tokio::spawn(retry_misses(rx));
+    let handler = ReadRequestHandler::new(Arc::clone(&readers), tx, cache.upquery_timeout);
+    handle.backend_ready().await;
+    Ok(NativeParts {
+        handle,
+        shutdown,
+        handler,
+        readers,
+    })
+}
+
 impl Engine {
     /// Bounded start from an in-memory snapshot (`databend-m2`, oracle mode, tests).
     pub async fn start(config: EngineConfig, rows: Vec<SourceRow>) -> Result<Self> {
@@ -729,33 +862,14 @@ impl Engine {
     /// Start the server and create the empty base table. Load the snapshot in chunks with
     /// [`Loader::load`], then call [`Loader::finish`].
     pub async fn loader(config: EngineConfig) -> Result<Loader> {
+        config.cache.validate(config.oracle)?;
         DatabendPosition::new(&config.generation, 0)?;
-        let mut builder = Builder::default();
-        builder.set_external_addr("127.0.0.1:0".parse()?);
-        builder.set_dialect(readyset_sql::Dialect::MySQL);
-        builder.disable_partial();
-        builder.set_mixed_comparisons(true);
-        // No upstream URL; do not use replication_enabled=false (shallow-only deep-state wipe).
-        builder.set_persistence(PersistenceParameters {
-            mode: DurabilityMode::Permanent,
-            db_filename_prefix: "m2".into(),
-            storage_dir: Some(config.storage_dir.clone()),
-            // Use the tracked background WAL-sync path. The synchronous (0) path currently
-            // leaves the durability watermark at Unflushed after offset-bearing writes.
-            wal_flush_interval_seconds: 1,
-            ..Default::default()
-        });
-        let readers: Readers = Default::default();
-        let authority = Arc::new(Authority::from(LocalAuthority::new_with_store(Arc::new(
-            LocalAuthorityStore::new(),
-        ))));
-        let (mut handle, shutdown) = builder
-            .start_with_shared_readers(authority, Arc::clone(&readers))
-            .await?;
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-        tokio::spawn(retry_misses(rx));
-        let handler = ReadRequestHandler::new(readers, tx, Duration::from_secs(5));
-        handle.backend_ready().await;
+        let NativeParts {
+            mut handle,
+            shutdown,
+            handler,
+            readers,
+        } = start_native(&config.storage_dir, config.cache).await?;
         handle
             .extend_recipe(ChangeList::from_strings(
                 vec![native_query::LOCAL_DDL],
@@ -768,6 +882,7 @@ impl Engine {
             shutdown,
             table,
             handler,
+            shared_readers: readers,
             config,
             loaded: 0,
         })
@@ -941,10 +1056,67 @@ impl Engine {
             return Ok(ReadOutcome::NotMatched);
         };
         let mut view = route.view.clone();
+        // The upstream in-process ResultIterator currently drops reply miss statistics.
+        // Observe residency using the SAME native key builder instead. Advisory counters:
+        // an eviction may race this snapshot; it never influences query correctness.
+        let misses = if self.cache.partial {
+            let native = view.build_view_query(
+                params.make_keys::<DfValue>(&[])?,
+                None,
+                None,
+                Dialect::DEFAULT_MYSQL,
+                None,
+                None,
+            )?;
+            if let Some((reader, vq)) = native {
+                let address = ReaderAddress {
+                    node: *reader.node(),
+                    name: reader.name().clone(),
+                };
+                let readers = self
+                    .shared_readers
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner());
+                let local = readers.get(&address).context("query reader missing")?;
+                vq.key_comparisons
+                    .iter()
+                    // Native lookups short-circuit reversed/empty ranges before the interval map.
+                    .filter(|key| {
+                        !key.is_reversed_range() && !matches!(local.contains(key), Ok(true))
+                    })
+                    .count() as u64
+            } else {
+                0
+            }
+        } else {
+            0
+        };
         let mut handler = self.take_handler();
         let result = native_query::read_with(&mut view, Some(&mut handler), &query, &params).await;
         self.return_handler(handler);
-        Ok(match self.guard(result)? {
+        // A cold replay timing out is a normal miss, NOT an uncertain mutation. Leave the
+        // native replay warming in the background and forward only this request upstream.
+        if result.as_ref().err().is_some_and(|e| {
+            e.downcast_ref::<readyset_errors::ReadySetError>()
+                .is_some_and(|e| {
+                    e.any_cause(|cause| {
+                        matches!(cause, readyset_errors::ReadySetError::UpqueryTimeout)
+                    })
+                })
+        }) {
+            self.query_timeouts
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            return Ok(ReadOutcome::NotMatched);
+        }
+        let result = self.guard(result)?;
+        if misses > 0 {
+            self.query_misses
+                .fetch_add(misses, std::sync::atomic::Ordering::Relaxed);
+        } else {
+            self.query_hits
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+        Ok(match result {
             Some((data, schema)) => ReadOutcome::Matched {
                 template: route.template.name.clone(),
                 schema,
@@ -1002,7 +1174,7 @@ impl Engine {
                     let _gate = self.gate.write().await;
                     let mut targets = fence_targets(core);
                     targets.push((r.view.clone(), projection));
-                    marker_fence(&mut core.table, &mut targets).await?;
+                    marker_fence(&mut core.table, &mut targets, &core.shared_readers).await?;
                 }
                 core.templates.push(template);
                 core.declared.push(r);
@@ -1078,6 +1250,32 @@ impl Engine {
         let mut core = self.core.lock().await;
         let Core { sink, handle, .. } = &mut *core;
         Ok(sink.checkpoint(handle).await?.sequence())
+    }
+
+    /// Cheap counters for /health, without controller RPCs or a full-table scan.
+    pub fn cache_status(&self) -> Value {
+        use std::sync::atomic::Ordering::Relaxed;
+        let readers: Vec<_> = self
+            .shared_readers
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .iter_mut()
+            .map(|(address, reader)| {
+                json!({"name": address.name.name.as_str(), "key_slots": reader.len(),
+                    "eviction_epoch": reader.eviction_epoch()})
+            })
+            .collect();
+        let allocated = readyset_alloc::fetch_stats().ok().map(|s| s.allocated);
+        json!({
+            "materialization": if self.cache.partial { "partial" } else { "full" },
+            "memory_limit_bytes": self.cache.memory_limit_bytes,
+            "upquery_timeout_ms": self.cache.upquery_timeout.as_millis(),
+            "hit_queries": self.query_hits.load(Relaxed),
+            "miss_keys": self.query_misses.load(Relaxed),
+            "replay_timeouts": self.query_timeouts.load(Relaxed),
+            "allocated_bytes": allocated,
+            "readers": readers,
+        })
     }
 
     pub async fn materializations(&self) -> Result<Value> {

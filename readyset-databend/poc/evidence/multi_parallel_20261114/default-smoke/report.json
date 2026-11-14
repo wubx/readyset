@@ -1,0 +1,1976 @@
+{
+  "passed": true,
+  "smoke": true,
+  "rows_per_table": 100000,
+  "databases": [
+    "readyset_gateway_multiscale_20261114_134408_e6f458_a",
+    "readyset_gateway_multiscale_20261114_134408_e6f458_b"
+  ],
+  "memory_limit_mb": 384,
+  "max_staleness_secs": 5,
+  "checks": [
+    {
+      "name": "two actual heterogeneous source counts",
+      "passed": true,
+      "counts": [
+        100002,
+        100003
+      ]
+    },
+    {
+      "name": "one native server, two real bases, ONE shared soft budget",
+      "passed": true,
+      "cache": {
+        "allocated_bytes": 86426104,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 0,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 0,
+        "native_server_instances": 1,
+        "readers": [],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      }
+    },
+    {
+      "name": "snapshots include identical duplicate rows",
+      "passed": true,
+      "rows": [
+        100002,
+        100003
+      ]
+    },
+    {
+      "name": "cache creation did not fill full readers",
+      "passed": true,
+      "readers": [
+        {
+          "eviction_epoch": 0,
+          "key_slots": 1,
+          "name": "a_payload"
+        },
+        {
+          "eviction_epoch": 0,
+          "key_slots": 1,
+          "name": "b_label"
+        },
+        {
+          "eviction_epoch": 0,
+          "key_slots": 3,
+          "name": "a_id"
+        },
+        {
+          "eviction_epoch": 0,
+          "key_slots": 2,
+          "name": "b_range"
+        },
+        {
+          "eviction_epoch": 0,
+          "key_slots": 2,
+          "name": "a_range"
+        },
+        {
+          "eviction_epoch": 0,
+          "key_slots": 3,
+          "name": "b_id"
+        }
+      ]
+    },
+    {
+      "name": "cold-0",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.981,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-0",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.221,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-1",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.644,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-1",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.208,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-2",
+      "passed": true,
+      "rows": 4,
+      "route": "readyset",
+      "ms": 1.297,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-2",
+      "passed": true,
+      "rows": 4,
+      "route": "readyset",
+      "ms": 1.396,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-3",
+      "passed": true,
+      "rows": 2,
+      "route": "readyset",
+      "ms": 1.377,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-3",
+      "passed": true,
+      "rows": 2,
+      "route": "readyset",
+      "ms": 0.934,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-4",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.645,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-4",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.047,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-5",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.348,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-5",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.372,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-6",
+      "passed": true,
+      "rows": 2,
+      "route": "readyset",
+      "ms": 1.384,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-6",
+      "passed": true,
+      "rows": 2,
+      "route": "readyset",
+      "ms": 1.325,
+      "miss_delta": 0
+    },
+    {
+      "name": "cold-7",
+      "passed": true,
+      "rows": 3,
+      "route": "readyset",
+      "ms": 1.41,
+      "miss_delta": 1
+    },
+    {
+      "name": "hot-7",
+      "passed": true,
+      "rows": 3,
+      "route": "readyset",
+      "ms": 1.12,
+      "miss_delta": 0
+    },
+    {
+      "name": "heat_balanced all query bags correct, actual local reader traffic",
+      "passed": true,
+      "queries": 24,
+      "secs": 0.021,
+      "routes": {
+        "readyset": 24
+      },
+      "p50_ms": 4.891,
+      "p95_ms": 6.872
+    },
+    {
+      "name": "allocated settles near ONE soft target: balanced",
+      "passed": true,
+      "allocated": 117695040,
+      "soft_target": 402653184,
+      "rss_mb": 345,
+      "hwm_mb": 367,
+      "threshold_ratio": 1.25
+    },
+    {
+      "name": "post-eviction table 0 lo 100",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.288,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 167",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.224,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 234",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.69,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 301",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 2.16,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 368",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.522,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 435",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.228,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 502",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.171,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 569",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.002,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 636",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 0.931,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 703",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.848,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 770",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.509,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 0 lo 837",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.776,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 100",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.286,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 167",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.378,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 234",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.176,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 301",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.182,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 368",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.307,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 435",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.139,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 502",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.083,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 569",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.07,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 636",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.226,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 703",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.201,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 770",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.455,
+      "miss_delta": 0
+    },
+    {
+      "name": "post-eviction table 1 lo 837",
+      "passed": true,
+      "rows": 60,
+      "route": "readyset",
+      "ms": 1.68,
+      "miss_delta": 0
+    },
+    {
+      "name": "observed A actual native mutation gate",
+      "passed": true,
+      "observed": true
+    },
+    {
+      "name": "B fresh round commits before A finishes, below own staleness limit",
+      "passed": true,
+      "a_still_applying": false,
+      "b_fresh_round_after_sql_secs": 0.366
+    },
+    {
+      "name": "B updated duplicate bag readable locally while A batch remains open",
+      "passed": true,
+      "route": "readyset",
+      "ms": 1.219
+    },
+    {
+      "name": "all concurrent reads are complete allowed before/after bags",
+      "passed": true,
+      "samples": 20,
+      "errors": []
+    },
+    {
+      "name": "B has local reads while A mutation gate is held",
+      "passed": true,
+      "samples": 2,
+      "local": 2,
+      "stale_upstream": 0,
+      "p50_ms": 1.98,
+      "p95_ms": 1.98,
+      "max_sync_age_ms": 313,
+      "routes": {
+        "readyset": 2
+      }
+    },
+    {
+      "name": "B no longer expires behind A large batch",
+      "passed": true,
+      "stale_samples": 0
+    },
+    {
+      "name": "whole A UPDATE captured once with all before/after images",
+      "passed": true,
+      "batch": {
+        "cancelled": 0,
+        "changes": 40000,
+        "deletes": 20000,
+        "finish": {
+          "cancelled": 0,
+          "checkpoint": 12,
+          "deletes": 20000,
+          "inserts": 20000,
+          "ok": true
+        },
+        "inserts": 20000,
+        "sequence": 12,
+        "total_ms": 641.8019889999999
+      }
+    },
+    {
+      "name": "A updated point",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 0.933,
+      "miss_delta": 0
+    },
+    {
+      "name": "B unchanged point",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.195,
+      "miss_delta": 0
+    },
+    {
+      "name": "B delayed UPDATE retains duplicate bags",
+      "passed": true,
+      "rows": 3,
+      "route": "readyset",
+      "ms": 1.371,
+      "miss_delta": 0
+    },
+    {
+      "name": "A old range membership",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.055,
+      "miss_delta": 0
+    },
+    {
+      "name": "A moved range membership",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.526,
+      "miss_delta": 1
+    },
+    {
+      "name": "allocated settles near ONE soft target: after_update",
+      "passed": true,
+      "allocated": 125541368,
+      "soft_target": 402653184,
+      "rss_mb": 400,
+      "hwm_mb": 418,
+      "threshold_ratio": 1.25
+    },
+    {
+      "name": "heat_b_only all query bags correct, actual local reader traffic",
+      "passed": true,
+      "queries": 12,
+      "secs": 0.013,
+      "routes": {
+        "readyset": 12
+      },
+      "p50_ms": 5.785,
+      "p95_ms": 8.521
+    },
+    {
+      "name": "allocated settles near ONE soft target: B_skew",
+      "passed": true,
+      "allocated": 126684496,
+      "soft_target": 402653184,
+      "rss_mb": 397,
+      "hwm_mb": 418,
+      "threshold_ratio": 1.25
+    },
+    {
+      "name": "A correct after B-only pressure",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.382,
+      "miss_delta": 0
+    },
+    {
+      "name": "B correct after B-only pressure",
+      "passed": true,
+      "rows": 1,
+      "route": "readyset",
+      "ms": 1.402,
+      "miss_delta": 0
+    },
+    {
+      "name": "A identical duplicates preserved",
+      "passed": true,
+      "rows": 2,
+      "route": "readyset",
+      "ms": 1.509,
+      "miss_delta": 0
+    },
+    {
+      "name": "B identical duplicates preserved",
+      "passed": true,
+      "rows": 3,
+      "route": "readyset",
+      "ms": 1.541,
+      "miss_delta": 0
+    },
+    {
+      "name": "both sources healthy after budget pressure and updates",
+      "passed": true,
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 20,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 20
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 40000,
+            "deletes": 20000,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 12,
+              "deletes": 20000,
+              "inserts": 20000,
+              "ok": true
+            },
+            "inserts": 20000,
+            "sequence": 12,
+            "total_ms": 641.8019889999999
+          },
+          "last_sync_age_ms": 360,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 21,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 21
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 6,
+            "deletes": 3,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 13,
+              "deletes": 3,
+              "inserts": 3,
+              "ok": true
+            },
+            "inserts": 3,
+            "sequence": 13,
+            "total_ms": 165.779703
+          },
+          "last_sync_age_ms": 383,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ]
+    },
+    {
+      "name": "exactly one Stream/table and no Databend helper tables",
+      "passed": true
+    }
+  ],
+  "stages": [
+    {
+      "name": "snapshot",
+      "ts": 1794635051.5721617,
+      "cache": {
+        "allocated_bytes": 86426104,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 0,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 0,
+        "native_server_instances": 1,
+        "readers": [],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 1,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 1
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 308,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 1,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 1
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 229,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 217,
+      "hwm_mb": 232
+    },
+    {
+      "name": "six partial caches",
+      "ts": 1794635054.9713695,
+      "cache": {
+        "allocated_bytes": 116729560,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 0,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 0,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 1,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 1,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 4,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 4
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 1371,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": true,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 4,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 4
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 1329,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": true,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 316,
+      "hwm_mb": 341
+    },
+    {
+      "name": "cold/hot baseline",
+      "ts": 1794635055.397329,
+      "cache": {
+        "allocated_bytes": 115821904,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 8,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 8,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 6,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 6
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 87,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 5,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 5
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 677,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": true,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 347,
+      "hwm_mb": 367
+    },
+    {
+      "name": "heat_balanced complete",
+      "ts": 1794635055.4215918,
+      "cache": {
+        "allocated_bytes": 117851656,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 8,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 32,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 737,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 737,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 6,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 6
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 110,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 5,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 5
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 701,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": true,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 347,
+      "hwm_mb": 367
+    },
+    {
+      "name": "settled balanced",
+      "ts": 1794635056.4247148,
+      "cache": {
+        "allocated_bytes": 117695040,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 8,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 32,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 2,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 737,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 737,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 5,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 8,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 8
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 356,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 8,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 8
+          },
+          "failed": null,
+          "last_batch": null,
+          "last_sync_age_ms": 325,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 345,
+      "hwm_mb": 367
+    },
+    {
+      "name": "large update complete",
+      "ts": 1794635058.3898914,
+      "cache": {
+        "allocated_bytes": 125537784,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 54,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 34,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 738,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 742,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 12,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 12
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 40000,
+            "deletes": 20000,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 12,
+              "deletes": 20000,
+              "inserts": 20000,
+              "ok": true
+            },
+            "inserts": 20000,
+            "sequence": 12,
+            "total_ms": 641.8019889999999
+          },
+          "last_sync_age_ms": 803,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 13,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 13
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 6,
+            "deletes": 3,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 13,
+              "deletes": 3,
+              "inserts": 3,
+              "ok": true
+            },
+            "inserts": 3,
+            "sequence": 13,
+            "total_ms": 165.779703
+          },
+          "last_sync_age_ms": 370,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 418,
+      "hwm_mb": 418
+    },
+    {
+      "name": "settled after_update",
+      "ts": 1794635059.392378,
+      "cache": {
+        "allocated_bytes": 125541368,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 54,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 34,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 738,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 742,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 15,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 15
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 40000,
+            "deletes": 20000,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 12,
+              "deletes": 20000,
+              "inserts": 20000,
+              "ok": true
+            },
+            "inserts": 20000,
+            "sequence": 12,
+            "total_ms": 641.8019889999999
+          },
+          "last_sync_age_ms": 125,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 16,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 16
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 6,
+            "deletes": 3,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 13,
+              "deletes": 3,
+              "inserts": 3,
+              "ok": true
+            },
+            "inserts": 3,
+            "sequence": 13,
+            "total_ms": 165.779703
+          },
+          "last_sync_age_ms": 141,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 400,
+      "hwm_mb": 418
+    },
+    {
+      "name": "heat_b_only complete",
+      "ts": 1794635060.4109266,
+      "cache": {
+        "allocated_bytes": 127173600,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 54,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 46,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 1470,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 742,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 17,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 17
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 40000,
+            "deletes": 20000,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 12,
+              "deletes": 20000,
+              "inserts": 20000,
+              "ok": true
+            },
+            "inserts": 20000,
+            "sequence": 12,
+            "total_ms": 641.8019889999999
+          },
+          "last_sync_age_ms": 353,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 18,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 18
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 6,
+            "deletes": 3,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 13,
+              "deletes": 3,
+              "inserts": 3,
+              "ok": true
+            },
+            "inserts": 3,
+            "sequence": 13,
+            "total_ms": 165.779703
+          },
+          "last_sync_age_ms": 390,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": true,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 400,
+      "hwm_mb": 418
+    },
+    {
+      "name": "settled B_skew",
+      "ts": 1794635061.4134998,
+      "cache": {
+        "allocated_bytes": 126684496,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 54,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 46,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 1470,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 742,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 20,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 20
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 40000,
+            "deletes": 20000,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 12,
+              "deletes": 20000,
+              "inserts": 20000,
+              "ok": true
+            },
+            "inserts": 20000,
+            "sequence": 12,
+            "total_ms": 641.8019889999999
+          },
+          "last_sync_age_ms": 243,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 21,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 21
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 6,
+            "deletes": 3,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 13,
+              "deletes": 3,
+              "inserts": 3,
+              "ok": true
+            },
+            "inserts": 3,
+            "sequence": 13,
+            "total_ms": 165.779703
+          },
+          "last_sync_age_ms": 267,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 397,
+      "hwm_mb": 418
+    },
+    {
+      "name": "final",
+      "ts": 1794635061.5298846,
+      "cache": {
+        "allocated_bytes": 126548416,
+        "base_tables": 2,
+        "durability": "native_sync_wal",
+        "failed": false,
+        "hit_queries": 58,
+        "materialization": "partial",
+        "memory_limit_bytes": 402653184,
+        "miss_keys": 46,
+        "native_server_instances": 1,
+        "readers": [
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "a_payload"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 3,
+            "name": "b_label"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "a_id"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 1470,
+            "name": "b_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 742,
+            "name": "a_range"
+          },
+          {
+            "eviction_epoch": 0,
+            "key_slots": 6,
+            "name": "b_id"
+          }
+        ],
+        "replay_timeouts": 0,
+        "upquery_timeout_ms": 10000
+      },
+      "tables": [
+        {
+          "applying": false,
+          "checkpoint": 20,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 20
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 40000,
+            "deletes": 20000,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 12,
+              "deletes": 20000,
+              "inserts": 20000,
+              "ok": true
+            },
+            "inserts": 20000,
+            "sequence": 12,
+            "total_ms": 641.8019889999999
+          },
+          "last_sync_age_ms": 360,
+          "phase": "online",
+          "ready": true,
+          "rows": 100002,
+          "snapshot": {
+            "rows": 100002,
+            "total_secs": 0.494009499
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_a.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_a.items"
+        },
+        {
+          "applying": false,
+          "checkpoint": 21,
+          "counters": {
+            "cache_ddl": 0,
+            "databend": 0,
+            "empty_local": 0,
+            "readyset": 0,
+            "sync_batches": 21
+          },
+          "failed": null,
+          "last_batch": {
+            "cancelled": 0,
+            "changes": 6,
+            "deletes": 3,
+            "finish": {
+              "cancelled": 0,
+              "checkpoint": 13,
+              "deletes": 3,
+              "inserts": 3,
+              "ok": true
+            },
+            "inserts": 3,
+            "sequence": 13,
+            "total_ms": 165.779703
+          },
+          "last_sync_age_ms": 383,
+          "phase": "online",
+          "ready": true,
+          "rows": 100003,
+          "snapshot": {
+            "rows": 100003,
+            "total_secs": 0.317137421
+          },
+          "stream": "readyset_gateway_multiscale_20261114_134408_e6f458_b.readyset_msda8b12c9762e_items",
+          "syncing": false,
+          "table": "readyset_gateway_multiscale_20261114_134408_e6f458_b.items"
+        }
+      ],
+      "rss_mb": 397,
+      "hwm_mb": 418
+    }
+  ],
+  "binary": "/data1/vmbox/readyset/target/release/readyset-databend",
+  "binary_sha256": "5156aea1f4d372110d8ca75d23588290a81678d439a9837980c63574305a7ba0",
+  "snapshot_wall_secs": 1.402,
+  "cold_hot": [
+    {
+      "probe": 0,
+      "cold": {
+        "ms": 1.9813477993011475,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.2209415435791016,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 1,
+      "cold": {
+        "ms": 1.6436763107776642,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.2078732252120972,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 2,
+      "cold": {
+        "ms": 1.2967977672815323,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.3960003852844238,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 3,
+      "cold": {
+        "ms": 1.376679167151451,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 0.9344033896923065,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 4,
+      "cold": {
+        "ms": 1.6451049596071243,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.0471027344465256,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 5,
+      "cold": {
+        "ms": 1.3476107269525528,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.3719592243432999,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 6,
+      "cold": {
+        "ms": 1.3840124011039734,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.324748620390892,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    },
+    {
+      "probe": 7,
+      "cold": {
+        "ms": 1.4100223779678345,
+        "miss_delta": 1,
+        "route": "readyset"
+      },
+      "hot": {
+        "ms": 1.1197030544281006,
+        "miss_delta": 0,
+        "route": "readyset"
+      }
+    }
+  ],
+  "heat_balanced": {
+    "queries": 24,
+    "secs": 0.021,
+    "routes": {
+      "readyset": 24
+    },
+    "p50_ms": 4.891,
+    "p95_ms": 6.872
+  },
+  "replay": {
+    "0": null,
+    "1": null
+  },
+  "update": {
+    "a_source_sql_secs": 0.218,
+    "a_catchup_after_sql_secs": 0.85,
+    "b_source_sql_secs": 0.103,
+    "b_fresh_round_after_sql_secs": 0.366,
+    "a_still_applying_at_b_fresh": false,
+    "a_last_batch": {
+      "cancelled": 0,
+      "changes": 40000,
+      "deletes": 20000,
+      "finish": {
+        "cancelled": 0,
+        "checkpoint": 12,
+        "deletes": 20000,
+        "inserts": 20000,
+        "ok": true
+      },
+      "inserts": 20000,
+      "sequence": 12,
+      "total_ms": 641.8019889999999
+    },
+    "b_last_batch": {
+      "cancelled": 0,
+      "changes": 6,
+      "deletes": 3,
+      "finish": {
+        "cancelled": 0,
+        "checkpoint": 13,
+        "deletes": 3,
+        "inserts": 3,
+        "ok": true
+      },
+      "inserts": 3,
+      "sequence": 13,
+      "total_ms": 165.779703
+    },
+    "b_during_a": {
+      "samples": 2,
+      "local": 2,
+      "stale_upstream": 0,
+      "p50_ms": 1.98,
+      "p95_ms": 1.98,
+      "max_sync_age_ms": 313,
+      "routes": {
+        "readyset": 2
+      }
+    }
+  },
+  "heat_b_only": {
+    "queries": 12,
+    "secs": 0.013,
+    "routes": {
+      "readyset": 12
+    },
+    "p50_ms": 5.785,
+    "p95_ms": 8.521
+  },
+  "peaks": {
+    "allocated_bytes": 174418664,
+    "rss_mb": 418,
+    "samples": 40,
+    "monitor_errors": []
+  }
+}

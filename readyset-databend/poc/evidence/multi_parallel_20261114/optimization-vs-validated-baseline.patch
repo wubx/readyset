@@ -1,0 +1,552 @@
+--- a/readyset-databend/src/engine.rs
++++ b/readyset-databend/src/engine.rs
+@@ -771,6 +771,17 @@
+     storage_dir: &std::path::Path,
+     cache: CacheConfig,
+ ) -> Result<NativeParts> {
++    start_native_with_wal_interval(storage_dir, cache, 1).await
++}
++
++/// A zero interval selects ReadySet's native synchronous RocksDB WAL writes. In that mode
++/// the base Table RPC acknowledges only after `write_opt(sync=true)` succeeds; no adapter
++/// flush, replacement storage, or background global low-watermark barrier is required.
++pub(crate) async fn start_native_with_wal_interval(
++    storage_dir: &std::path::Path,
++    cache: CacheConfig,
++    wal_flush_interval_seconds: u64,
++) -> Result<NativeParts> {
+     cache.validate(false)?;
+     let mut builder = Builder::default();
+     builder.set_external_addr("127.0.0.1:0".parse()?);
+@@ -786,7 +797,7 @@
+         mode: DurabilityMode::Permanent,
+         db_filename_prefix: "m2".into(),
+         storage_dir: Some(storage_dir.to_owned()),
+-        wal_flush_interval_seconds: 1,
++        wal_flush_interval_seconds,
+         ..Default::default()
+     });
+     let readers: Readers = Default::default();
+--- a/readyset-databend/src/shared_engine.rs
++++ b/readyset-databend/src/shared_engine.rs
+@@ -1,8 +1,9 @@
+ //! Multi-source adapter over ONE native ReadySet server. Tables have separate read gates
+-//! and failure flags; graph migrations and WAL barriers are coordinated, not reimplemented.
++//! and failure flags. Native synchronous WAL acknowledgements certify each source independently;
++//! graph migrations remain exclusive. Storage, replay, and reader fences are not reimplemented.
+ use crate::cache_control::{self, CacheControl};
+ use crate::declaration::Template;
+-use crate::engine::{CacheConfig, ReadOutcome, start_native};
++use crate::engine::{CacheConfig, ReadOutcome, start_native_with_wal_interval};
+ use crate::native_query::{self, Input};
+ use crate::replicator::{Replicator, TypedChange};
+ use crate::source_schema::{SourceCatalog, SourceSchema, SourceType};
+@@ -23,7 +24,7 @@
+ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering::*};
+ use std::sync::{Arc, Mutex as StdMutex, RwLock as StdRwLock};
+ use std::time::Duration;
+-use tokio::sync::{Mutex, OwnedMutexGuard, OwnedRwLockWriteGuard, RwLock};
++use tokio::sync::{Mutex, OwnedMutexGuard, OwnedRwLockReadGuard, OwnedRwLockWriteGuard, RwLock};
+ 
+ struct Source {
+     schema: Arc<SourceSchema>,
+@@ -60,9 +61,9 @@
+     catalog: SourceCatalog,
+     sources: BTreeMap<String, Arc<Source>>,
+     routes: StdRwLock<Vec<Arc<Route>>>,
+-    /// Native persisted watermark is global. Serialize writes/migrations so another source
+-    /// cannot keep it perpetually unflushed; this never excludes unrelated cache READS.
+-    writes: Arc<Mutex<()>>,
++    /// Batches hold a shared guard for their complete lifetime; only graph changes/snapshots
++    /// take the exclusive side. Per-source Table ownership orders writes, not this lock.
++    migrations: Arc<RwLock<()>>,
+     generation: String,
+     cache: CacheConfig,
+     failed: AtomicBool,
+@@ -83,7 +84,9 @@
+         schemas: Vec<Arc<SourceSchema>>,
+     ) -> Result<Arc<Self>> {
+         DatabendPosition::new(&generation, 0)?;
+-        let mut native = start_native(storage, cache).await?;
++        // ReadySet's built-in synchronous WAL mode: each Table RPC is durable before ACK.
++        // Background global UpTo/Persisted cannot certify independent table sequences.
++        let mut native = start_native_with_wal_interval(storage, cache, 0).await?;
+         let mut catalog = SourceCatalog::default();
+         let mut sources = BTreeMap::new();
+         if !schemas.is_empty() {
+@@ -95,7 +98,7 @@
+                 )?)
+                 .await?;
+         }
+-        // Initialize EVERY base offset before querying native global persistence status.
++        // Initialize every base offset through the same synchronous native Table channel.
+         for schema in schemas {
+             catalog.insert((*schema).clone())?;
+             let mut table = native.handle.table(schema.local.as_str()).await?;
+@@ -117,11 +120,6 @@
+                 }),
+             );
+         }
+-        if let Some(source) = sources.values().next() {
+-            Sink::new(generation.clone(), source.schema.local.clone())?
+-                .wait_persisted(&mut native.handle, 0)
+-                .await?;
+-        }
+         Ok(Arc::new(Self {
+             handle: Mutex::new(native.handle),
+             shutdown: StdMutex::new(Some(native.shutdown)),
+@@ -130,7 +128,7 @@
+             catalog,
+             sources,
+             routes: StdRwLock::new(Vec::new()),
+-            writes: Arc::new(Mutex::new(())),
++            migrations: Arc::new(RwLock::new(())),
+             generation,
+             cache,
+             failed: AtomicBool::new(false),
+@@ -190,14 +188,30 @@
+             .map(|r| r.view.clone())
+             .collect()
+     }
++    async fn checkpoint(&self, source: &Source) -> Result<DatabendPosition> {
++        // Cloning the native controller client does NOT create another server. Never hold
++        // the adapter's handle mutex across polling/RPC waits for another source.
++        let mut controller = self
++            .handle
++            .lock()
++            .await
++            .c
++            .as_ref()
++            .context("native controller missing")?
++            .clone();
++        Sink::new(self.generation.clone(), source.schema.local.clone())?
++            .checkpoint(&mut controller)
++            .await
++    }
+     async fn persisted(&self, source: &Source, sequence: u64) -> Result<()> {
+-        Sink::new(self.generation.clone(), source.schema.local.clone())?
+-            .wait_persisted_for(
+-                &mut *self.handle.lock().await,
+-                sequence,
+-                Duration::from_secs(1800),
+-            )
+-            .await
++        // All row RPCs AND the final offset RPC have already ACKed. In native sync-WAL
++        // mode each ACK follows successful durable base processing. Check this source's
++        // exact offset, never compare independent source sequences through a global min.
++        ensure!(
++            self.checkpoint(source).await?.sequence() == sequence,
++            "native durable source checkpoint mismatch"
++        );
++        Ok(())
+     }
+     fn offset(&self, sequence: u64) -> Result<ReplicationOffset> {
+         Ok(ReplicationOffset::Databend(DatabendPosition::new(
+@@ -207,7 +221,8 @@
+     }
+     pub async fn snapshot(&self, id: &str, capture: &mut Replicator) -> Result<u64> {
+         self.alive()?;
+-        let _serial = self.writes.lock().await;
++        let _migration = self.migrations.write().await;
++        self.alive()?;
+         let source = self.sources.get(id).context("source missing")?;
+         let mut table = source.table.lock().await;
+         let rows = capture.snapshot_into(&mut table).await?;
+@@ -218,25 +233,27 @@
+     }
+     pub async fn begin_batch(self: &Arc<Self>, id: &str, sequence: u64) -> Result<SharedBatch> {
+         self.alive()?;
+-        let serial = Arc::clone(&self.writes).lock_owned().await;
++        let migration = Arc::clone(&self.migrations).read_owned().await;
++        self.alive()?;
+         let source = Arc::clone(self.sources.get(id).context("source missing")?);
++        // Lock BEFORE checking offset/failed: two same-source begin calls must not both
++        // validate an old checkpoint and subsequently apply the same sequence twice.
++        let table = Arc::clone(&source.table).lock_owned().await;
++        self.alive()?;
+         ensure!(!source.failed.load(Acquire), "source failed closed");
+-        let current = Sink::new(self.generation.clone(), source.schema.local.clone())?
+-            .checkpoint(&mut *self.handle.lock().await)
+-            .await?;
++        let current = self.checkpoint(&source).await?;
+         ensure!(
+             current.sequence() == source.checkpoint.load(Acquire)
+                 && current.sequence().checked_add(1) == Some(sequence),
+             "per-source checkpoint gap or uncompleted native batch"
+         );
+-        let table = Arc::clone(&source.table).lock_owned().await;
+         Ok(SharedBatch {
+             engine: Arc::clone(self),
+             source,
+             id: id.into(),
+             table,
+             _gate: None,
+-            _serial: serial,
++            _migration: migration,
+             sequence,
+             done: false,
+             inserts: 0,
+@@ -345,7 +362,8 @@
+         available: impl Fn(&str) -> bool + Send,
+     ) -> Result<Value> {
+         self.alive()?;
+-        let _serial = self.writes.lock().await;
++        let _migration = self.migrations.write().await;
++        self.alive()?;
+         let routes = self
+             .routes
+             .read()
+@@ -487,7 +505,7 @@
+     }
+     pub fn cache_status(&self) -> Value {
+         let readers: Vec<_> = self.readers.lock().unwrap_or_else(|e| e.into_inner()).iter_mut().map(|(a,r)| json!({"name":a.name.name.as_str(),"key_slots":r.len(),"eviction_epoch":r.eviction_epoch()})).collect();
+-        json!({"failed":self.is_failed(),"native_server_instances":1,"base_tables":self.sources.len(),"materialization":if self.cache.partial {"partial"} else {"full"},
++        json!({"failed":self.is_failed(),"native_server_instances":1,"base_tables":self.sources.len(),"durability":"native_sync_wal","materialization":if self.cache.partial {"partial"} else {"full"},
+             "memory_limit_bytes":self.cache.memory_limit_bytes,"upquery_timeout_ms":self.cache.upquery_timeout.as_millis(),
+             "allocated_bytes":readyset_alloc::fetch_stats().ok().map(|s| s.allocated),"readers":readers,
+             "hit_queries":self.hits.load(Relaxed),"miss_keys":self.misses.load(Relaxed),"replay_timeouts":self.timeouts.load(Relaxed)})
+@@ -510,7 +528,7 @@
+     id: String,
+     table: OwnedMutexGuard<Table>,
+     _gate: Option<OwnedRwLockWriteGuard<()>>,
+-    _serial: OwnedMutexGuard<()>,
++    _migration: OwnedRwLockReadGuard<()>,
+     sequence: u64,
+     done: bool,
+     pub inserts: u64,
+@@ -581,6 +599,10 @@
+ #[cfg(test)]
+ #[path = "shared_engine_tests.rs"]
+ mod tests;
++
++#[cfg(test)]
++#[path = "shared_engine_concurrency_tests.rs"]
++mod concurrency_tests;
+ 
+ fn marker(schema: &SourceSchema) -> Result<Vec<DfValue>> {
+     let nonce = uuid::Uuid::new_v4();
+--- a/readyset-databend/src/shared_engine_tests.rs
++++ b/readyset-databend/src/shared_engine_tests.rs
+@@ -120,7 +120,7 @@
+             ),
+             None
+         );
+-        // Divergent checkpoints: the global low watermark cannot certify B's target=2.
++        // Divergent checkpoints: native sync-WAL ACKs certify B independently of A=1.
+         let mut batch = engine.begin_batch("b.items", 2).await.unwrap();
+         let mut updated = br.clone();
+         updated[1] = DfValue::from("changed");
+@@ -293,7 +293,7 @@
+     });
+     tokio::time::timeout(Duration::from_secs(10), async {
+         loop {
+-            if engine.writes.try_lock().is_err() {
++            if engine.migrations.try_read().is_err() {
+                 break;
+             }
+             tokio::task::yield_now().await;
+--- a/dataflow-state/src/persistent_state/mod.rs
++++ b/dataflow-state/src/persistent_state/mod.rs
+@@ -3091,6 +3091,9 @@
+ }
+ 
+ #[cfg(test)]
++mod sync_wal_tests;
++
++#[cfg(test)]
+ #[allow(clippy::unreachable)]
+ mod tests {
+     use std::path::PathBuf;
+--- a/readyset-databend/src/shared_engine_concurrency_tests.rs
++++ b/readyset-databend/src/shared_engine_concurrency_tests.rs
+@@ -0,0 +1,189 @@
++use super::*;
++
++/// B must finish DURABLY while A still owns an incomplete batch. A timeout here is a
++/// regression to whole-batch global serialization, not a performance benchmark.
++#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
++async fn independent_native_wal_batches_and_same_source_ordering() {
++    for partial in [false, true] {
++        let dir = std::env::temp_dir().join(format!("rs-shared-parallel-{}", uuid::Uuid::new_v4()));
++        let schemas: Vec<_> = ["a", "b"]
++            .into_iter()
++            .map(|db| {
++                Arc::new(
++                    SourceSchema::from_describe(
++                        db,
++                        "items",
++                        &[
++                            vec![json!("id"), json!("VARCHAR"), json!("NO")],
++                            vec![json!("value"), json!("VARCHAR"), json!("YES")],
++                        ],
++                    )
++                    .unwrap(),
++                )
++            })
++            .collect();
++        let engine = SharedEngine::start(
++            format!("parallel_{}", uuid::Uuid::new_v4().simple()),
++            &dir,
++            CacheConfig {
++                partial,
++                ..Default::default()
++            },
++            schemas.clone(),
++        )
++        .await
++        .unwrap();
++        assert_eq!(engine.cache_status()["durability"], "native_sync_wal");
++        for db in ["a", "b"] {
++            assert_eq!(
++                engine
++                    .cache_ddl(
++                        &format!(
++                            "CREATE CACHE {db}_id FROM SELECT id,value FROM {db}.items WHERE id=?"
++                        ),
++                        db,
++                        |_| true,
++                    )
++                    .await
++                    .unwrap()["ok"],
++                true,
++            );
++        }
++        let ar = schemas[0]
++            .decode_row(&[json!("a-key"), json!("unpublished")])
++            .unwrap();
++        let br = schemas[1]
++            .decode_row(&[json!("b-key"), json!("published")])
++            .unwrap();
++        let aq = "SELECT id,value FROM items WHERE id='a-key'";
++        let bq = "SELECT id,value FROM items WHERE id='b-key'";
++        let mut a = engine.begin_batch("a.items", 1).await.unwrap();
++        a.push(vec![TypedChange {
++            action: Action::Insert,
++            row: ar,
++        }])
++        .await
++        .unwrap();
++        assert!(engine.source_busy("a.items"));
++        assert!(matches!(
++            engine.query(aq, "a").await.unwrap(),
++            ReadOutcome::NotMatched
++        ));
++        tokio::time::timeout(Duration::from_secs(5), async {
++            let mut b = engine.begin_batch("b.items", 1).await.unwrap();
++            b.push(
++                (0..2)
++                    .map(|_| TypedChange {
++                        action: Action::Insert,
++                        row: br.clone(),
++                    })
++                    .collect(),
++            )
++            .await
++            .unwrap();
++            b.finish().await.unwrap();
++            // Empty rounds also advance B independently, without hiding its resident keys.
++            engine
++                .begin_batch("b.items", 2)
++                .await
++                .unwrap()
++                .finish()
++                .await
++                .unwrap();
++        })
++        .await
++        .expect("B must not wait for A's incomplete batch");
++        assert_eq!(engine.sources["a.items"].checkpoint.load(Acquire), 0);
++        assert_eq!(engine.sources["b.items"].checkpoint.load(Acquire), 2);
++        assert_eq!(
++            engine
++                .checkpoint(&engine.sources["a.items"])
++                .await
++                .unwrap()
++                .sequence(),
++            0
++        );
++        assert_eq!(
++            engine
++                .checkpoint(&engine.sources["b.items"])
++                .await
++                .unwrap()
++                .sequence(),
++            2
++        );
++        match engine.query(bq, "b").await.unwrap() {
++            ReadOutcome::Matched { data, .. } => {
++                assert_eq!(data, vec![vec![json!("b-key"), json!("published")]; 2])
++            }
++            _ => panic!("B must be independently readable"),
++        }
++        // A same-source waiter must validate AFTER taking Table ownership, not use the
++        // offset it saw before the preceding writer finished.
++        let b = engine.begin_batch("b.items", 3).await.unwrap();
++        let duplicate_engine = Arc::clone(&engine);
++        let duplicate =
++            tokio::spawn(async move { duplicate_engine.begin_batch("b.items", 3).await });
++        tokio::task::yield_now().await;
++        assert!(!duplicate.is_finished());
++        b.finish().await.unwrap();
++        assert!(
++            tokio::time::timeout(Duration::from_secs(5), duplicate)
++                .await
++                .unwrap()
++                .unwrap()
++                .is_err()
++        );
++        assert!(!engine.sources["b.items"].failed.load(Acquire));
++        // A queued migration cannot run over A's partial batch. Cancelling before the
++        // exclusive guard is acquired has no native side effect and must not poison.
++        let migrate_engine = Arc::clone(&engine);
++        let migration = tokio::spawn(async move {
++            migrate_engine
++                .cache_ddl("DROP CACHE a_id", "a", |_| true)
++                .await
++        });
++        tokio::time::timeout(Duration::from_secs(5), async {
++            while engine.migrations.try_read().is_ok() {
++                tokio::task::yield_now().await;
++            }
++        })
++        .await
++        .unwrap();
++        assert!(!migration.is_finished());
++        migration.abort();
++        assert!(migration.await.unwrap_err().is_cancelled());
++        assert!(!engine.is_failed());
++        a.finish().await.unwrap();
++        assert!(matches!(
++            engine.query(aq, "a").await.unwrap(),
++            ReadOutcome::Matched { .. }
++        ));
++        assert_eq!(engine.sources["a.items"].checkpoint.load(Acquire), 1);
++        // An abandoned A batch poisons only A; B can still progress its durable offset.
++        let mut abandoned = engine.begin_batch("a.items", 2).await.unwrap();
++        abandoned
++            .push(vec![TypedChange {
++                action: Action::Insert,
++                row: br,
++            }])
++            .await
++            .unwrap();
++        drop(abandoned);
++        tokio::time::timeout(Duration::from_secs(5), async {
++            engine
++                .begin_batch("b.items", 4)
++                .await
++                .unwrap()
++                .finish()
++                .await
++                .unwrap();
++        })
++        .await
++        .unwrap();
++        assert!(engine.sources["a.items"].failed.load(Acquire));
++        assert!(!engine.sources["b.items"].failed.load(Acquire));
++        assert!(!engine.is_failed());
++        engine.shutdown().await;
++        std::fs::remove_dir_all(dir).unwrap();
++    }
++}
+--- a/dataflow-state/src/persistent_state/sync_wal_tests.rs
++++ b/dataflow-state/src/persistent_state/sync_wal_tests.rs
+@@ -0,0 +1,98 @@
++//! Regression for SharedEngine's native sync-WAL premise, not a power-loss simulation.
++use super::*;
++use replication_offset::databend::DatabendPosition;
++
++fn open(dir: &std::path::Path, name: &str) -> PersistentState {
++    let mut state = PersistentState::new(
++        name.into(),
++        None,
++        Vec::<Box<[usize]>>::new(),
++        &PersistenceParameters {
++            mode: DurabilityMode::Permanent,
++            storage_dir: Some(dir.into()),
++            wal_flush_interval_seconds: 0,
++            ..Default::default()
++        },
++        PersistenceType::BaseTable,
++        None,
++    )
++    .unwrap();
++    state.add_index(Index::new(IndexType::HashMap, vec![0]), None);
++    state
++}
++fn offset(sequence: u64) -> ReplicationOffset {
++    ReplicationOffset::Databend(DatabendPosition::new("native_sync_wal", sequence).unwrap())
++}
++fn stored(state: &PersistentState) -> Vec<Vec<DfValue>> {
++    let mut all = state.all_records();
++    let mut rows: Vec<_> = all.read().iter().collect();
++    rows.sort();
++    rows
++}
++
++#[test]
++fn separate_chunks_and_offset_survive_exit_without_state_drop() {
++    let dir = tempfile::tempdir().unwrap();
++    let result = std::process::Command::new(std::env::current_exe().unwrap())
++        .args([
++            "--ignored",
++            "--exact",
++            "persistent_state::sync_wal_tests::native_sync_wal_child",
++            "--nocapture",
++        ])
++        .env("READYSET_NATIVE_SYNC_WAL_TEST_DIR", dir.path())
++        .output()
++        .unwrap();
++    assert!(
++        result.status.success(),
++        "child: {}",
++        String::from_utf8_lossy(&result.stderr)
++    );
++    let a = open(dir.path(), "source_a");
++    let b = open(dir.path(), "source_b");
++    // A's partial batch is durable but MUST NOT acquire a completed-batch offset.
++    assert_eq!(a.replication_offset(), Some(&offset(0)));
++    assert_eq!(stored(&a), vec![vec![1.into(), "pending".into()]; 2]);
++    assert_eq!(b.replication_offset(), Some(&offset(7)));
++    let mut expected = vec![vec![2.into(), "old".into()], vec![2.into(), "new".into()]];
++    expected.sort();
++    assert_eq!(stored(&b), expected);
++}
++
++#[test]
++#[ignore = "subprocess helper; invoked by separate_chunks_and_offset_survive_exit_without_state_drop"]
++fn native_sync_wal_child() {
++    let dir = PathBuf::from(std::env::var("READYSET_NATIVE_SYNC_WAL_TEST_DIR").unwrap());
++    let mut a = open(&dir, "source_a");
++    let mut b = open(&dir, "source_b");
++    for state in [&mut a, &mut b] {
++        state
++            .process_records(&mut Records::default(), None, Some(offset(0)))
++            .unwrap();
++    }
++    let pending = vec![1.into(), "pending".into()];
++    a.process_records(
++        &mut vec![(pending.clone(), true), (pending, true)].into(),
++        None,
++        None,
++    )
++    .unwrap();
++    let old = vec![2.into(), "old".into()];
++    b.process_records(
++        &mut vec![(old.clone(), true), (old.clone(), true)].into(),
++        None,
++        None,
++    )
++    .unwrap();
++    b.process_records(
++        &mut vec![(old, false), (vec![2.into(), "new".into()], true)].into(),
++        None,
++        None,
++    )
++    .unwrap();
++    b.process_records(&mut Records::default(), None, Some(offset(7)))
++        .unwrap();
++    // Deliberately bypass PersistentState::drop, including its clean WAL shutdown.
++    // This checks process-exit recovery, not disk/controller power-loss guarantees.
++    std::process::exit(0);
++}

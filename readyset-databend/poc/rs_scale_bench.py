@@ -84,10 +84,11 @@ class Rss(threading.Thread):
         while not self.stop.wait(1):
             try:
                 fields = dict(l.split(':', 1) for l in open(f'/proc/{self.pid}/status'))
-            except OSError:
+                rss = int(fields['VmRSS'].split()[0]) // 1024
+                hwm = int(fields['VmHWM'].split()[0]) // 1024
+            except (OSError, KeyError):
+                # An exiting/zombie process can still have status but no VmRSS/VmHWM.
                 return
-            rss = int(fields['VmRSS'].split()[0]) // 1024
-            hwm = int(fields['VmHWM'].split()[0]) // 1024
             self.now, self.peak = rss, max(self.peak, hwm)
             self.file.write(f'{time.time():.0f},{rss},{hwm}\n')
             self.file.flush()

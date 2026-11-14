@@ -3,9 +3,13 @@
 pub mod cache_control;
 pub mod declaration;
 pub mod engine;
+mod engine_fence;
 pub mod native_query;
 pub mod reader_fence;
 pub mod replicator;
+pub mod restart_marker;
+pub mod shared_engine;
+pub mod source_schema;
 pub mod upstream;
 
 use std::collections::HashSet;

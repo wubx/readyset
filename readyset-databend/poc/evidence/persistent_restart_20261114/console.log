@@ -1,0 +1,217 @@
+EVENT full {"life": 1, "ready_secs": 1.77, "recovery": {"readyset_gateway_restart_3a4eba16e330_a.items": "created", "readyset_gateway_restart_3a4eba16e330_b.items": "created"}, "load_secs": {"readyset_gateway_restart_3a4eba16e330_a.items": 0.266099036, "readyset_gateway_restart_3a4eba16e330_b.items": 0.088233639}, "rows": {"readyset_gateway_restart_3a4eba16e330_a.items": 50004, "readyset_gateway_restart_3a4e
+PASS full: life1 both created
+PASS full: HTTP 200: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r
+PASS full: route readyset: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r
+PASS full: HTTP 200: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway
+PASS full: route readyset: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life1 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: life1 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life1 A ordinary row local
+PASS full: life1 row count a.items
+PASS full: life1 row count b.items
+EVENT full {"kill": false, "code": 0, "event": "stopped", "utc": 1794646348.9439292}
+PASS full: clean SIGTERM exit
+EVENT full {"life": 2, "ready_secs": 1.629, "recovery": {"readyset_gateway_restart_3a4eba16e330_a.items": "resumed", "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_3a4eba16e330_a.items": 0.325801789, "readyset_gateway_restart_3a4eba16e330_b.items": 0.275106775}, "rows": {"readyset_gateway_restart_3a4eba16e330_a.items": 50004, "readyset_gateway_restart_3a4
+PASS full: clean restart resumes both tables
+PASS full: HTTP 200: SHOW CACHES
+PASS full: route readyset: SHOW CACHES
+PASS full: HTTP 200: SHOW CACHES
+PASS full: route readyset: SHOW CACHES
+PASS full: declared caches restored without CREATE
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life2 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: life2 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life2 A ordinary row local
+PASS full: life2 row count a.items
+PASS full: life2 row count b.items
+PASS full: A COMMIT executed then response dropped
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route databend: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: A served from Databend while failed
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: B unaffected
+EVENT full {"kill": false, "code": 0, "event": "stopped", "utc": 1794646352.091763}
+PASS full: clean SIGTERM exit
+EVENT full {"life": 3, "ready_secs": 1.173, "recovery": {"readyset_gateway_restart_3a4eba16e330_a.items": "resumed", "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_3a4eba16e330_a.items": 0.321238948, "readyset_gateway_restart_3a4eba16e330_b.items": 0.055938108}, "rows": {"readyset_gateway_restart_3a4eba16e330_a.items": 50004, "readyset_gateway_restart_3a4
+PASS full: lost COMMIT reply: A resumes (Stream moved), B resumes
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life3 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: life3 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life3 A ordinary row local
+PASS full: life3 row count a.items
+PASS full: life3 row count b.items
+PASS full: A COMMIT withheld
+EVENT full {"kill": true, "code": -9, "event": "stopped", "utc": 1794646354.4930937}
+EVENT full {"life": 4, "ready_secs": 1.686, "recovery": {"readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed", "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_3a4eba16e330_a.items": 0.644512257, "readyset_gateway_restart_3a4eba16e330_b.items": 0.071161207}, "rows": {"readyset_gateway_restart_3a4eba16e330_a.items":
+PASS full: uncommitted batch: A rebuilt, B resumed
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life4 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: life4 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life4 A ordinary row local
+PASS full: life4 row count a.items
+PASS full: life4 row count b.items
+EVENT full {"kill": true, "code": -9, "event": "stopped", "utc": 1794646357.2926514}
+EVENT full {"life": 5, "ready_secs": 2.43, "recovery": {"readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed", "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_3a4eba16e330_a.items": 0.520623212, "readyset_gateway_restart_3a4eba16e330_b.items": 0.279294963}, "rows": {"readyset_gateway_restart_3a4eba16e330_a.items": 
+PASS full: mid-batch crash: A rebuilt or resumed, B resumed
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life5 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: life5 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life5 A ordinary row local
+PASS full: life5 row count a.items
+PASS full: life5 row count b.items
+EVENT full {"kill": false, "code": 0, "event": "stopped", "utc": 1794646360.5554833}
+PASS full: clean SIGTERM exit
+EVENT full {"life": 6, "ready_secs": 1.493, "recovery": {"readyset_gateway_restart_3a4eba16e330_a.items": "resumed", "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_3a4eba16e330_a.items": 0.306845454, "readyset_gateway_restart_3a4eba16e330_b.items": 0.273019654}, "rows": {"readyset_gateway_restart_3a4eba16e330_a.items": 50004, "readyset_gateway_restart_3a4
+PASS full: final restart resumes both
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life6 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba
+PASS full: HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b
+PASS full: life6 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e
+PASS full: HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i
+PASS full: life6 A ordinary row local
+PASS full: life6 row count a.items
+PASS full: life6 row count b.items
+PASS full: one native server
+PASS full: one Stream per table
+PASS full: no helper tables
+EVENT full {"kill": false, "code": 0, "event": "stopped", "utc": 1794646362.949689}
+PASS full: clean SIGTERM exit
+EVENT partial {"life": 1, "ready_secs": 1.38, "recovery": {"readyset_gateway_restart_44881a07cb71_a.items": "created", "readyset_gateway_restart_44881a07cb71_b.items": "created"}, "load_secs": {"readyset_gateway_restart_44881a07cb71_a.items": 0.198363844, "readyset_gateway_restart_44881a07cb71_b.items": 0.0964142}, "rows": {"readyset_gateway_restart_44881a07cb71_a.items": 50004, "readyset_gateway_restart_44881a
+PASS partial: life1 both created
+PASS partial: HTTP 200: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r
+PASS partial: route readyset: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r
+PASS partial: HTTP 200: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway
+PASS partial: route readyset: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life1 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: life1 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life1 A ordinary row local
+PASS partial: life1 row count a.items
+PASS partial: life1 row count b.items
+EVENT partial {"kill": false, "code": 0, "event": "stopped", "utc": 1794646366.2139869}
+PASS partial: clean SIGTERM exit
+EVENT partial {"life": 2, "ready_secs": 1.23, "recovery": {"readyset_gateway_restart_44881a07cb71_a.items": "resumed", "readyset_gateway_restart_44881a07cb71_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_44881a07cb71_a.items": 0.09082195, "readyset_gateway_restart_44881a07cb71_b.items": 0.050370637}, "rows": {"readyset_gateway_restart_44881a07cb71_a.items": 50004, "readyset_gateway_restart_44881
+PASS partial: clean restart resumes both tables
+PASS partial: HTTP 200: SHOW CACHES
+PASS partial: route readyset: SHOW CACHES
+PASS partial: HTTP 200: SHOW CACHES
+PASS partial: route readyset: SHOW CACHES
+PASS partial: declared caches restored without CREATE
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life2 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: life2 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life2 A ordinary row local
+PASS partial: life2 row count a.items
+PASS partial: life2 row count b.items
+PASS partial: A COMMIT executed then response dropped
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route databend: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: A served from Databend while failed
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: B unaffected
+EVENT partial {"kill": false, "code": 0, "event": "stopped", "utc": 1794646369.3028116}
+PASS partial: clean SIGTERM exit
+EVENT partial {"life": 3, "ready_secs": 0.945, "recovery": {"readyset_gateway_restart_44881a07cb71_a.items": "resumed", "readyset_gateway_restart_44881a07cb71_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_44881a07cb71_a.items": 0.082873011, "readyset_gateway_restart_44881a07cb71_b.items": 0.061461342}, "rows": {"readyset_gateway_restart_44881a07cb71_a.items": 50004, "readyset_gateway_restart_448
+PASS partial: lost COMMIT reply: A resumes (Stream moved), B resumes
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life3 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: life3 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life3 A ordinary row local
+PASS partial: life3 row count a.items
+PASS partial: life3 row count b.items
+PASS partial: A COMMIT withheld
+EVENT partial {"kill": true, "code": -9, "event": "stopped", "utc": 1794646371.2176516}
+EVENT partial {"life": 4, "ready_secs": 1.332, "recovery": {"readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed", "readyset_gateway_restart_44881a07cb71_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_44881a07cb71_a.items": 0.291792532, "readyset_gateway_restart_44881a07cb71_b.items": 0.060060304}, "rows": {"readyset_gateway_restart_44881a07cb71_a.items":
+PASS partial: uncommitted batch: A rebuilt, B resumed
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life4 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: life4 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life4 A ordinary row local
+PASS partial: life4 row count a.items
+PASS partial: life4 row count b.items
+EVENT partial {"kill": true, "code": -9, "event": "stopped", "utc": 1794646373.698982}
+EVENT partial {"life": 5, "ready_secs": 1.935, "recovery": {"readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed", "readyset_gateway_restart_44881a07cb71_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_44881a07cb71_a.items": 0.294835, "readyset_gateway_restart_44881a07cb71_b.items": 0.066258305}, "rows": {"readyset_gateway_restart_44881a07cb71_a.items": 50
+PASS partial: mid-batch crash: A rebuilt or resumed, B resumed
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life5 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: life5 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life5 A ordinary row local
+PASS partial: life5 row count a.items
+PASS partial: life5 row count b.items
+EVENT partial {"kill": false, "code": 0, "event": "stopped", "utc": 1794646376.391158}
+PASS partial: clean SIGTERM exit
+EVENT partial {"life": 6, "ready_secs": 1.432, "recovery": {"readyset_gateway_restart_44881a07cb71_a.items": "resumed", "readyset_gateway_restart_44881a07cb71_b.items": "resumed"}, "load_secs": {"readyset_gateway_restart_44881a07cb71_a.items": 0.085496099, "readyset_gateway_restart_44881a07cb71_b.items": 0.059793335}, "rows": {"readyset_gateway_restart_44881a07cb71_a.items": 50004, "readyset_gateway_restart_448
+PASS partial: final restart resumes both
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life6 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a
+PASS partial: HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b
+PASS partial: life6 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488
+PASS partial: HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i
+PASS partial: life6 A ordinary row local
+PASS partial: life6 row count a.items
+PASS partial: life6 row count b.items
+PASS partial: one native server
+PASS partial: one Stream per table
+PASS partial: no helper tables
+EVENT partial {"kill": false, "code": 0, "event": "stopped", "utc": 1794646378.6404653}
+PASS partial: clean SIGTERM exit
+RESULT {"passed": true, "checks": 192, "report": "/data1/vmbox/readyset-persist-build-20261114-162944/restart_50k/report.json"}

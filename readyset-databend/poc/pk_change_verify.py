@@ -89,7 +89,8 @@ class PkChangeVerification(Verification):
             self.source.sql(f'CREATE STREAM {db}.pk_observer ON TABLE {db}.source_rows APPEND_ONLY = false')
             command = [self.args.gateway_binary, '--endpoint', self.args.endpoint, '--user', self.args.user,
                        '--database', db, '--table', 'source_rows', '--output', str(self.output / 'service'),
-                       '--port', '0', '--interval', '1', '--confirm-create']
+                       '--port', '0', '--interval', '1', '--confirm-create',
+                       *(['--partial', '--memory-limit-mb', '2048'] if self.args.partial else [])]
             self.child = subprocess.Popen(command, stdout=(self.output / 'gateway_stdout.log').open('w'),
                                           stderr=(self.output / 'gateway_stderr.log').open('w'))
             deadline = time.monotonic() + 75
@@ -187,6 +188,7 @@ def main():
     p.add_argument('--endpoint', required=True)
     p.add_argument('--user', default='root')
     p.add_argument('--gateway-binary', required=True, help='path to the readyset-databend binary')
+    p.add_argument('--partial', action='store_true', help='native partial materialization, 2 GiB soft memory target')
     p.add_argument('--output', default='/tmp/readyset-databend-pk-change')
     p.add_argument('--confirm-create', action='store_true', required=True)
     args = p.parse_args()

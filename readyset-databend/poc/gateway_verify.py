@@ -299,7 +299,8 @@ class Verification:
             if self.args.gateway_binary:
                 # Single-binary front end: same HTTP contract, engine in-process.
                 command = [self.args.gateway_binary, *common, '--enable-fault-injection',
-                           *(['--oracle'] if self.args.oracle else [])]
+                           *(['--oracle'] if self.args.oracle else []),
+                           *(['--partial', '--memory-limit-mb', '2048'] if self.args.partial else [])]
             else:
                 command = [sys.executable,'-B',str(Path(__file__).with_name('gateway.py')), *common, '--binary', self.args.binary]
             self.child=subprocess.Popen(command,stdout=stdout,stderr=log)
@@ -453,6 +454,7 @@ def main():
     p.add_argument('--binary',default='target/debug/databend-m2')
     p.add_argument('--gateway-binary',help='run the readyset-databend single binary instead of gateway.py + databend-m2')
     p.add_argument('--oracle',action='store_true',help='with --gateway-binary: POC content-oracle mode (re-verify the whole replica per batch)')
+    p.add_argument('--partial',action='store_true',help='with --gateway-binary: native partial materialization with a 2 GiB soft memory target')
     p.add_argument('--output',default='/tmp/readyset-databend-gateway')
     p.add_argument('--confirm-create',action='store_true')
     p.add_argument('--sql-declarations',action='store_true',help='start without JSON queries; exercise runtime CREATE/SHOW/DROP CACHE')

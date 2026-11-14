@@ -1,0 +1,2688 @@
+{
+  "passed": true,
+  "checks": 192,
+  "cases": [
+    {
+      "passed": true,
+      "mode": "full",
+      "databases": [
+        "readyset_gateway_restart_3a4eba16e330_a",
+        "readyset_gateway_restart_3a4eba16e330_b"
+      ],
+      "lives": [
+        {
+          "life": 1,
+          "ready_secs": 1.77,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "created",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "created"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.266099036,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.088233639
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          }
+        },
+        {
+          "life": 2,
+          "ready_secs": 1.629,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.325801789,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.275106775
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          }
+        },
+        {
+          "life": 3,
+          "ready_secs": 1.173,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.321238948,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.055938108
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          }
+        },
+        {
+          "life": 4,
+          "ready_secs": 1.686,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.644512257,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.071161207
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          }
+        },
+        {
+          "life": 5,
+          "ready_secs": 2.43,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.520623212,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.279294963
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          }
+        },
+        {
+          "life": 6,
+          "ready_secs": 1.493,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.306845454,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.273019654
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          }
+        }
+      ],
+      "checks": [
+        {
+          "name": "life1 both created",
+          "actual": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "created",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "created"
+          },
+          "expected": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "created",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "created"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life1 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba",
+          "actual": [
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life1 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life1 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life1 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life1 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "clean restart resumes both tables",
+          "actual": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SHOW CACHES",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SHOW CACHES",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SHOW CACHES",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SHOW CACHES",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "declared caches restored without CREATE",
+          "actual": [
+            "a_id",
+            "b_id"
+          ],
+          "expected": [
+            "a_id",
+            "b_id"
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life2 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba",
+          "actual": [
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life2 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life2 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life2 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life2 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "A COMMIT executed then response dropped",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route databend: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend while failed",
+          "actual": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B unaffected",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "lost COMMIT reply: A resumes (Stream moved), B resumes",
+          "actual": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life3 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba",
+          "actual": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life3 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life3 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life3 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life3 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "A COMMIT withheld",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "uncommitted batch: A rebuilt, B resumed",
+          "actual": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life4 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba",
+          "actual": [
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life4 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life4 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life4 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life4 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "mid-batch crash: A rebuilt or resumed, B resumed",
+          "actual": [
+            "resumed",
+            true
+          ],
+          "expected": [
+            "resumed",
+            true
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life5 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba",
+          "actual": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life5 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life5 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life5 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life5 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "final restart resumes both",
+          "actual": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life6 local equals Databend: SELECT id,val FROM readyset_gateway_restart_3a4eba",
+          "actual": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_3a4eba16e330_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life6 local equals Databend: SELECT id,label FROM readyset_gateway_restart_3a4e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_3a4eba16e330_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life6 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life6 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life6 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "one native server",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "one Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "no helper tables",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "life": 1,
+          "ready_secs": 1.77,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "created",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "created"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.266099036,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.088233639
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646347.7246258
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646348.9439292
+        },
+        {
+          "life": 2,
+          "ready_secs": 1.629,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.325801789,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.275106775
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646350.93486
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646352.091763
+        },
+        {
+          "life": 3,
+          "ready_secs": 1.173,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.321238948,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.055938108
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646353.2654426
+        },
+        {
+          "kill": true,
+          "code": -9,
+          "event": "stopped",
+          "utc": 1794646354.4930937
+        },
+        {
+          "life": 4,
+          "ready_secs": 1.686,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.644512257,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.071161207
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646356.327699
+        },
+        {
+          "kill": true,
+          "code": -9,
+          "event": "stopped",
+          "utc": 1794646357.2926514
+        },
+        {
+          "life": 5,
+          "ready_secs": 2.43,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.520623212,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.279294963
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646359.960741
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646360.5554833
+        },
+        {
+          "life": 6,
+          "ready_secs": 1.493,
+          "recovery": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": "resumed",
+            "readyset_gateway_restart_3a4eba16e330_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 0.306845454,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 0.273019654
+          },
+          "rows": {
+            "readyset_gateway_restart_3a4eba16e330_a.items": 50004,
+            "readyset_gateway_restart_3a4eba16e330_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646362.0485835
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646362.949689
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "databases": [
+        "readyset_gateway_restart_44881a07cb71_a",
+        "readyset_gateway_restart_44881a07cb71_b"
+      ],
+      "lives": [
+        {
+          "life": 1,
+          "ready_secs": 1.38,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "created",
+            "readyset_gateway_restart_44881a07cb71_b.items": "created"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.198363844,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.0964142
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          }
+        },
+        {
+          "life": 2,
+          "ready_secs": 1.23,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.09082195,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.050370637
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          }
+        },
+        {
+          "life": 3,
+          "ready_secs": 0.945,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.082873011,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.061461342
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          }
+        },
+        {
+          "life": 4,
+          "ready_secs": 1.332,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.291792532,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.060060304
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          }
+        },
+        {
+          "life": 5,
+          "ready_secs": 1.935,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.294835,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.066258305
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          }
+        },
+        {
+          "life": 6,
+          "ready_secs": 1.432,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.085496099,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.059793335
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          }
+        }
+      ],
+      "checks": [
+        {
+          "name": "life1 both created",
+          "actual": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "created",
+            "readyset_gateway_restart_44881a07cb71_b.items": "created"
+          },
+          "expected": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "created",
+            "readyset_gateway_restart_44881a07cb71_b.items": "created"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: CREATE CACHE a_id FROM SELECT id,val FROM readyset_gateway_r",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life1 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a",
+          "actual": [
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ],
+            [
+              "bag",
+              "v1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life1 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ],
+            [
+              "18446744073709551615",
+              "b1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life1 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life1 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life1 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "clean restart resumes both tables",
+          "actual": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SHOW CACHES",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SHOW CACHES",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SHOW CACHES",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SHOW CACHES",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "declared caches restored without CREATE",
+          "actual": [
+            "a_id",
+            "b_id"
+          ],
+          "expected": [
+            "a_id",
+            "b_id"
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life2 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a",
+          "actual": [
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ],
+            [
+              "bag",
+              "v2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life2 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ],
+            [
+              "18446744073709551615",
+              "b2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life2 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life2 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life2 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "A COMMIT executed then response dropped",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route databend: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend while failed",
+          "actual": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B unaffected",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "lost COMMIT reply: A resumes (Stream moved), B resumes",
+          "actual": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life3 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a",
+          "actual": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ],
+            [
+              "bag",
+              "v3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life3 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ],
+            [
+              "18446744073709551615",
+              "b3"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life3 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life3 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life3 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "A COMMIT withheld",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "uncommitted batch: A rebuilt, B resumed",
+          "actual": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life4 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a",
+          "actual": [
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ],
+            [
+              "bag",
+              "v4"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life4 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ],
+            [
+              "18446744073709551615",
+              "b4"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life4 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life4 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life4 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "mid-batch crash: A rebuilt or resumed, B resumed",
+          "actual": [
+            "resumed",
+            true
+          ],
+          "expected": [
+            "resumed",
+            true
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life5 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a",
+          "actual": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life5 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life5 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life5 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life5 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "final restart resumes both",
+          "actual": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "expected": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life6 local equals Databend: SELECT id,val FROM readyset_gateway_restart_44881a",
+          "actual": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ],
+            [
+              "bag",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,label FROM readyset_gateway_restart_44881a07cb71_b",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life6 local equals Databend: SELECT id,label FROM readyset_gateway_restart_4488",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ],
+            [
+              "18446744073709551615",
+              "b5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "HTTP 200: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "route readyset: SELECT id,val FROM readyset_gateway_restart_44881a07cb71_a.i",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "life6 A ordinary row local",
+          "actual": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "expected": [
+            [
+              "id-7",
+              "v5"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "life6 row count a.items",
+          "actual": "50004",
+          "expected": "50004",
+          "passed": true
+        },
+        {
+          "name": "life6 row count b.items",
+          "actual": "3",
+          "expected": "3",
+          "passed": true
+        },
+        {
+          "name": "one native server",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "one Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "no helper tables",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "clean SIGTERM exit",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "life": 1,
+          "ready_secs": 1.38,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "created",
+            "readyset_gateway_restart_44881a07cb71_b.items": "created"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.198363844,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.0964142
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646365.2019393
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646366.2139869
+        },
+        {
+          "life": 2,
+          "ready_secs": 1.23,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.09082195,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.050370637
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646367.7695718
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646369.3028116
+        },
+        {
+          "life": 3,
+          "ready_secs": 0.945,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.082873011,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.061461342
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646370.2485752
+        },
+        {
+          "kill": true,
+          "code": -9,
+          "event": "stopped",
+          "utc": 1794646371.2176516
+        },
+        {
+          "life": 4,
+          "ready_secs": 1.332,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.291792532,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.060060304
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646372.7059577
+        },
+        {
+          "kill": true,
+          "code": -9,
+          "event": "stopped",
+          "utc": 1794646373.698982
+        },
+        {
+          "life": 5,
+          "ready_secs": 1.935,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "rebuilt: interrupted batch was not committed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.294835,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.066258305
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646375.873696
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646376.391158
+        },
+        {
+          "life": 6,
+          "ready_secs": 1.432,
+          "recovery": {
+            "readyset_gateway_restart_44881a07cb71_a.items": "resumed",
+            "readyset_gateway_restart_44881a07cb71_b.items": "resumed"
+          },
+          "load_secs": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 0.085496099,
+            "readyset_gateway_restart_44881a07cb71_b.items": 0.059793335
+          },
+          "rows": {
+            "readyset_gateway_restart_44881a07cb71_a.items": 50004,
+            "readyset_gateway_restart_44881a07cb71_b.items": 3
+          },
+          "event": "life",
+          "utc": 1794646377.8233025
+        },
+        {
+          "kill": false,
+          "code": 0,
+          "event": "stopped",
+          "utc": 1794646378.6404653
+        }
+      ],
+      "error": null
+    }
+  ]
+}

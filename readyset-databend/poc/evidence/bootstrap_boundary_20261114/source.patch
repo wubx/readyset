@@ -1,0 +1,494 @@
+--- a/readyset-databend/src/replicator.rs
++++ b/readyset-databend/src/replicator.rs
+@@ -5,11 +5,16 @@
+ //! the Stream only advances when the transaction commits, so a failed apply leaves the
+ //! changes in the Stream. Tables, cache declarations and progress live in ReadySet.
+ //!
++//! Bootstrap keeps one native transaction across snapshot AT STREAM and its first consume:
++//! repeatable-read pins Stream/source versions and COMMIT's native version CAS rejects a
++//! previous consumer's late commit. Aborting that transaction requires a rebuild.
++//!
+ //! Production mode streams the snapshot and every batch page by page and keeps no copy of
+ //! the table. Oracle mode (POC regression verifiers) also keeps every row to re-verify the
+ //! replica after each batch, and is bounded to small tables with unique ids.
+ use std::collections::{BTreeMap, HashSet};
+ use std::sync::Arc;
++use std::time::Instant;
+ 
+ use readyset_client::Table;
+ 
+@@ -163,6 +168,10 @@
+     pub default_role: Option<String>,
+     /// Dynamic production binding. Oracle continues to use the original bounded DTO.
+     pub schema: Option<Arc<SourceSchema>>,
++    /// Snapshot and the first consuming read MUST share the native transaction's pinned
++    /// Stream/source versions. Also bounds freshness: a long snapshot is not a fresh round.
++    bootstrap_started: Option<Instant>,
++    capture_failed: bool,
+ }
+ 
+ const EXPECTED_SCHEMA: [(&str, &str, &str); 4] = [
+@@ -185,7 +194,56 @@
+             rows: 0,
+             default_role: None,
+             schema: None,
++            bootstrap_started: None,
++            capture_failed: false,
++        }
++    }
++
++    pub fn bootstrap_started(&self) -> Option<Instant> {
++        self.bootstrap_started
++    }
++
++    fn capture_active(&self) -> Result<()> {
++        ensure!(
++            self.capture
++                .session
++                .get("txn_state")
++                .and_then(Value::as_str)
++                == Some("Active"),
++            "capture transaction not Active"
++        );
++        Ok(())
++    }
++
++    async fn begin_snapshot(&mut self) -> Result<()> {
++        ensure!(
++            self.sequence == 0 && self.bootstrap_started.is_none() && !self.capture_failed,
++            "snapshot already started or capture already committed"
++        );
++        let started = Instant::now();
++        self.capture_failed = true;
++        self.capture.sql("BEGIN").await?;
++        self.capture_active()?;
++        self.bootstrap_started = Some(started);
++        self.capture_failed = false;
++        Ok(())
++    }
++
++    async fn begin_capture_transaction(&mut self) -> Result<()> {
++        ensure!(
++            !self.capture_failed,
++            "capture failed closed; rebuild required"
++        );
++        if self.bootstrap_started.is_none() {
++            ensure!(
++                self.sequence > 0,
++                "snapshot transaction required before capture"
++            );
++            self.capture.sql("BEGIN").await?;
+         }
++        // A lost/expired bootstrap session must never fall back to a new transaction:
++        // that would detach consume from the already loaded snapshot boundary.
++        self.capture_active()
+     }
+ 
+     /// Check the source schema and create this instance's Stream unless it already exists.
+@@ -233,10 +291,9 @@
+                 "source schema must be id BIGINT NOT NULL, payload STRING NOT NULL, score BIGINT NOT NULL, note STRING NULL"
+             );
+         }
+-        // Reuse this instance's Stream when it already exists (restart with the same
+-        // instance_id): the snapshot below is read AT the Stream's offset, so snapshot +
+-        // the changes still in the Stream is exactly the current table. No DROP is needed,
+-        // which keeps the account at SELECT + CREATE (DROP would be database-wide).
++        // Reuse this instance's Stream without DROP. The snapshot AND first consume below
++        // share a native transaction: pinned Stream/source metadata plus the native stream
++        // version CAS at COMMIT protect against an old consumer's late COMMIT on restart.
+         let (database, stream) = n.stream.split_once('.').context("qualified stream name")?;
+         let existing = a
+             .sql(&format!(
+@@ -256,12 +313,23 @@
+     /// Stream the fixed snapshot the Stream starts from into the engine, page by page.
+     /// Oracle mode also returns (and keeps) the rows; it requires unique ids.
+     pub async fn snapshot(&mut self, loader: &mut Loader) -> Result<Option<Vec<SourceRow>>> {
++        self.begin_snapshot().await?;
++        match self.snapshot_in_transaction(loader).await {
++            Ok(rows) => Ok(rows),
++            Err(error) => Err(self.abort_with(error).await),
++        }
++    }
++
++    async fn snapshot_in_transaction(
++        &mut self,
++        loader: &mut Loader,
++    ) -> Result<Option<Vec<SourceRow>>> {
+         let n = self.names.clone();
+         let oracle = self.oracle;
+         let order = if oracle { " ORDER BY id" } else { "" };
+         let mut kept: Vec<SourceRow> = Vec::new();
+         let mut pages = self
+-            .admin
++            .capture
+             .pages(
+                 &format!(
+                     "SELECT id, payload, score, note FROM {} AT (STREAM => {}){order}",
+@@ -295,7 +363,7 @@
+             Err(error) => return Err(pages.abort(error).await),
+         }
+         let fixed = self
+-            .admin
++            .capture
+             .sql(&format!(
+                 "SELECT count(*) FROM {} AT (STREAM => {})",
+                 n.source, n.stream
+@@ -314,6 +382,7 @@
+             "fixed snapshot row count mismatch: loaded {}, source {fixed}",
+             loader.loaded()
+         );
++        self.capture_active()?;
+         self.rows = fixed as u64;
+         if !oracle {
+             return Ok(None);
+@@ -334,6 +403,14 @@
+     /// Snapshot a discovered source directly into an existing native base table. Caller
+     /// owns checkpoint/persistence/reader fencing; no ReadySet instance is started here.
+     pub async fn snapshot_into(&mut self, table: &mut Table) -> Result<u64> {
++        self.begin_snapshot().await?;
++        match self.snapshot_into_transaction(table).await {
++            Ok(rows) => Ok(rows),
++            Err(error) => Err(self.abort_with(error).await),
++        }
++    }
++
++    async fn snapshot_into_transaction(&mut self, table: &mut Table) -> Result<u64> {
+         let schema = self
+             .schema
+             .as_ref()
+@@ -344,7 +421,7 @@
+             self.names.source,
+             self.names.stream
+         );
+-        let mut pages = self.admin.pages(&sql, PAGE_ROWS).await?;
++        let mut pages = self.capture.pages(&sql, PAGE_ROWS).await?;
+         let mut loaded = 0u64;
+         let result = async {
+             while let Some(page) = pages.next().await? {
+@@ -365,7 +442,7 @@
+         }
+         pages.close().await?;
+         let count = self
+-            .admin
++            .capture
+             .sql(&format!(
+                 "SELECT count(*) FROM {} AT (STREAM => {})",
+                 self.names.source, self.names.stream
+@@ -381,6 +458,7 @@
+             loaded == expected,
+             "snapshot row count mismatch: loaded {loaded}, expected {expected}"
+         );
++        self.capture_active()?;
+         self.rows = loaded;
+         Ok(loaded)
+     }
+@@ -402,7 +480,7 @@
+             "SELECT {columns}, change$action, change$row_id, change$is_update FROM {} WITH CONSUME",
+             self.names.stream
+         );
+-        self.capture.sql("BEGIN").await?;
++        self.begin_capture_transaction().await?;
+         self.capture.pages(&sql, PAGE_ROWS).await
+     }
+ 
+@@ -426,6 +504,10 @@
+     /// may or may not have advanced) and must stop capture.
+     pub async fn commit_consumed(&mut self, inserts: u64, deletes: u64) -> Result<()> {
+         ensure!(
++            !self.capture_failed,
++            "capture failed closed; rebuild required"
++        );
++        ensure!(
+             self.capture
+                 .session
+                 .get("txn_state")
+@@ -433,7 +515,10 @@
+                 == Some("Active"),
+             "capture transaction not Active"
+         );
++        self.capture_failed = true;
+         self.capture.sql("COMMIT").await?;
++        self.capture_failed = false;
++        self.bootstrap_started = None;
+         self.sequence += 1;
+         self.rows = (self.rows + inserts).saturating_sub(deletes);
+         Ok(())
+@@ -444,8 +529,8 @@
+     /// read advances the Stream past everything it covers.
+     pub async fn begin_capture(&mut self) -> Result<Prepared> {
+         let n = self.names.clone();
++        self.begin_capture_transaction().await?;
+         let tx = &mut self.capture;
+-        tx.sql("BEGIN").await?;
+         let read = async {
+             let raw = tx
+                 .sql(&format!(
+@@ -505,6 +590,9 @@
+     }
+ 
+     async fn abort_with(&mut self, error: anyhow::Error) -> anyhow::Error {
++        // After aborting bootstrap, its already loaded native snapshot may no longer be
++        // paired with a future Stream read. Never silently retry in a fresh transaction.
++        self.capture_failed |= self.bootstrap_started.is_some();
+         if matches!(
+             self.capture
+                 .session
+@@ -515,6 +603,7 @@
+         {
+             return error.context(format!("rollback also failed: {cleanup:#}"));
+         }
++        self.bootstrap_started = None;
+         error
+     }
+ 
+@@ -543,10 +632,22 @@
+     /// The batch is applied in ReadySet: advance the Stream. An error here is uncertain
+     /// (the Stream may or may not have advanced) and must stop capture.
+     pub async fn commit_capture(&mut self, prepared: Prepared) -> Result<()> {
++        ensure!(
++            !self.capture_failed,
++            "capture failed closed; rebuild required"
++        );
++        self.capture_active()?;
++        self.capture_failed = true;
+         self.capture.sql("COMMIT").await?;
++        self.capture_failed = false;
++        self.bootstrap_started = None;
+         self.sequence = prepared.batch.sequence;
+         self.state = prepared.new_state;
+         self.rows = self.state.len() as u64;
+         Ok(())
+     }
+ }
++
++#[cfg(test)]
++#[path = "replicator_boundary_tests.rs"]
++mod boundary_tests;
+--- a/readyset-databend/src/live_schema_tests.rs
++++ b/readyset-databend/src/live_schema_tests.rs
+@@ -151,6 +151,15 @@
+             .0;
+         assert_eq!(actual, admin.sql(&sql).await.unwrap());
+     }
++    // Complete the snapshot's pinned transaction before testing ordinary rollback.
++    // The first consume shares the source/Stream versions fixed during snapshot.
++    for i in 0..2 {
++        let mut pages = sources[i].begin_consume().await.unwrap();
++        assert!(pages.next().await.unwrap().is_none());
++        pages.close().await.unwrap();
++        tables[i].set_replication_offset(offset(1)).await.unwrap();
++        sources[i].commit_consumed(0, 0).await.unwrap();
++    }
+     admin
+         .sql(&format!(
+             "INSERT INTO {}.items VALUES ('new-key', false, NULL)",
+@@ -212,14 +221,14 @@
+                     .map(|c| TableOperation::Insert(c.row.clone())),
+             );
+         tables[i].perform_all(operations).await.unwrap();
+-        tables[i].set_replication_offset(offset(1)).await.unwrap();
++        tables[i].set_replication_offset(offset(2)).await.unwrap();
+         Sink::new(generation.clone(), schemas[i].local.clone())
+             .unwrap()
+-            .wait_persisted(&mut loader.handle, 1)
++            .wait_persisted(&mut loader.handle, 2)
+             .await
+             .unwrap();
+         sources[i].commit_consumed(inserts, deletes).await.unwrap();
+-        assert_eq!(sources[i].sequence, 1);
++        assert_eq!(sources[i].sequence, 2);
+     }
+     for i in 0..2 {
+         let projection = if i == 0 {
+@@ -263,10 +272,10 @@
+             );
+         }
+         pages.close().await.unwrap();
+-        tables[i].set_replication_offset(offset(2)).await.unwrap();
++        tables[i].set_replication_offset(offset(3)).await.unwrap();
+         Sink::new(generation.clone(), schemas[i].local.clone())
+             .unwrap()
+-            .wait_persisted(&mut loader.handle, 2)
++            .wait_persisted(&mut loader.handle, 3)
+             .await
+             .unwrap();
+         sources[i].commit_consumed(0, 0).await.unwrap();
+@@ -321,7 +330,7 @@
+     );
+     sources[1].check_schema().await.unwrap();
+     assert_eq!(
+-        sources[1].sequence, 2,
++        sources[1].sequence, 3,
+         "other source's checkpoint must remain independent"
+     );
+     eprintln!(
+--- a/readyset-databend/src/bin/server.rs
++++ b/readyset-databend/src/bin/server.rs
+@@ -1627,7 +1627,7 @@
+ 
+ async fn sync_once(app: &App, replicator: &mut Replicator) -> Result<()> {
+     let _capturing = app.capturing.lock().await;
+-    let capture_started = Instant::now();
++    let capture_started = replicator.bootstrap_started().unwrap_or_else(Instant::now);
+     let (epoch, clean) = {
+         let st = app.lock();
+         (st.forward_epoch, st.active_forwards == 0)
+--- a/readyset-databend/src/bin/server/shared.rs
++++ b/readyset-databend/src/bin/server/shared.rs
+@@ -68,6 +68,7 @@
+                 state.snapshot = json!({"rows":rows,"total_secs":started.elapsed().as_secs_f64()});
+             }
+             Err(e) => {
++                let e = capture.abort_capture(e).await;
+                 tables[id].lock().failed = Some(format!("snapshot failed: {e:#}"));
+                 engine.fail_source(id);
+             }
+@@ -147,7 +148,9 @@
+     let polling = &app.tables[id].syncing;
+     polling.store(true, std::sync::atomic::Ordering::Release);
+     let _polling = Polling(polling);
+-    let started = Instant::now();
++    // The first round consumes the source snapshot pinned at bootstrap start, not at
++    // this function's entry. A subsequent fresh transaction catches up later writes.
++    let started = capture.bootstrap_started().unwrap_or_else(Instant::now);
+     let (epoch, clean) = {
+         let state = app.lock();
+         (
+--- /dev/null
++++ b/readyset-databend/src/replicator_boundary_tests.rs
+@@ -0,0 +1,135 @@
++//! Adapter protocol guards; real Stream repeatable-read/CAS tests are opt-in live tests.
++use super::*;
++use crate::upstream::{basic_auth, http_client};
++use axum::{Json, Router, extract::State, routing::post};
++use serde_json::json;
++use std::sync::Mutex;
++
++#[derive(Default)]
++struct Mock {
++    sql: Mutex<Vec<String>>,
++    fail_commit: bool,
++}
++async fn query(State(mock): State<Arc<Mock>>, Json(body): Json<Value>) -> Json<Value> {
++    let sql = body["sql"].as_str().unwrap();
++    mock.sql.lock().unwrap().push(sql.into());
++    let failed = sql == "COMMIT" && mock.fail_commit;
++    Json(
++        json!({"id":"mock", "state":if failed {"Failed"} else {"Succeeded"},
++        "error":if failed {json!({"code":2734,"message":"StreamVersionMismatched"})} else {Value::Null},
++        "data":[], "next_uri":null,
++        "session":{"txn_state":if matches!(sql,"COMMIT"|"ROLLBACK") {"AutoCommit"} else {"Active"}}}),
++    )
++}
++async fn fixture(fail_commit: bool) -> (Replicator, Arc<Mock>, tokio::task::JoinHandle<()>) {
++    let mock = Arc::new(Mock {
++        fail_commit,
++        ..Default::default()
++    });
++    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
++    let endpoint = format!("http://{}", listener.local_addr().unwrap());
++    let app = Router::new()
++        .route("/v1/query", post(query))
++        .fallback(|| async { Json(json!({})) })
++        .with_state(Arc::clone(&mock));
++    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
++    let client = || {
++        DatabendClient::new(
++            http_client().unwrap(),
++            &endpoint,
++            &basic_auth("root", ""),
++            "test",
++            None,
++        )
++    };
++    let capture = Replicator::new(
++        Names::new("a", "items", "test", "generation"),
++        client(),
++        client(),
++        false,
++    );
++    (capture, mock, server)
++}
++
++#[tokio::test]
++async fn bootstrap_consume_reuses_transaction_and_keeps_original_freshness_start() {
++    let (mut capture, mock, server) = fixture(false).await;
++    capture.begin_snapshot().await.unwrap();
++    let started = capture.bootstrap_started().unwrap();
++    let pages = capture.begin_consume().await.unwrap();
++    let mut pages = pages;
++    assert!(pages.next().await.unwrap().is_none());
++    pages.close().await.unwrap();
++    assert_eq!(capture.bootstrap_started(), Some(started));
++    capture.commit_consumed(0, 0).await.unwrap();
++    assert!(capture.bootstrap_started().is_none());
++    assert_eq!(capture.sequence, 1);
++    assert_eq!(
++        mock.sql
++            .lock()
++            .unwrap()
++            .iter()
++            .filter(|s| *s == "BEGIN")
++            .count(),
++        1
++    );
++    let mut pages = capture.begin_consume().await.unwrap();
++    assert!(pages.next().await.unwrap().is_none());
++    pages.close().await.unwrap();
++    capture.commit_consumed(0, 0).await.unwrap();
++    assert_eq!(
++        mock.sql
++            .lock()
++            .unwrap()
++            .iter()
++            .filter(|s| *s == "BEGIN")
++            .count(),
++        2
++    );
++    server.abort();
++}
++
++#[tokio::test]
++async fn expired_bootstrap_never_silently_opens_new_transaction() {
++    let (mut capture, mock, server) = fixture(false).await;
++    capture.begin_snapshot().await.unwrap();
++    capture
++        .capture
++        .session
++        .insert("txn_state".into(), json!("AutoCommit"));
++    assert!(capture.begin_consume().await.is_err());
++    assert_eq!(*mock.sql.lock().unwrap(), vec!["BEGIN"]);
++    server.abort();
++}
++
++#[tokio::test]
++async fn aborted_bootstrap_requires_rebuild_not_a_fresh_consume() {
++    let (mut capture, mock, server) = fixture(false).await;
++    capture.begin_snapshot().await.unwrap();
++    let _ = capture
++        .abort_capture(anyhow::anyhow!("injected snapshot failure"))
++        .await;
++    assert!(capture.begin_consume().await.is_err());
++    assert!(capture.begin_snapshot().await.is_err());
++    assert_eq!(*mock.sql.lock().unwrap(), vec!["BEGIN", "ROLLBACK"]);
++    server.abort();
++}
++
++#[tokio::test]
++async fn commit_conflict_stops_capture_without_retrying_transaction_or_sql() {
++    let (mut capture, mock, server) = fixture(true).await;
++    capture.begin_snapshot().await.unwrap();
++    let mut pages = capture.begin_consume().await.unwrap();
++    assert!(pages.next().await.unwrap().is_none());
++    pages.close().await.unwrap();
++    let err = capture.commit_consumed(0, 0).await.unwrap_err();
++    assert!(format!("{err:#}").contains("2734"));
++    assert_eq!(capture.sequence, 0);
++    assert!(capture.commit_consumed(0, 0).await.is_err());
++    let _ = capture.abort_capture(err).await;
++    assert!(capture.begin_consume().await.is_err());
++    let sql = mock.sql.lock().unwrap();
++    assert_eq!(sql.iter().filter(|s| *s == "BEGIN").count(), 1);
++    assert_eq!(sql.iter().filter(|s| *s == "COMMIT").count(), 1);
++    server.abort();
++}

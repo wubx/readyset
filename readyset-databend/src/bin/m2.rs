@@ -173,6 +173,7 @@ async fn main() -> Result<()> {
             declaration,
             // databend-m2 drives the POC content oracle through its stdin protocol.
             oracle: true,
+            cache: Default::default(),
         },
         rows,
     )

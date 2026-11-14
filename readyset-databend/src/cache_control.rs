@@ -35,6 +35,16 @@ pub fn plan<T: Borrow<Template>>(
     declaration: &Declaration,
     templates: &[T],
 ) -> Result<CacheControl> {
+    plan_with(sql, templates, |name, sql| {
+        declaration.template_for_sql(name, sql, database, INTERNAL_TABLE)
+    })
+}
+
+pub fn plan_with<T: Borrow<Template>>(
+    sql: &str,
+    templates: &[T],
+    compile: impl FnOnce(String, &str) -> Result<Template>,
+) -> Result<CacheControl> {
     ensure!(sql.len() <= 16384, "cache SQL exceeds 16 KiB");
     ensure!(
         !sql.contains("/*") && !sql.contains("--") && !sql.contains('#'),
@@ -92,8 +102,11 @@ pub fn plan<T: Borrow<Template>>(
             else {
                 bail!("CREATE CACHE FROM must contain a supported SELECT, not a query ID");
             };
-            let template =
-                declaration.template_for_sql(name, &query.to_string(), database, INTERNAL_TABLE)?;
+            ensure!(
+                !name.to_ascii_lowercase().starts_with("rs_source_"),
+                "reserved source relation prefix"
+            );
+            let template = compile(name, &query.to_string())?;
             ensure!(
                 !templates
                     .iter()

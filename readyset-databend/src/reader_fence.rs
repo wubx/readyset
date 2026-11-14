@@ -15,6 +15,14 @@ use readyset_sql::ast::BinaryOperator;
 use crate::{SourceRow, native_query::COLUMNS};
 
 pub fn physical_key(view: &View, row: &SourceRow) -> Result<Vec<DfValue>> {
+    key_values(view, &COLUMNS, &row.values())
+}
+
+pub fn key_values(
+    view: &View,
+    columns: &[impl AsRef<str>],
+    values: &[DfValue],
+) -> Result<Vec<DfValue>> {
     let View::Single(reader) = view else {
         bail!("single reader required")
     };
@@ -22,7 +30,6 @@ pub fn physical_key(view: &View, row: &SourceRow) -> Result<Vec<DfValue>> {
         .schema()
         .context("reader schema required")?
         .schema(SchemaType::ProjectedSchema);
-    let values = row.values();
     reader
         .key_map()
         .iter()
@@ -32,16 +39,45 @@ pub fn physical_key(view: &View, row: &SourceRow) -> Result<Vec<DfValue>> {
                 .context("invalid key column index")?
                 .column
                 .name;
-            let index = COLUMNS
+            let index = columns
                 .iter()
-                .position(|name| *name == column.as_str())
+                .position(|name| name.as_ref() == column.as_str())
                 .context("oracle requires a plain source key column")?;
             Ok(values[index].clone())
         })
         .collect()
 }
 
-pub async fn point_contents(view: &mut View, key: &[DfValue]) -> Result<Vec<Vec<DfValue>>> {
+/// Physical reader row, including hidden key columns (before post-lookup projection).
+pub fn physical_row(view: &View, row: &SourceRow) -> Result<Vec<DfValue>> {
+    row_values(view, &COLUMNS, &row.values())
+}
+
+pub fn row_values(
+    view: &View,
+    columns: &[impl AsRef<str>],
+    values: &[DfValue],
+) -> Result<Vec<DfValue>> {
+    let View::Single(reader) = view else {
+        bail!("single reader required")
+    };
+    reader
+        .schema()
+        .context("reader schema required")?
+        .schema(SchemaType::ProjectedSchema)
+        .iter()
+        .map(|column| {
+            let index = columns
+                .iter()
+                .position(|c| c.as_ref() == column.column.name.as_str())
+                .context("fence requires plain source columns")?;
+            Ok(values[index].clone())
+        })
+        .collect()
+}
+
+/// Native point comparison; BTree readers require a degenerate range.
+pub fn point_comparison(view: &View, key: &[DfValue]) -> Result<KeyComparison> {
     let View::Single(reader) = view else {
         bail!("single reader required")
     };
@@ -64,6 +100,14 @@ pub async fn point_contents(view: &mut View, key: &[DfValue]) -> Result<Vec<Vec<
         KeyComparison::Range((Bound::Included(key.clone()), Bound::Included(key)))
     } else {
         KeyComparison::Equal(key)
+    };
+    Ok(comparison)
+}
+
+pub async fn point_contents(view: &mut View, key: &[DfValue]) -> Result<Vec<Vec<DfValue>>> {
+    let comparison = point_comparison(view, key)?;
+    let View::Single(reader) = view else {
+        bail!("single reader required")
     };
     Ok(reader
         .multi_lookup(vec![comparison], Dialect::DEFAULT_MYSQL)

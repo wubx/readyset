@@ -1,0 +1,9 @@
+   Compiling readyset-databend v0.1.0 (/data1/vmbox/readyset-single-binary/readyset-databend)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.13s
+     Running unittests src/lib.rs (/data1/vmbox/readyset/target/debug/deps/readyset_databend-a27babc392268b60)
+
+running 1 test
+test shared_engine::restart_tests::restart_keeps_rows_caches_and_detects_interrupted_batches ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 42 filtered out; finished in 6.41s
+

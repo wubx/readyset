@@ -21,7 +21,7 @@ use axum::http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode, header}
 use axum::response::Response;
 use clap::Parser;
 use readyset_databend::declaration::{Declaration, identifier};
-use readyset_databend::engine::{BatchWriter, Engine, EngineConfig, ReadOutcome};
+use readyset_databend::engine::{BatchWriter, CacheConfig, Engine, EngineConfig, ReadOutcome};
 use readyset_databend::replicator::{Names, Replicator, parse_changes};
 use readyset_databend::upstream::{
     DatabendClient, Journal, MAX_RESPONSE, Pages, basic_auth, bounded_body, http_client,
@@ -89,6 +89,15 @@ struct Cli {
     /// batch (at most 9,000 rows with unique ids). Default is production mode.
     #[arg(long)]
     oracle: bool,
+    /// Use native partial materialization (cold keys replay from the local disk base).
+    #[arg(long)]
+    partial: bool,
+    /// Allocated-memory soft target in MiB, requires --partial (not an RSS hard cap).
+    #[arg(long)]
+    memory_limit_mb: Option<usize>,
+    /// Wait for native cache backfill; timeout forwards this read, never poisons the engine.
+    #[arg(long)]
+    upquery_timeout_ms: Option<u64>,
 }
 
 #[derive(Deserialize, Default)]
@@ -100,6 +109,15 @@ struct FileConfig {
     listen: Option<ListenSection>,
     replication: Option<ReplicationSection>,
     storage: Option<StorageSection>,
+    cache: Option<CacheSection>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+struct CacheSection {
+    partial: Option<bool>,
+    memory_limit_mb: Option<usize>,
+    upquery_timeout_ms: Option<u64>,
 }
 
 #[derive(Deserialize)]
@@ -130,11 +148,15 @@ struct StorageSection {
 }
 
 struct Settings {
+    /// TOML tables select the shared native runtime; CLI/oracle keeps its legacy contract.
+    tables: Vec<(String, String)>,
     endpoint: String,
     user: String,
     password: String,
     declaration: Declaration,
     run_dir: PathBuf,
+    /// Shared runtime only: stable native storage reopened on every restart.
+    engine_dir: PathBuf,
     instance_id: String,
     listen: SocketAddr,
     interval: Duration,
@@ -142,6 +164,7 @@ struct Settings {
     route_journal: bool,
     fault_injection: bool,
     oracle: bool,
+    cache: CacheConfig,
 }
 
 fn duration(text: &str) -> Result<Duration> {
@@ -225,12 +248,51 @@ fn settings(cli: Cli) -> Result<Settings> {
             queries: vec![],
         },
     };
+    let shared_tables =
+        if cli.database.is_none() && cli.table.is_none() && cli.declarations.is_none() {
+            replication.tables.clone().unwrap_or_default()
+        } else {
+            ensure!(
+                replication.tables.as_ref().is_none_or(Vec::is_empty),
+                "use replication.tables OR CLI/declarations, not both"
+            );
+            vec![]
+        };
+    ensure!(
+        shared_tables.len() <= 32,
+        "at most 32 configured source tables"
+    );
+    ensure!(
+        shared_tables.is_empty() || !cli.oracle,
+        "oracle remains single-table CLI only"
+    );
+    let mut tables: Vec<(String, String)> = Vec::new();
+    for name in &shared_tables {
+        let (database, table) = name
+            .split_once('.')
+            .context("replication.tables entries must be db.table")?;
+        ensure!(
+            identifier(database) && identifier(table),
+            "invalid source identifier"
+        );
+        let source = (database.to_owned(), table.to_owned());
+        ensure!(
+            !tables.iter().any(
+                |(d, t)| d.eq_ignore_ascii_case(&source.0) && t.eq_ignore_ascii_case(&source.1)
+            ),
+            "duplicate configured source table (including case-folded identifiers)"
+        );
+        tables.push(source);
+    }
     if declaration.database.is_empty() {
         let (database, table) = match (cli.database, cli.table) {
             (Some(d), Some(t)) => (d, t),
             (None, None) => {
                 let tables = replication.tables.clone().unwrap_or_default();
-                ensure!(tables.len() == 1, "phase 1 replicates exactly one table");
+                ensure!(
+                    !tables.is_empty(),
+                    "configure at least one replication.tables source"
+                );
                 let (d, t) = tables[0]
                     .split_once('.')
                     .context("replication.tables entries must be db.table")?;
@@ -253,22 +315,29 @@ fn settings(cli: Cli) -> Result<Settings> {
     // Validates names, count and every bootstrap template through the native pipeline.
     declaration.templates(readyset_databend::native_query::LOCAL_TABLE)?;
     let storage = file.storage.and_then(|s| s.dir);
-    let run_dir = match (cli.output, &storage) {
-        (Some(output), _) => output,
+    let shared = !tables.is_empty();
+    let (run_dir, engine_dir) = match (cli.output, &storage) {
+        (Some(output), _) => {
+            let engine = output.join("engine").join("storage");
+            (output, engine)
+        }
         (None, Some(dir)) => {
             fs::create_dir_all(dir)?;
-            dir.join("runs").join(format!(
+            let run = dir.join("runs").join(format!(
                 "{}-{}",
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)?
                     .as_secs(),
                 new_id(6)
-            ))
+            ));
+            (run, dir.join("engine"))
         }
         (None, None) => bail!("--output or [storage].dir required"),
     };
+    // The shared runtime reopens its native storage, so its --output may be reused.
+    // ReadySet's RocksDB locks refuse a second live process on the same storage.
     ensure!(
-        !run_dir.exists(),
+        shared || !run_dir.exists(),
         "run directory must not exist: {}",
         run_dir.display()
     );
@@ -289,13 +358,32 @@ fn settings(cli: Cli) -> Result<Settings> {
         Some(s) => duration(&format!("{s}s"))?,
         None => duration(replication.max_staleness.as_deref().unwrap_or("10s"))?,
     };
+    let cache_file = file.cache.unwrap_or_default();
+    let partial = cli.partial || cache_file.partial.unwrap_or(false);
+    let memory_limit_bytes = cli
+        .memory_limit_mb
+        .or(cache_file.memory_limit_mb)
+        .map(|mb| mb.checked_mul(1024 * 1024).context("memory limit overflow"))
+        .transpose()?;
+    let cache = CacheConfig {
+        partial,
+        memory_limit_bytes,
+        upquery_timeout: Duration::from_millis(
+            cli.upquery_timeout_ms
+                .or(cache_file.upquery_timeout_ms)
+                .unwrap_or(5000),
+        ),
+    };
+    cache.validate(cli.oracle)?;
     let instance_id = instance_id(file.instance_id, storage.as_deref())?;
     Ok(Settings {
+        tables,
         endpoint: endpoint.trim_end_matches('/').to_owned(),
         user,
         password: std::env::var("DATABEND_PASSWORD").unwrap_or_default(),
         declaration,
         run_dir,
+        engine_dir,
         instance_id,
         listen,
         interval,
@@ -303,6 +391,7 @@ fn settings(cli: Cli) -> Result<Settings> {
         route_journal: cli.route_journal,
         fault_injection: cli.enable_fault_injection,
         oracle: cli.oracle,
+        cache,
     })
 }
 
@@ -380,18 +469,69 @@ struct App {
     s: Settings,
     auth: String,
     http: reqwest::Client,
-    engine: Arc<Engine>,
+    engine: CacheEngine,
+    tables: std::collections::BTreeMap<String, Arc<TableState>>,
     names: Names,
     default_role: Option<String>,
     state: StdMutex<RouteState>,
     results: StdMutex<LocalResults>,
+    passive: StdMutex<HashMap<String, Instant>>,
     /// Cache DDL is serialized, like the gateway's single request lock.
     control: tokio::sync::Mutex<()>,
-    /// Held for a whole capture. `/health` waits on it, so a reported checkpoint covers every
-    /// capture that had already started (the gateway's serialized /health contract).
+    /// Legacy-only capture fence. Shared `/health` never blocks unrelated tables: each
+    /// table reports its own last completed checkpoint and current `syncing` flag.
     capturing: tokio::sync::Mutex<()>,
     routes_journal: Option<Arc<Journal>>,
     stop: watch::Sender<bool>,
+}
+
+struct TableState {
+    syncing: std::sync::atomic::AtomicBool,
+    names: Names,
+    state: StdMutex<RouteState>,
+}
+
+impl TableState {
+    fn lock(&self) -> std::sync::MutexGuard<'_, RouteState> {
+        self.state.lock().unwrap_or_else(|e| e.into_inner())
+    }
+}
+
+enum CacheEngine {
+    Legacy(Arc<Engine>),
+    Shared(Arc<readyset_databend::shared_engine::SharedEngine>),
+}
+impl CacheEngine {
+    fn legacy(&self) -> Result<&Arc<Engine>> {
+        match self {
+            Self::Legacy(e) => Ok(e),
+            _ => bail!("legacy operation on shared runtime"),
+        }
+    }
+    async fn query(&self, sql: &str, database: &str) -> Result<ReadOutcome> {
+        match self {
+            Self::Legacy(e) => e.query(sql, database).await,
+            Self::Shared(e) => e.query(sql, database).await,
+        }
+    }
+    fn cache_status(&self) -> Value {
+        match self {
+            Self::Legacy(e) => e.cache_status(),
+            Self::Shared(e) => e.cache_status(),
+        }
+    }
+    fn poison(&self) {
+        match self {
+            Self::Legacy(e) => e.poison(),
+            Self::Shared(e) => e.poison(),
+        }
+    }
+    async fn shutdown(&self) {
+        match self {
+            Self::Legacy(e) => e.shutdown().await,
+            Self::Shared(e) => e.shutdown().await,
+        }
+    }
 }
 
 type Headers = Vec<(HeaderName, HeaderValue)>;
@@ -636,7 +776,76 @@ impl App {
         self.results.lock().unwrap_or_else(|e| e.into_inner())
     }
 
+    fn table_available(&self, id: &str) -> bool {
+        if matches!(&self.engine, CacheEngine::Shared(e) if e.is_failed() || e.source_busy(id)) {
+            return false;
+        }
+        let global = self.lock();
+        let Some(table) = self.tables.get(id) else {
+            return false;
+        };
+        let state = table.lock();
+        global.failed.is_none()
+            && !global.uncertain
+            && global.active_forwards == 0
+            && global.inflight.is_empty()
+            && state.forward_epoch == global.forward_epoch
+            && state.available(Instant::now(), self.s.max_staleness)
+    }
+
+    fn ready(&self) -> bool {
+        if self.tables.is_empty() {
+            self.lock().available(Instant::now(), self.s.max_staleness)
+        } else {
+            self.tables.keys().any(|id| self.table_available(id))
+        }
+    }
+
+    fn read_available(&self, sql: &str, database: &str) -> bool {
+        match &self.engine {
+            CacheEngine::Legacy(_) => self.ready(),
+            CacheEngine::Shared(engine) => engine
+                .read_source(sql, database)
+                .is_some_and(|id| self.table_available(&id)),
+        }
+    }
+
+    fn fail_source(&self, id: &str, reason: String) {
+        if let Some(table) = self.tables.get(id) {
+            let mut state = table.lock();
+            state.ready = false;
+            state.failed.get_or_insert(reason);
+        }
+        if let CacheEngine::Shared(engine) = &self.engine {
+            engine.fail_source(id);
+        }
+    }
+
     fn status(&self) -> Value {
+        if !self.tables.is_empty() {
+            let tables: Vec<_> = self.tables.iter().map(|(id,table)| {
+                let ready = self.table_available(id);
+                let state = table.lock();
+                json!({"table":id,"stream":table.names.stream,"checkpoint":state.sequence,"rows":state.rows,
+                    "ready":ready,"syncing":table.syncing.load(std::sync::atomic::Ordering::Acquire),
+                    "applying":matches!(&self.engine,CacheEngine::Shared(e) if e.source_busy(id)),
+                    "last_sync_age_ms":state.last_sync.map(|t| t.elapsed().as_millis()),"failed":state.failed,"phase":if state.failed.is_some() {"error"} else if state.last_sync.is_some() {"online"} else {"snapshotting"},
+                    "snapshot":state.snapshot,"last_batch":state.last_batch,"counters":state.counters})
+            }).collect();
+            let global = self.lock();
+            let failed = global.failed.clone().or_else(|| {
+                matches!(&self.engine, CacheEngine::Shared(e) if e.is_failed()).then(|| {
+                    "shared native runtime failed closed (possibly cancelled migration)".to_owned()
+                })
+            });
+            return json!({"generation":self.names.generation,"instance_id":self.s.instance_id,
+                "ready":tables.iter().any(|t| t["ready"]==true),"all_tables_ready":tables.iter().all(|t| t["ready"]==true),
+                "failed":failed,"uncertain_upstream":global.uncertain,"inflight":global.inflight.len(),
+                "checkpoint":if tables.len()==1 {tables[0]["checkpoint"].clone()} else {Value::Null},
+                "rows":tables.iter().filter_map(|t| t["rows"].as_u64()).sum::<u64>(),"tables":tables,
+                "counters":global.counters,"cache":self.engine.cache_status(),"mode":"production","engine_mode":"shared",
+                "engine_pid":std::process::id(),"single_process":true,"fault_injection":self.s.fault_injection});
+        }
         let st = self.lock();
         json!({
             "generation": self.names.generation,
@@ -651,6 +860,7 @@ impl App {
             "mode": if self.s.oracle { "oracle" } else { "production" },
             "snapshot": st.snapshot,
             "last_batch": st.last_batch,
+            "cache": self.engine.cache_status(),
             "engine_pid": std::process::id(),
             "single_process": true,
             "fault_injection": self.s.fault_injection,
@@ -799,9 +1009,39 @@ impl App {
             let _capturing = self.capturing.lock().await;
             return reply(StatusCode::OK, self.status().to_string(), vec![]);
         }
+        if path == "/__fault/table" && method == Method::POST && self.s.fault_injection {
+            let body: Value = serde_json::from_slice(&raw).unwrap_or(Value::Null);
+            let id = body["table"].as_str().unwrap_or_default();
+            if !self.tables.contains_key(id) {
+                return reply(
+                    StatusCode::BAD_REQUEST,
+                    error_body("unknown source table"),
+                    vec![],
+                );
+            }
+            self.fail_source(id, "injected table failure".into());
+            return reply(StatusCode::OK, r#"{"ok":true}"#, vec![]);
+        }
         if path == "/__fault/engine" && method == Method::POST && self.s.fault_injection {
             self.fail("injected engine failure".into());
             return reply(StatusCode::OK, r#"{"ok":true}"#, vec![]);
+        }
+        if path == "/__fault/native" && method == Method::GET && self.s.fault_injection {
+            let CacheEngine::Shared(engine) = &self.engine else {
+                return reply(
+                    StatusCode::BAD_REQUEST,
+                    error_body("shared runtime required"),
+                    vec![],
+                );
+            };
+            return match engine.native_fault_targets().await {
+                Ok(targets) => reply(StatusCode::OK, targets.to_string(), vec![]),
+                Err(e) => reply(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    error_body(&format!("{e:#}")),
+                    vec![],
+                ),
+            };
         }
         let start = path == "/v1/query" && method == Method::POST;
         let cycle = lifecycle(path);
@@ -857,7 +1097,9 @@ impl App {
         let database = session_database(&body);
         let sane = safe_session(&body, self.default_role.as_deref())
             && safe_headers(&headers)
-            && (database == "default" || database == self.s.declaration.database);
+            && (!self.tables.is_empty()
+                || database == "default"
+                || database == self.s.declaration.database);
         if start && cache_control_sql(sql) {
             return self
                 .cache_control(&body, &headers, sql, &database, sane)
@@ -865,10 +1107,7 @@ impl App {
         }
         let eligible = start
             && sane
-            && {
-                let st = self.lock();
-                st.available(now, self.s.max_staleness)
-            }
+            && self.read_available(sql, &database)
             && self.results().len() < MAX_LOCAL_RESULTS;
         if eligible {
             match self.engine.query(sql, &database).await {
@@ -904,8 +1143,62 @@ impl App {
                 }
                 Ok(ReadOutcome::LimitMiss | ReadOutcome::NotMatched) => {}
                 // Do not send further engine RPCs after an uncertain engine result.
-                Err(error) => self.fail(format!("engine query failure: {error:#}")),
+                Err(error) => {
+                    if let CacheEngine::Shared(engine) = &self.engine {
+                        if let Some(id) = engine.read_source(sql, &database) {
+                            self.fail_source(&id, format!("engine query failure: {error:#}"));
+                        } else {
+                            self.fail(format!("engine query failure: {error:#}"));
+                        }
+                    } else {
+                        self.fail(format!("engine query failure: {error:#}"));
+                    }
+                }
             }
+        }
+        let passive_start = start
+            && sane
+            && matches!(&self.engine, CacheEngine::Shared(engine) if engine.read_source(sql,&database).is_some());
+        let passive_cycle = if let Some((id, _)) = &cycle {
+            let mut passive = self.passive.lock().unwrap_or_else(|e| e.into_inner());
+            passive.retain(|_, t| *t > Instant::now());
+            passive.contains_key(id)
+        } else {
+            false
+        };
+        if passive_start || passive_cycle {
+            let outcome = self.forward(&method, &uri, raw, &headers).await;
+            return match outcome {
+                Ok((status, content, mut kept)) => {
+                    if passive_start {
+                        self.lock().counters.databend += 1;
+                        if let Ok(response) = serde_json::from_slice::<Value>(&content)
+                            && let Some(id) = response["id"].as_str()
+                        {
+                            let mut passive =
+                                self.passive.lock().unwrap_or_else(|e| e.into_inner());
+                            passive.retain(|_, t| *t > Instant::now());
+                            if passive.len() < MAX_INFLIGHT {
+                                passive
+                                    .insert(id.into(), Instant::now() + Duration::from_secs(3600));
+                            }
+                        }
+                    }
+                    if let Some((id, Lifecycle::Final | Lifecycle::Kill)) = &cycle {
+                        self.passive
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .remove(id);
+                    }
+                    kept.extend(route("databend"));
+                    reply(status, content, kept)
+                }
+                Err(_) => reply(
+                    StatusCode::BAD_GATEWAY,
+                    error_body("upstream read failed; not retried"),
+                    vec![],
+                ),
+            };
         }
         self.forward_and_track(method, &uri, raw, &headers, start, cycle)
             .await
@@ -971,10 +1264,7 @@ impl App {
             );
         }
         let _serial = self.control.lock().await;
-        let unavailable = {
-            let st = self.lock();
-            !st.available(Instant::now(), self.s.max_staleness)
-        } || {
+        let unavailable = self.tables.is_empty() && !self.ready() || {
             let results = self.results();
             results.len() >= MAX_LOCAL_RESULTS
                 || Self::local_bytes(&results) > MAX_LOCAL_TOTAL_BYTES - CONTROL_RESPONSE_RESERVE
@@ -991,7 +1281,15 @@ impl App {
             Ok(qid) => qid,
             Err(e) => return reply(StatusCode::BAD_REQUEST, error_body(&e), vec![]),
         };
-        let failure = match self.engine.cache_ddl(sql, database).await {
+        let applied = match &self.engine {
+            CacheEngine::Legacy(engine) => engine.cache_ddl(sql, database).await,
+            CacheEngine::Shared(engine) => {
+                engine
+                    .cache_ddl(sql, database, |id| self.table_available(id))
+                    .await
+            }
+        };
+        let failure = match applied {
             Ok(result) if result["ok"] == true || result["rejected"] == true => {
                 if result["ok"] == true {
                     // Audit only. This file is not a crash-recovery catalog.
@@ -1171,7 +1469,7 @@ async fn dispatch(State(app): State<Arc<App>>, request: Request) -> Response {
         return reply(StatusCode::OK, r#"{"ok":true}"#, vec![]);
     }
     if parts.method == Method::GET && parts.uri.path() == "/readyz" {
-        let ready = app.lock().available(Instant::now(), app.s.max_staleness);
+        let ready = app.ready();
         return reply(
             if ready {
                 StatusCode::OK
@@ -1266,6 +1564,7 @@ async fn oracle_round(app: &App, replicator: &mut Replicator) -> Result<Value> {
     let applied = match witnessed {
         Ok((rows, missing)) => app
             .engine
+            .legacy()?
             .apply_and_barrier(&prepared.batch, rows, missing)
             .await
             .map(|_| ()),
@@ -1327,7 +1626,7 @@ async fn read_batch(
 async fn stream_round(app: &App, replicator: &mut Replicator) -> Result<Value> {
     let started = Instant::now();
     let sequence = replicator.sequence + 1;
-    let read = read_batch(replicator, &app.engine, sequence).await;
+    let read = read_batch(replicator, app.engine.legacy()?, sequence).await;
     let (writer, changes) = match read {
         Ok(read) => read,
         Err(error) => return Err(replicator.abort_capture(error).await),
@@ -1355,7 +1654,7 @@ async fn stream_round(app: &App, replicator: &mut Replicator) -> Result<Value> {
 
 async fn sync_once(app: &App, replicator: &mut Replicator) -> Result<()> {
     let _capturing = app.capturing.lock().await;
-    let capture_started = Instant::now();
+    let capture_started = replicator.bootstrap_started().unwrap_or_else(Instant::now);
     let (epoch, clean) = {
         let st = app.lock();
         (st.forward_epoch, st.active_forwards == 0)
@@ -1419,7 +1718,17 @@ async fn shutdown_signal() {
     }
 }
 
+#[cfg(test)]
+#[path = "server/config_tests.rs"]
+mod config_tests;
+#[path = "server/shared.rs"]
+mod shared_http;
+use shared_http::run_shared;
+
 async fn run(s: Settings) -> Result<()> {
+    if !s.tables.is_empty() {
+        return run_shared(s).await;
+    }
     fs::create_dir_all(&s.run_dir)?;
     let journal = Journal::open(&s.run_dir.join("source_queries.jsonl"))?;
     let http = http_client()?;
@@ -1453,6 +1762,7 @@ async fn run(s: Settings) -> Result<()> {
         storage_dir: s.run_dir.join("engine").join("storage"),
         declaration: Some(s.declaration.clone()),
         oracle: s.oracle,
+        cache: s.cache,
     })
     .await?;
     let rows = replicator.snapshot(&mut loader).await?;
@@ -1480,11 +1790,13 @@ async fn run(s: Settings) -> Result<()> {
     let app = Arc::new(App {
         auth,
         http,
-        engine: Arc::clone(&engine),
+        engine: CacheEngine::Legacy(Arc::clone(&engine)),
+        tables: Default::default(),
         names: names.clone(),
         default_role: replicator.default_role.clone(),
         state: StdMutex::new(state),
         results: StdMutex::new(HashMap::new()),
+        passive: StdMutex::new(HashMap::new()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),
         routes_journal,
@@ -1496,6 +1808,10 @@ async fn run(s: Settings) -> Result<()> {
         return Err(error.context("initial capture failed"));
     }
     let worker = tokio::spawn(sync_loop(Arc::clone(&app), replicator, stop_rx));
+    serve(app, vec![worker]).await
+}
+
+async fn serve(app: Arc<App>, workers: Vec<tokio::task::JoinHandle<()>>) -> Result<()> {
     let listener = tokio::net::TcpListener::bind(app.s.listen).await?;
     let bound = listener.local_addr()?;
     let host = if bound.ip().is_unspecified() {
@@ -1508,8 +1824,9 @@ async fn run(s: Settings) -> Result<()> {
         "listen": bound.to_string(),
         "database": app.s.declaration.database,
         "instance_id": app.s.instance_id,
-        "generation": names.generation,
-        "stream": names.stream,
+        "generation": app.names.generation,
+        "stream": app.names.stream,
+        "tables": app.tables.keys().collect::<Vec<_>>(),
     });
     fs::write(app.s.run_dir.join("listening.json"), format!("{info:#}\n"))?;
     println!("{info}");
@@ -1539,8 +1856,14 @@ async fn run(s: Settings) -> Result<()> {
     };
     // Stop capture, then the engine; record the final state either way.
     let _ = app.stop.send(true);
-    let _ = tokio::time::timeout(Duration::from_secs(60), worker).await;
-    engine.shutdown().await;
+    let until = tokio::time::Instant::now() + Duration::from_secs(60);
+    for mut worker in workers {
+        if tokio::time::timeout_at(until, &mut worker).await.is_err() {
+            worker.abort();
+            let _ = worker.await;
+        }
+    }
+    app.engine.shutdown().await;
     app.write_status("final_status.json");
     served?;
     Ok(())

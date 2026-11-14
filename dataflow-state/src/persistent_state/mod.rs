@@ -3091,6 +3091,9 @@ impl SizeOf for PersistentState {
 }
 
 #[cfg(test)]
+mod sync_wal_tests;
+
+#[cfg(test)]
 #[allow(clippy::unreachable)]
 mod tests {
     use std::path::PathBuf;

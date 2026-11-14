@@ -1,0 +1,517 @@
+{
+  "passed": true,
+  "checks": 38,
+  "attempts": 2,
+  "cases": [
+    {
+      "passed": true,
+      "mode": "full",
+      "fault": "rejects_requests",
+      "databases": [
+        "readyset_gateway_isolation_7f0779b66d41_a",
+        "readyset_gateway_isolation_7f0779b66d41_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_7f0779b66d41_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_7f0779b66d41_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7f0779b66d41_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7f0779b66d41_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "A stopped before its domain fault",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "baseline: A domain failure drags B down",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "baseline: B failure is a checkpoint/offset RPC error",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "baseline: B stays failed after fault cleared",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_7f0779b66d41_a.items": 0,
+            "readyset_gateway_isolation_7f0779b66d41_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:34841/",
+          "event": "targets",
+          "utc": 1794642693.5868793
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794642694.2117116
+        },
+        {
+          "failed": "sync failure: Error during RPC (replication_offsets): Error during RPC (domain request to 0): Internal error: failpoint: Error during RPC (domain request to 0): Internal error: failpoint: Internal error: failpoint",
+          "rounds": 1,
+          "event": "baseline_b",
+          "utc": 1794642694.4400637
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794642694.453322
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794642694.498702
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794642694.4988787
+        }
+      ],
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "rejects_requests",
+      "databases": [
+        "readyset_gateway_isolation_657a92ca9965_a",
+        "readyset_gateway_isolation_657a92ca9965_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_657a92ca9965_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_657a92ca9965_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_657a92ca9965_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_657a92ca9965_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "A stopped before its domain fault",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "baseline: A domain failure drags B down",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "baseline: B failure is a checkpoint/offset RPC error",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "baseline: B stays failed after fault cleared",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_657a92ca9965_a.items": 0,
+            "readyset_gateway_isolation_657a92ca9965_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:44457/",
+          "event": "targets",
+          "utc": 1794642696.5821955
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794642697.204301
+        },
+        {
+          "failed": "sync failure: Error during RPC (replication_offsets): Error during RPC (domain request to 0): Internal error: failpoint: Error during RPC (domain request to 0): Internal error: failpoint: Internal error: failpoint",
+          "rounds": 1,
+          "event": "baseline_b",
+          "utc": 1794642697.431145
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794642697.4451168
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794642697.4900246
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794642697.4902134
+        }
+      ],
+      "error": null,
+      "attempt": 1
+    }
+  ]
+}

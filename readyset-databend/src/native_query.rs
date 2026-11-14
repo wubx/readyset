@@ -7,7 +7,7 @@ use anyhow::{Context, Result, bail, ensure};
 use readyset_client::View;
 use readyset_client::query::QueryId;
 use readyset_client::read::LocalReader;
-use readyset_data::{DfType, DfValue};
+use readyset_data::DfValue;
 use readyset_sql::ast::*;
 use readyset_sql::{Dialect, DialectDisplay};
 use readyset_sql_parsing::{ParsingPreset, parse_query_with_config};
@@ -23,6 +23,7 @@ use sqlparser::dialect::MySqlDialect;
 use sqlparser::tokenizer::{Token, Tokenizer};
 
 use crate::declaration::Declaration;
+use crate::source_schema::{SourceColumn, SourceSchema, SourceType};
 
 pub const COLUMNS: [&str; 4] = ["id", "payload", "score", "note"];
 pub const LOCAL_TABLE: &str = "m2_source";
@@ -42,6 +43,8 @@ pub struct NativeQuery {
     pub params: DfQueryParameters,
     pub id: QueryId,
     pub projection: Vec<String>,
+    /// Source metadata, not hard-coded names, defines Databend result types and codecs.
+    pub output_columns: Vec<SourceColumn>,
 }
 
 /// Enforce a single bounded statement even when a parsing backend accepts a prefix.
@@ -132,21 +135,48 @@ fn parse_select_with(sql: &str, preset: ParsingPreset) -> Result<SelectStatement
 
 /// A real, closed catalog: only the mapped replica exists and its real DDL supplies types,
 /// nullability, collation and unique keys to native rewrite passes.
-struct SourceContext {
+pub(crate) struct SourceContext {
     table: Relation,
     body: CreateTableBody,
+    columns: Vec<SourceColumn>,
 }
 impl SourceContext {
     fn new() -> Result<Self> {
+        Self::for_columns(
+            LOCAL_TABLE,
+            COLUMNS
+                .iter()
+                .map(|name| SourceColumn {
+                    name: (*name).into(),
+                    ty: if matches!(*name, "id" | "score") {
+                        SourceType::Signed(64)
+                    } else {
+                        SourceType::String
+                    },
+                    nullable: *name == "note",
+                })
+                .collect(),
+        )
+    }
+
+    pub(crate) fn for_columns(local: &str, columns: Vec<SourceColumn>) -> Result<Self> {
+        let ddl = crate::source_schema::native_ddl(local, &columns);
         let SqlQuery::CreateTable(table) =
-            parse_query_with_config(ParsingPreset::for_prod(), Dialect::MySQL, LOCAL_DDL)?
+            parse_query_with_config(ParsingPreset::for_prod(), Dialect::MySQL, &ddl)?
         else {
             unreachable!()
         };
         Ok(Self {
-            table: LOCAL_TABLE.into(),
+            table: local.into(),
             body: table.body.map_err(anyhow::Error::msg)?,
+            columns,
         })
+    }
+    fn column(&self, name: &str) -> Result<&SourceColumn> {
+        self.columns
+            .iter()
+            .find(|c| c.name == name)
+            .context("unknown source column")
     }
 }
 
@@ -190,7 +220,12 @@ impl StarExpansionContext for SourceContext {
         &self,
         table: &Relation,
     ) -> Option<impl IntoIterator<Item = SqlIdentifier>> {
-        (table == &self.table).then(|| COLUMNS.map(SqlIdentifier::from))
+        (table == &self.table).then(|| {
+            self.columns
+                .iter()
+                .map(|c| SqlIdentifier::from(c.name.clone()))
+                .collect::<Vec<_>>()
+        })
     }
     fn is_relation_non_replicated(&self, table: &Relation) -> bool {
         table != &self.table
@@ -200,13 +235,16 @@ impl ImpliedTablesContext for SourceContext {
     fn all_schemas(&self) -> impl IntoIterator<Item = (Relation, Vec<SqlIdentifier>)> {
         vec![(
             self.table.clone(),
-            COLUMNS.map(SqlIdentifier::from).to_vec(),
+            self.columns
+                .iter()
+                .map(|c| SqlIdentifier::from(c.name.clone()))
+                .collect(),
         )]
     }
 }
 
-fn map_column(column: &mut Column, source: &Relation) -> Result<String> {
-    ensure!(COLUMNS.contains(&column.name.as_str()), "unknown column");
+fn map_column(column: &mut Column, source: &Relation, context: &SourceContext) -> Result<String> {
+    context.column(column.name.as_str())?;
     if let Some(table) = &column.table {
         ensure!(
             table.catalog.is_none()
@@ -215,7 +253,7 @@ fn map_column(column: &mut Column, source: &Relation) -> Result<String> {
             "unauthorized column qualifier"
         );
     }
-    column.table = Some(LOCAL_TABLE.into());
+    column.table = Some(context.table.clone());
     Ok(column.name.to_string())
 }
 
@@ -228,7 +266,7 @@ enum PredicateKind {
     Between,
 }
 
-fn validate_value(expr: &Expr, name: &str, input: Input) -> Result<()> {
+fn validate_value(expr: &Expr, column: &SourceColumn, input: Input) -> Result<()> {
     let Expr::Literal(value) = expr else {
         bail!("literal or ? required")
     };
@@ -237,12 +275,10 @@ fn validate_value(expr: &Expr, name: &str, input: Input) -> Result<()> {
             matches!(value, Literal::Placeholder(ItemPlaceholder::QuestionMark)),
             "cache predicates require ? placeholders"
         ),
-        Input::Read => match (name, value) {
-            ("id" | "score", Literal::Integer(_)) => {}
-            ("id" | "score", Literal::UnsignedInteger(v)) if i64::try_from(*v).is_ok() => {}
-            ("payload" | "note", Literal::String(_)) => {}
-            _ => bail!("literal type is not supported; no implicit coercion or NULL lookup"),
-        },
+        Input::Read => ensure!(
+            column.accepts_literal(value),
+            "literal type is not supported; no implicit coercion or NULL lookup"
+        ),
     }
     Ok(())
 }
@@ -254,6 +290,7 @@ fn validate_predicate(
     source: &Relation,
     input: Input,
     seen: &mut HashMap<String, Vec<PredicateKind>>,
+    context: &SourceContext,
 ) -> Result<()> {
     let (column, values, kind) = match expr {
         Expr::BinaryOp {
@@ -261,8 +298,8 @@ fn validate_predicate(
             lhs,
             rhs,
         } => {
-            validate_predicate(lhs, source, input, seen)?;
-            return validate_predicate(rhs, source, input, seen);
+            validate_predicate(lhs, source, input, seen, context)?;
+            return validate_predicate(rhs, source, input, seen, context);
         }
         Expr::BinaryOp { op, lhs, rhs }
             if *op == BinaryOperator::Equal || op.is_ordering_comparison() =>
@@ -302,18 +339,16 @@ fn validate_predicate(
         }
         _ => bail!("only AND equality, IN and numeric range predicates are supported"),
     };
-    let name = map_column(column, source)?;
+    let name = map_column(column, source, context)?;
+    let source_column = context.column(&name)?;
     if matches!(
         kind,
         PredicateKind::Lower | PredicateKind::Upper | PredicateKind::Between
     ) {
-        ensure!(
-            matches!(name.as_str(), "id" | "score"),
-            "numeric ranges only"
-        );
+        ensure!(source_column.ty.numeric(), "numeric ranges only");
     }
     for value in values {
-        validate_value(value, &name, input)?;
+        validate_value(value, source_column, input)?;
     }
     let previous = seen.entry(name).or_default();
     ensure!(
@@ -331,13 +366,57 @@ fn validate_predicate(
 }
 
 pub fn compile(
-    mut select: SelectStatement,
+    select: SelectStatement,
     declaration: &Declaration,
     database: &str,
     local_table: &str,
     input: Input,
 ) -> Result<NativeQuery> {
-    ensure!(local_table == LOCAL_TABLE, "unexpected local relation");
+    compile_in_context(
+        select,
+        declaration,
+        database,
+        local_table,
+        input,
+        source_context()?,
+    )
+}
+
+/// Dynamic source schemas use exactly the legacy native parser/rewrite/read pipeline.
+/// A context is parsed once at schema discovery, not rebuilt per application query.
+pub fn compile_for_source(
+    select: SelectStatement,
+    source: &SourceSchema,
+    database: &str,
+    input: Input,
+) -> Result<NativeQuery> {
+    let declaration = Declaration {
+        database: source.database.clone(),
+        table: source.table.clone(),
+        queries: vec![],
+    };
+    compile_in_context(
+        select,
+        &declaration,
+        database,
+        &source.local,
+        input,
+        &source.context,
+    )
+}
+
+fn compile_in_context(
+    mut select: SelectStatement,
+    declaration: &Declaration,
+    database: &str,
+    local_table: &str,
+    input: Input,
+    context: &SourceContext,
+) -> Result<NativeQuery> {
+    ensure!(
+        local_table == context.table.name.as_str(),
+        "unexpected local relation"
+    );
     ensure!(select.tables.len() == 1, "one source table required");
     let table = &select.tables[0];
     ensure!(
@@ -380,7 +459,7 @@ pub fn compile(
             else {
                 bail!("plain projected columns required")
             };
-            map_column(column, &source)
+            map_column(column, &source, context)
         })
         .collect::<Result<Vec<_>>>()?;
     ensure!(!projection.is_empty(), "empty projection");
@@ -390,6 +469,7 @@ pub fn compile(
         &source,
         input,
         &mut seen,
+        context,
     )?;
     let has_in = seen.values().flatten().any(|k| *k == PredicateKind::In);
     let has_range = seen.values().flatten().any(|k| {
@@ -412,11 +492,10 @@ pub fn compile(
             <= 1,
         "only one numeric range column is admitted"
     );
-    select.tables[0] = Relation::from(LOCAL_TABLE).into();
+    select.tables[0] = context.table.clone().into();
     // Use the existing native pass at the SAME boundary for CREATE and SELECT. Otherwise
     // adapter rewrites leave literal BETWEEN bounds inline until the later controller pass.
     select.rewrite_between();
-    let context = source_context()?;
     let mut flags = AdapterRewriteParams::new(Dialect::MySQL);
     flags.server_supports_mixed_comparisons = true;
     let params = rewrite_query(&mut select, flags, context)?;
@@ -429,6 +508,10 @@ pub fn compile(
         statement: select,
         params,
         id,
+        output_columns: projection
+            .iter()
+            .map(|name| context.column(name).cloned())
+            .collect::<Result<_>>()?,
         projection,
     })
 }
@@ -504,14 +587,22 @@ pub async fn read_with(
             .eq(query.projection.iter().map(String::as_str)),
         "native returned columns disagree with declaration"
     );
-    let schema = result.schema.columns.iter().zip(result.schema.schema.iter()).map(|(name, column)| {
-        let ty = match column.column_type {
-            DfType::BigInt => "Int64",
-            DfType::Text(_) => "String",
-            _ => bail!("unsupported native result type"),
-        };
-        Ok(json!({"name":name.as_str(), "type":if column.nullable { format!("Nullable({ty})") } else {ty.to_owned()} }))
-    }).collect::<Result<Vec<_>>>()?;
+    ensure!(
+        result.schema.schema.len() == query.output_columns.len(),
+        "native result type arity mismatch"
+    );
+    let schema = query
+        .output_columns
+        .iter()
+        .zip(result.schema.schema.iter())
+        .map(|(source, native)| {
+            ensure!(
+                source.ty.native_type() == native.column_type,
+                "native/source result types disagree"
+            );
+            Ok(json!({"name":source.name, "type":source.wire_type()}))
+        })
+        .collect::<Result<Vec<_>>>()?;
     // Consume incrementally instead of making an unbounded second owned row collection.
     let mut rows = Vec::new();
     let mut bytes = 2;
@@ -525,16 +616,8 @@ pub async fn read_with(
         }
         let row = row
             .iter()
-            .zip(&query.projection)
-            .map(|(value, column)| -> Result<Json> {
-                Ok(match value {
-                    DfValue::None => Json::Null,
-                    _ if column == "id" || column == "score" => {
-                        Json::String(i64::try_from(value.clone())?.to_string())
-                    }
-                    _ => Json::String(value.as_str().context("non-text projected value")?.into()),
-                })
-            })
+            .zip(&query.output_columns)
+            .map(|(value, column)| column.encode(value))
             .collect::<Result<Vec<_>>>()?;
         bytes += serde_json::to_vec(&row)?.len() + usize::from(!rows.is_empty());
         if bytes > MAX_RESULT_BYTES {

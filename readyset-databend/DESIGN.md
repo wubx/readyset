@@ -12,7 +12,7 @@
 readyset-databend（单进程）
   ├─ HTTP 前端：认证、session 检查、路由、分页与查询生命周期、回源转发、缓存 DDL
   ├─ 原生查询链路：parser → rewrite → slot 匹配 → read_cache（进程内 ReadRequestHandler）
-  ├─ ReadySet server：底表（本地磁盘 RocksDB）+ dataflow + reader（内存，目前全量物化）
+  ├─ ReadySet server：底表（本地磁盘 RocksDB）+ dataflow + reader（内存，支持全量/部分物化）
   ├─ Databend 同步：每张表一个 Stream，定期在事务里消费增量 → 底表
   └─ 本地存储（volume）：底表、reader 派生状态、要同步的表、缓存声明、instance_id
         │
@@ -54,9 +54,11 @@ Databend：业务库；readyset-databend 只在表所在的库里为每张表建
 - 快照：一条 `SELECT ... AT (STREAM => s)` 按 5 万行一页流式读取并写入底表，再用 `count(*)` 在同一位置核对行数。
 - 每轮：`BEGIN` → 消费读取按页流式写入（每页一次 Table 写入）→ 确认读取完整 → 写入 checkpoint 并等待持久化 →
   标记行检查 → `COMMIT`。进程内不保存整表，每轮的开销只和变更量有关。
-- 标记行检查：每个 reader 都完整物化了底表的每一行（缓存都是"单表投影 + 参数条件"），并且按顺序应用底表的更新。
-  所以在批次之后写入一行随机标记行，等它在每个 reader 里出现、删除后再消失，就证明这个 reader 已经反映了整批变更。
-  开销只和 reader 数量有关。检查期间暂停本地读取，因为标记行会短暂出现在底表里。
+- 标记行检查（全量/部分模式共用）：缓存都是“单表投影 + 参数条件”。先预热随机标记键并记录 reader 的淘汰 epoch，
+  再插入标记行；此后只通过共享 reader 句柄做不触发 replay 的物理行探测，等待出现和删除。
+  若有 hole 或 epoch 变化，清理标记并重新预热、重试。这样不会把基于更新后底表的 replay 误当成其他热键已收到增量的证据。
+  句柄的物理行包含隐藏索引列，不能和 HTTP/RPC 的最终投影混用。检查期间持有排他读 gate，超时或不确定位点一律 fail closed。
+  开销与 reader 数量及重试次数有关；仅适用于当前允许的单表无聚合/无 JOIN 形状，不是通用 dataflow 屏障。
 - 多页的大批次：写入期间本地读请求不等待，直接转发给 Databend，因此不会读到写了一半的批次。
 - 新建缓存：先在不影响其他缓存读取的情况下，等新 reader 完成初始回放（回放期间查询会超时，属于正常现象，重试即可），
   再做一次短暂的标记行检查。
@@ -70,10 +72,27 @@ Databend：业务库；readyset-databend 只在表所在的库里为每张表建
 - ReadySet 侧（全量物化，release 版本，32 核机器）：1,000 万行快照 30 秒。建 3 个缓存后进程内存约 20 GB。
   增量写入：UPDATE 约 13 万变更行/秒，INSERT 约 32 万行/秒；2,200 万变更行用了 164 秒。
   点查、IN、字符串等值查询本地 1–8 ms，Databend 直查 50–80 ms。
-- **已知问题：** 千万行时本地范围查询（`score >= ? AND score < ?`）要 1.6–1.9 秒，比 Databend 直查慢约 25 倍。
-  原因还没有排查。
+- **范围问题已定位并修复（2026-11-14）：** 原生 mixed-comparison 对同一列的上下界生成重复索引维度，
+  但边界为 `[(lo,NULL),(MAX,hi)]`，导致过量扫描；部分物化还会过量 replay。现在在相同列的所有维度上取边界交集，
+  保留物理索引及排他条件过滤。千万行部分模式实测 200 行范围冷读 3.53 ms、热读 1.20 ms；
+  旧的全量范围 1.6–1.9 秒属于修复前历史数据，未重测新代码全量模式的千万行耗时。
 - 账号权限：业务库 `SELECT`，加上建 Stream 需要的 `CREATE`，都通过角色授予
   （Databend 不允许把建表类权限直接授给用户）。账号对业务表没有写权限。
+
+### 2.3 部分物化实测（`poc/evidence/partial_20261114/`）
+
+- 同一远端、Databend v1.2.962、release 单进程、1,000 万行、2 GiB allocated 软目标，保留全量模式作对照。
+  快照引擎耗时 16.16 秒（启动墙钟 17.01 秒）；快照后 RSS 960 MiB，四个缓存声明完成后 RSS 1,226 MiB，
+  reader 合计仅 15 个 key slots（含标记键），并非整表内存副本。新增索引仍需扫描底表：四个声明总计约 71 秒。
+- 冷/热读与 Databend 按多重集合核对，含点查、IN、范围、字符串、空结果。200 行范围冷/热读 3.53/1.20 ms。
+  8 并发、1,800 次每次 5,000 行的范围查询全部本地返回，逐行比对正确，27.68 秒完成；观察到淘汰 epoch 增长 32。
+  淘汰后范围 miss 计数增加并在 3.94 ms 本地回填返回，不仅验证了仍然驻留的热键。
+- 压力后 allocated 2,015 MiB（软目标 2,048 MiB），RSS 3,201 MiB；含百万行 UPDATE 的整轮 RSS 高水位 3,425 MiB。
+  **预算不是 RSS 上限，容器不能按 2 GiB 配硬限制。** 该峰值是本轮工作负载实测，不是所有查询/增量的保证。
+- 百万行 UPDATE 期间 117 次并发读取均是完整旧/新结果（17 本地、100 回源），同步后六类本地查询全部对齐。
+  重复键/相同行删除及零等待超时后后台回填通过，主进程无 replay timeout/引擎错误；零等待独立进程记录一次超时，仍可本地命中。
+- 一轮失败证据也保留：2,500 次短突发触发 HTTP 层 2,048 个查询生命周期记录预算，后续正确回源，不能据此判断 reader 回填失败。
+  最终以预算内 1,800 次且强制全部本地返回的压力复测通过。退出时 RSS 采样器遇到 zombie 状态的无关异常已修复并单独验证。
 
 ## 3. 配置
 
@@ -99,6 +118,11 @@ dir = "/var/lib/readyset-databend"
 
 ## 4. 表的管理（静态 + SQL 动态）
 
+静态 TOML 表列表、真实 schema、共享原生 server、每表 Stream/sequence/可读 gate 已接入 HTTP；
+使用一个共同 runtime generation，各表 sequence 独立；SharedEngine 复用原生同步 WAL 的基表 ACK + 本表 offset 校验，
+不同表不再等待适配层全批次写锁/全局刷盘。图迁移仍排他，旧单表后台 WAL 模式不变。详细边界见 [MULTITABLE.md](MULTITABLE.md)。
+以下静态 ∪ 动态表管理 SQL 仍为目标设计，尚未实现；当前只支持静态来源列表，动态的是公共缓存目录。
+
 - 实际同步的表 = 静态配置 ∪ 动态添加，记录在 ReadySet 本地存储里，不做自动发现。
 - 管理 SQL 通过同一入口执行，只有管理员可用：
   `ALTER READYSET ADD TABLES`、`ALTER READYSET RESNAPSHOT TABLE`、`ALTER READYSET DROP TABLE`（原生没有，需要扩展，
@@ -109,10 +133,14 @@ dir = "/var/lib/readyset-databend"
 
 ## 5. 内存、磁盘与集群
 
-- **内存：** 目前是全量物化，每个缓存在内存里存一份完整结果，不能淘汰。另外，即使没有用户缓存，也会有一份内部的全量 id 缓存，
-  它只用于标记行检查（1,000 万行约 8 GB，其中包含 RocksDB 和其他开销，没有单独拆分）。
-  要让内存可控，需要改用部分物化，并配合 `Builder::set_memory_limit`：按 jemalloc 实际分配的内存触发 LRU 淘汰，
-  而且只能淘汰部分物化的状态。
+- **内存：** 默认保留全量模式作兼容/对照。`--partial` 或 `[cache].partial=true` 启用原生部分物化，内部 id reader 也按需回填，
+  不再保留一份额外的全量内存副本。`--memory-limit-mb` / `[cache].memory_limit_mb` 调用 `Builder::set_memory_limit`，
+  每 100 ms 检查 jemalloc allocated，按原生策略淘汰部分状态。只能配合 partial 使用；oracle 仍要求全量。
+  这是进程分配内存的软目标，不是 RSS 上限，也不能淘汰 RocksDB block cache、网络缓冲和所有固定开销。容器必须留余量。
+- **冷读：** 原生 `upquery` 从本地 replay 路径回填。`upquery_timeout_ms` 默认 5000；超时只让该次查询回源，
+  不 poison 引擎；0 表示触发后台回填后立即回源。其他不确定引擎错误仍 fail closed。
+  `/health` 增加 cache 配置、allocated、reader key slots、eviction epoch、命中/缺失和超时计数。
+  residency 计数是只读观测快照（淘汰可并发），不参与一致性判定，不宣称精确命中率。
 - **磁盘：** 底表就是本地磁盘上的完整副本（RocksDB，读缓存 `block_cache_bytes` 默认 1 GB）。reader 只能放在内存里。
   部分物化时，内存里没有的键从本地底表补回，不访问 Databend。这样就形成"内存热点 + 本地磁盘全量"两层。
   `materialization_persistence` 是实验功能，只把中间节点放到磁盘上，不包括 reader，所以不采用。
@@ -139,8 +167,8 @@ dir = "/var/lib/readyset-databend"
    同步在进程内以 Stream 消费方式运行，快照和批次都流式处理，带心跳，没有行数上限，重复主键与源表一致；
    提供 Dockerfile 和 compose 示例。数据范围暂时保持单表、固定结构；重启时复用自己的 Stream，
    读 Stream 位点处的快照再消费积累的变更，但本地副本和缓存声明需要重建。
-2. **生产化同步。** 重启续接（不重做快照）、静态加动态表管理、多表和类型映射、部分物化加内存上限、
-   排查范围查询慢的问题、`has_data` 为 0 时跳过本轮。
+2. **生产化同步。** 部分物化、进程内存软预算、静态多表/真实 schema 已接入；后续为重启续接（不重做快照）、静态加动态表管理、扩展类型与原子 DDL 协调、
+   扩展已修复范围键边界的性能覆盖、`has_data` 为 0 时跳过本轮。
    续接时要处理“已写入 ReadySet、但 COMMIT 前进程退出”的情况：本地记录 Stream 当时的版本号，避免同一批重复写入。
 3. **客户端与运维。** login/session 透传（JDBC）、metrics、文档，最后做端到端 HTTP 压测。
 4. **集群。** 先做多副本无共享，加上缓存声明下发和分页的跨实例转发；容量需要扩展时，再做按分区的方案（见第 5 节）。

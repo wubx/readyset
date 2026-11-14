@@ -1,0 +1,1348 @@
+{
+  "passed": false,
+  "checks": 90,
+  "cases": [
+    {
+      "passed": false,
+      "mode": "full",
+      "fault": "request_error",
+      "databases": [
+        "readyset_gateway_isolation_dd3331724403_a",
+        "readyset_gateway_isolation_dd3331724403_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_dd3331724403_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_dd3331724403_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_dd3331724403_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_dd3331724403_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_dd3331724403_a.items": 0,
+            "readyset_gateway_isolation_dd3331724403_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:40395/",
+          "event": "targets",
+          "utc": 1794642466.2516363
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794642466.2645328
+        },
+        {
+          "domain_failed": 1,
+          "controller_recovery": 1,
+          "event": "native_log",
+          "utc": 1794642467.4007037
+        }
+      ],
+      "error": "Traceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 248, in run\n    self.isolated_phase()\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 173, in isolated_phase\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 105, in wait\n    result = condition()\n             ^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 173, in <lambda>\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n                                 ^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 77, in states\n    return {t['table']: t for t in self.health()['tables']}\n                                   ^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 71, in health\n    status, _, body = self.http('GET', self.origin + '/health')\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 64, in http\n    response = opener.open(req, timeout=timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1373, in http_open\n    return self.do_open(http.client.HTTPConnection, req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1348, in do_open\n    r = h.getresponse()\n        ^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 1457, in getresponse\n    response.begin()\n  File \"/usr/lib/python3.12/http/client.py\", line 336, in begin\n    version, status, reason = self._read_status()\n                              ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 297, in _read_status\n    line = str(self.fp.readline(_MAXLINE + 1), \"iso-8859-1\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 707, in readinto\n    return self._sock.recv_into(b)\n           ^^^^^^^^^^^^^^^^^^^^^^^\nConnectionResetError: [Errno 104] Connection reset by peer\nTraceback (most recent call last):\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1344, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/usr/lib/python3.12/http/client.py\", line 1365, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1411, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1360, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1120, in _send_output\n    self.send(msg)\n  File \"/usr/lib/python3.12/http/client.py\", line 1064, in send\n    self.connect()\n  File \"/usr/lib/python3.12/http/client.py\", line 1030, in connect\n    self.sock = self._create_connection(\n                ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 852, in create_connection\n    raise exceptions[0]\n  File \"/usr/lib/python3.12/socket.py\", line 837, in create_connection\n    sock.connect(sa)\nConnectionRefusedError: [Errno 111] Connection refused\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 255, in run\n    self.failpoint('off')\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 123, in failpoint\n    status, _, raw = self.http('POST', url, raw=bincode_str('handle-packet') + bincode_str(action))\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 64, in http\n    response = opener.open(req, timeout=timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1373, in http_open\n    return self.do_open(http.client.HTTPConnection, req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1347, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [Errno 111] Connection refused>\n"
+    },
+    {
+      "passed": false,
+      "mode": "full",
+      "fault": "crash_mid_apply",
+      "databases": [
+        "readyset_gateway_isolation_23f340e2dee4_a",
+        "readyset_gateway_isolation_23f340e2dee4_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_23f340e2dee4_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_23f340e2dee4_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_23f340e2dee4_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_23f340e2dee4_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_23f340e2dee4_a.items": 0,
+            "readyset_gateway_isolation_23f340e2dee4_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:39189/",
+          "event": "targets",
+          "utc": 1794642469.846455
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794642470.215307
+        },
+        {
+          "domain_failed": 1,
+          "controller_recovery": 1,
+          "event": "native_log",
+          "utc": 1794642471.3712993
+        }
+      ],
+      "error": "Traceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 248, in run\n    self.isolated_phase()\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 173, in isolated_phase\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 105, in wait\n    result = condition()\n             ^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 173, in <lambda>\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n                                 ^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 77, in states\n    return {t['table']: t for t in self.health()['tables']}\n                                   ^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 71, in health\n    status, _, body = self.http('GET', self.origin + '/health')\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 64, in http\n    response = opener.open(req, timeout=timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1373, in http_open\n    return self.do_open(http.client.HTTPConnection, req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1348, in do_open\n    r = h.getresponse()\n        ^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 1457, in getresponse\n    response.begin()\n  File \"/usr/lib/python3.12/http/client.py\", line 336, in begin\n    version, status, reason = self._read_status()\n                              ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 297, in _read_status\n    line = str(self.fp.readline(_MAXLINE + 1), \"iso-8859-1\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 707, in readinto\n    return self._sock.recv_into(b)\n           ^^^^^^^^^^^^^^^^^^^^^^^\nConnectionResetError: [Errno 104] Connection reset by peer\nTraceback (most recent call last):\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1344, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/usr/lib/python3.12/http/client.py\", line 1365, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1411, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1360, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1120, in _send_output\n    self.send(msg)\n  File \"/usr/lib/python3.12/http/client.py\", line 1064, in send\n    self.connect()\n  File \"/usr/lib/python3.12/http/client.py\", line 1030, in connect\n    self.sock = self._create_connection(\n                ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 852, in create_connection\n    raise exceptions[0]\n  File \"/usr/lib/python3.12/socket.py\", line 837, in create_connection\n    sock.connect(sa)\nConnectionRefusedError: [Errno 111] Connection refused\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 255, in run\n    self.failpoint('off')\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 123, in failpoint\n    status, _, raw = self.http('POST', url, raw=bincode_str('handle-packet') + bincode_str(action))\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 64, in http\n    response = opener.open(req, timeout=timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1373, in http_open\n    return self.do_open(http.client.HTTPConnection, req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1347, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [Errno 111] Connection refused>\n"
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "request_error",
+      "databases": [
+        "readyset_gateway_isolation_178bf3bb80bb_a",
+        "readyset_gateway_isolation_178bf3bb80bb_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_178bf3bb80bb_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_178bf3bb80bb_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "A fails closed (not ready)",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_178bf3bb80bb_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_178bf3bb80bb_a.items WHE",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend with upstream bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B new cache local during A fault",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed during A fault",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_178bf3bb80bb_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A remains failed closed after fault cleared",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_178bf3bb80bb_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_178bf3bb80bb_a.items WHE",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend with upstream bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_178bf3bb80bb_a.items": 0,
+            "readyset_gateway_isolation_178bf3bb80bb_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:44109/",
+          "event": "targets",
+          "utc": 1794642473.329279
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794642473.3424025
+        },
+        {
+          "seconds": 0.082,
+          "reason": "sync failure: Error during RPC (table_replication_offset): Error during RPC (domain request to 0): Internal error: failpoint: Error during RPC (domain request to 0): Internal error: failpoint: Internal error: failpoint",
+          "event": "a_failed",
+          "utc": 1794642473.5208328
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794642475.0652232
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794642475.708218
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794642475.7083945
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": false,
+      "mode": "partial",
+      "fault": "crash_mid_apply",
+      "databases": [
+        "readyset_gateway_isolation_fc4d631e4eba_a",
+        "readyset_gateway_isolation_fc4d631e4eba_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_fc4d631e4eba_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_fc4d631e4eba_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_fc4d631e4eba_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_fc4d631e4eba_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_fc4d631e4eba_a.items": 0,
+            "readyset_gateway_isolation_fc4d631e4eba_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:35151/",
+          "event": "targets",
+          "utc": 1794642477.7713673
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794642478.0077214
+        },
+        {
+          "domain_failed": 1,
+          "controller_recovery": 1,
+          "event": "native_log",
+          "utc": 1794642479.1350608
+        }
+      ],
+      "error": "Traceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 248, in run\n    self.isolated_phase()\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 173, in isolated_phase\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 105, in wait\n    result = condition()\n             ^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 173, in <lambda>\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n                                 ^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 77, in states\n    return {t['table']: t for t in self.health()['tables']}\n                                   ^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 71, in health\n    status, _, body = self.http('GET', self.origin + '/health')\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 64, in http\n    response = opener.open(req, timeout=timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1373, in http_open\n    return self.do_open(http.client.HTTPConnection, req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1348, in do_open\n    r = h.getresponse()\n        ^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 1457, in getresponse\n    response.begin()\n  File \"/usr/lib/python3.12/http/client.py\", line 336, in begin\n    version, status, reason = self._read_status()\n                              ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/http/client.py\", line 297, in _read_status\n    line = str(self.fp.readline(_MAXLINE + 1), \"iso-8859-1\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 707, in readinto\n    return self._sock.recv_into(b)\n           ^^^^^^^^^^^^^^^^^^^^^^^\nConnectionResetError: [Errno 104] Connection reset by peer\nTraceback (most recent call last):\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1344, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/usr/lib/python3.12/http/client.py\", line 1365, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1411, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1360, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/usr/lib/python3.12/http/client.py\", line 1120, in _send_output\n    self.send(msg)\n  File \"/usr/lib/python3.12/http/client.py\", line 1064, in send\n    self.connect()\n  File \"/usr/lib/python3.12/http/client.py\", line 1030, in connect\n    self.sock = self._create_connection(\n                ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socket.py\", line 852, in create_connection\n    raise exceptions[0]\n  File \"/usr/lib/python3.12/socket.py\", line 837, in create_connection\n    sock.connect(sa)\nConnectionRefusedError: [Errno 111] Connection refused\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 255, in run\n    self.failpoint('off')\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 123, in failpoint\n    status, _, raw = self.http('POST', url, raw=bincode_str('handle-packet') + bincode_str(action))\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 64, in http\n    response = opener.open(req, timeout=timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 515, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 532, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1373, in http_open\n    return self.do_open(http.client.HTTPConnection, req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 1347, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [Errno 111] Connection refused>\n"
+    }
+  ]
+}

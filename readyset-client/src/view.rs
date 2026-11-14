@@ -1773,7 +1773,36 @@ impl<'a> KeyComparisonBuilder<'a> {
             };
         }
 
-        if let Some((lower, upper)) = bounds {
+        if let Some((mut lower, mut upper)) = bounds {
+            // Multiple predicates on one physical column can create repeated index dimensions
+            // (x >= $1 AND x < $2 => index [x,x]). Intersect their bounds in EVERY occurrence.
+            // Without this, [(lo,NULL),(MAX,hi)] scans nearly the whole index; post-lookup
+            // filters hide the over-read but a partial reader must replay it all into memory.
+            // Keep the physical index layout and residual filters, including exclusivity.
+            let columns: Vec<_> = self
+                .key_map
+                .iter()
+                .filter_map(|(placeholder, column)| {
+                    matches!(
+                        placeholder,
+                        ViewPlaceholder::OneToOne(..) | ViewPlaceholder::Between(..)
+                    )
+                    .then_some(*column)
+                })
+                .collect();
+            debug_assert_eq!(columns.len(), lower.len());
+            for i in 0..columns.len() {
+                for j in 0..columns.len() {
+                    if columns[i] == columns[j] {
+                        if lower[j] > lower[i] {
+                            lower[i] = lower[j].clone();
+                        }
+                        if upper[j] < upper[i] {
+                            upper[i] = upper[j].clone();
+                        }
+                    }
+                }
+            }
             debug_assert!(k.is_empty());
             Ok(Some(KeyComparison::Range((
                 Bound::Included(lower.try_into()?),
@@ -2388,6 +2417,42 @@ mod tests {
                     &(vec1![DfValue::from(1)]..=vec1![DfValue::from(2)])
                 )]
             );
+        }
+
+        #[test]
+        fn repeated_column_range_bounds_are_intersected() {
+            for (lo, hi) in [(2, 4), (4, 2), (2, 2)] {
+                for reversed in [false, true] {
+                    let lower = (
+                        ViewPlaceholder::OneToOne(1, BinaryOperator::GreaterOrEqual),
+                        0,
+                    );
+                    let upper = (ViewPlaceholder::OneToOne(2, BinaryOperator::Less), 0);
+                    let map = if reversed {
+                        vec![upper, lower]
+                    } else {
+                        vec![lower, upper]
+                    };
+                    let query = make_build_query(
+                        vec![Cow::Owned(vec![DfValue::from(lo), DfValue::from(hi)])],
+                        None,
+                        None,
+                        &map,
+                        Dialect::MySQL,
+                    );
+                    assert_eq!(
+                        query.key_comparisons,
+                        vec![KeyComparison::Range((
+                            Bound::Included(vec1![DfValue::from(lo), DfValue::from(lo)]),
+                            Bound::Included(vec1![DfValue::from(hi), DfValue::from(hi)]),
+                        ))]
+                    );
+                    assert!(
+                        query.filter.is_some(),
+                        "exclusive upper bound must remain filtered"
+                    );
+                }
+            }
         }
 
         #[test]

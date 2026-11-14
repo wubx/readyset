@@ -1,4 +1,4 @@
-# readyset-databend configuration (phase 1: one fixed-schema table).
+# readyset-databend: one shared native runtime with real source schemas.
 # The Databend password is read ONLY from the DATABEND_PASSWORD environment variable.
 
 # Stable identity of this instance. Empty: generated once and kept in [storage].dir.
@@ -16,11 +16,21 @@ user = "readyset"
 http = "0.0.0.0:8001"
 
 [replication]
-# Phase 1 replicates exactly one table: id BIGINT NOT NULL, payload STRING NOT NULL,
-# score BIGINT NOT NULL, note STRING NULL.
+# Every source must pre-exist. DESCRIBE supplies real columns/types; no implicit primary key.
+# One Stream/source/instance, one native server and shared process budget for ALL tables.
+# Example with two sources: ["sales.orders", "crm.customers"]. JOINs still go upstream.
 tables        = ["sales.orders"]
 poll_interval = "1s"
 max_staleness = "10s"
 
 [storage]
 dir = "/var/lib/readyset-databend"
+
+[cache]
+# Opt in to native partial materialization: only requested keys occupy reader memory.
+# The disk base table still contains every row. Full materialization remains the default.
+partial = false
+# Enable partial=true before setting a soft allocated-memory target (NOT an RSS hard cap).
+# memory_limit_mb = 2048
+# Cold replay wait; timeout forwards only this query. 0 warms asynchronously and falls through.
+upquery_timeout_ms = 5000

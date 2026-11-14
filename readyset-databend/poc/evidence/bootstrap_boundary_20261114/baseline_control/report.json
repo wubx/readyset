@@ -1,0 +1,286 @@
+{
+  "passed": true,
+  "checks": 22,
+  "cases": [
+    {
+      "passed": true,
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old consumer read whole Stream before delayed COMMIT",
+          "actual": [
+            [
+              "2006"
+            ]
+          ],
+          "expected": [
+            [
+              "2006"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old real COMMIT advanced Stream before new snapshot returned",
+          "actual": [
+            [
+              "0"
+            ]
+          ],
+          "expected": [
+            [
+              "0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_vulnerable FROM SELECT id,val FROM readyset_g",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_vulnerable FROM SELECT id,val FROM readyset_g",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "baseline falsely stays ready beyond staleness bound",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "baseline upstream bag has real update",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_a4a34653e47c_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_a4a34653e47c_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "baseline reproduces permanent old local duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "expected_vulnerability_reproduced": true
+    },
+    {
+      "passed": true,
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old consumer read whole Stream before delayed COMMIT",
+          "actual": [
+            [
+              "2006"
+            ]
+          ],
+          "expected": [
+            [
+              "2006"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old real COMMIT advanced Stream before new snapshot returned",
+          "actual": [
+            [
+              "0"
+            ]
+          ],
+          "expected": [
+            [
+              "0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_vulnerable FROM SELECT id,val FROM readyset_g",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_vulnerable FROM SELECT id,val FROM readyset_g",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "baseline falsely stays ready beyond staleness bound",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "baseline upstream bag has real update",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_3a45733b36ec_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_3a45733b36ec_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "baseline reproduces permanent old local duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "expected_vulnerability_reproduced": true
+    }
+  ]
+}
