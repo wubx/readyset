@@ -1,0 +1,254 @@
+{
+  "db": "readyset_gateway_cddl_20261116_205516_e54d13",
+  "checks": [
+    {
+      "name": "B reads never failed",
+      "passed": true,
+      "before": {
+        "reads": 916,
+        "local": 898,
+        "forwarded": 18,
+        "errors": 0
+      },
+      "during_ddl": {
+        "reads": 1900,
+        "local": 1863,
+        "forwarded": 37,
+        "errors": 0
+      },
+      "after": {
+        "reads": 913,
+        "local": 895,
+        "forwarded": 18,
+        "errors": 0
+      }
+    },
+    {
+      "name": "all A cache DDL succeeded, none rejected",
+      "passed": true,
+      "ddl": [
+        {
+          "sql": "CREATE CACHE a_ext",
+          "secs": 17.04,
+          "ok": true,
+          "error": null
+        },
+        {
+          "sql": "CREATE CACHE a_cust",
+          "secs": 11.04,
+          "ok": true,
+          "error": null
+        },
+        {
+          "sql": "CREATE CACHE a_payload",
+          "secs": 13.05,
+          "ok": true,
+          "error": null
+        },
+        {
+          "sql": "DROP CACHE a_payload",
+          "secs": 0.02,
+          "ok": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "B local, ready and fresh throughout A cache DDL",
+      "passed": true,
+      "ratio": {
+        "before": 0.9803,
+        "during_ddl": 0.9805
+      },
+      "reads": {
+        "reads": 1900,
+        "local": 1863,
+        "forwarded": 37,
+        "errors": 0
+      },
+      "health": {
+        "samples": 204,
+        "not_ready_other_than_applying": 0,
+        "unavailable": [
+          "source_applying"
+        ],
+        "max_last_sync_age_ms": 1307
+      },
+      "fresh": {
+        "writes": 69,
+        "never_seen_locally": 0,
+        "p50_secs": 0.6330549716949463,
+        "max_secs": 1.174682378768921
+      }
+    },
+    {
+      "name": "A local again after its DDL",
+      "passed": true,
+      "reads": 232,
+      "local": 232,
+      "forwarded": 0,
+      "errors": 0
+    },
+    {
+      "name": "B final row local and equal to Databend",
+      "passed": true,
+      "got": [
+        [
+          "7",
+          "w135",
+          "135"
+        ]
+      ]
+    },
+    {
+      "name": "a_ext local and equal to Databend",
+      "passed": true,
+      "rows": 1
+    },
+    {
+      "name": "a_cust local and equal to Databend",
+      "passed": true,
+      "rows": 10
+    },
+    {
+      "name": "clean exit",
+      "passed": true
+    }
+  ],
+  "ddl": [
+    {
+      "sql": "CREATE CACHE a_ext",
+      "secs": 17.04,
+      "ok": true,
+      "error": null
+    },
+    {
+      "sql": "CREATE CACHE a_cust",
+      "secs": 11.04,
+      "ok": true,
+      "error": null
+    },
+    {
+      "sql": "CREATE CACHE a_payload",
+      "secs": 13.05,
+      "ok": true,
+      "error": null
+    },
+    {
+      "sql": "DROP CACHE a_payload",
+      "secs": 0.02,
+      "ok": true,
+      "error": null
+    }
+  ],
+  "binary": "/data1/vmbox/readyset-base2-release",
+  "load_secs": 23.6,
+  "b_reads": {
+    "before": {
+      "reads": 916,
+      "local": 898,
+      "forwarded": 18,
+      "errors": 0
+    },
+    "during_ddl": {
+      "reads": 1900,
+      "local": 1863,
+      "forwarded": 37,
+      "errors": 0
+    },
+    "after": {
+      "reads": 913,
+      "local": 895,
+      "forwarded": 18,
+      "errors": 0
+    }
+  },
+  "a_reads": {
+    "before": {
+      "reads": 932,
+      "local": 932,
+      "forwarded": 0,
+      "errors": 0
+    },
+    "during_ddl": {
+      "reads": 927,
+      "local": 426,
+      "forwarded": 501,
+      "errors": 0
+    },
+    "after_last_5s": {
+      "reads": 232,
+      "local": 232,
+      "forwarded": 0,
+      "errors": 0
+    }
+  },
+  "b_health_during_ddl": {
+    "samples": 204,
+    "not_ready_other_than_applying": 0,
+    "unavailable": [
+      "source_applying"
+    ],
+    "max_last_sync_age_ms": 1307
+  },
+  "b_fresh_during_ddl": {
+    "writes": 69,
+    "never_seen_locally": 0,
+    "p50_secs": 0.6330549716949463,
+    "max_secs": 1.174682378768921
+  },
+  "ddl_window_secs": 41.15,
+  "b_local_ratio": {
+    "before": 0.9803,
+    "during_ddl": 0.9805
+  },
+  "forward_reasons": {
+    "readyset_gateway_cddl_20261116_205516_e54d13.a": {
+      "capture_slow": 188,
+      "stale": 329
+    },
+    "readyset_gateway_cddl_20261116_205516_e54d13.b": {
+      "source_applying": 73
+    }
+  },
+  "cache_ddl_events": [
+    {
+      "sql": "CREATE CACHE a_id FROM SELECT id, ext_id, cust_id, payload FROM readyset_gateway_cddl_20261116_205516_e54d13.a WHERE id = ?",
+      "secs": 0.021020705,
+      "ok": true,
+      "rejected": false
+    },
+    {
+      "sql": "CREATE CACHE b_id FROM SELECT id, label, revision FROM readyset_gateway_cddl_20261116_205516_e54d13.b WHERE id = ?",
+      "secs": 0.019286105,
+      "ok": true,
+      "rejected": false
+    },
+    {
+      "sql": "CREATE CACHE a_ext FROM SELECT id, ext_id, cust_id, payload FROM readyset_gateway_cddl_20261116_205516_e54d13.a WHERE ext_id = ?",
+      "secs": 17.041438129,
+      "ok": true,
+      "rejected": false
+    },
+    {
+      "sql": "CREATE CACHE a_cust FROM SELECT id, ext_id, cust_id, payload FROM readyset_gateway_cddl_20261116_205516_e54d13.a WHERE cust_id = ?",
+      "secs": 11.037529785,
+      "ok": true,
+      "rejected": false
+    },
+    {
+      "sql": "CREATE CACHE a_payload FROM SELECT id, ext_id, cust_id, payload FROM readyset_gateway_cddl_20261116_205516_e54d13.a WHERE payload = ?",
+      "secs": 13.047370712,
+      "ok": true,
+      "rejected": false
+    },
+    {
+      "sql": "DROP CACHE a_payload",
+      "secs": 0.017216968,
+      "ok": true,
+      "rejected": false
+    }
+  ],
+  "exit_code": 0,
+  "passed": true
+}

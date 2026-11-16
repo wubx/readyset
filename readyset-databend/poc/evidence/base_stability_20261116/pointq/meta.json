@@ -1,0 +1,47 @@
+{
+  "db": "readyset_gateway_pointq_20261115_090730",
+  "started": 1794705485.877895,
+  "nproc": 32,
+  "databend_version": "Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)",
+  "settings": [
+    [
+      "hide_options_in_show_create_table",
+      "0"
+    ],
+    [
+      "inlist_runtime_bloom_prune_threshold",
+      "10000"
+    ],
+    [
+      "inlist_to_join_threshold",
+      "201"
+    ],
+    [
+      "max_inlist_to_or",
+      "200"
+    ],
+    [
+      "max_storage_io_requests",
+      "8"
+    ],
+    [
+      "max_threads",
+      "8"
+    ]
+  ],
+  "configs": [
+    [
+      "max_running_queries",
+      "8"
+    ],
+    [
+      "data_cache_storage",
+      "none"
+    ],
+    [
+      "max_active_sessions",
+      "400"
+    ]
+  ],
+  "loadavg": "1.78 1.79 1.66 3/3699 48152"
+}

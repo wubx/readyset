@@ -1,0 +1,20 @@
+[package]
+name = "databend-loadtest"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Load generators for Databend HTTP endpoints (Databend itself or readyset-databend)"
+
+[[bin]]
+name = "databend-loadtest"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+base64 = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+hex = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+tokio = { workspace = true, features = ["full"] }

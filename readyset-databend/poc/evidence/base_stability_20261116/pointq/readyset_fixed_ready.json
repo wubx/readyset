@@ -1,0 +1,89 @@
+{
+  "ready_secs": 47.1,
+  "snapshot": {
+    "attempt": 1,
+    "previous_failure": null,
+    "recovery": "created",
+    "rows": 10000000,
+    "total_secs": 45.442886927
+  },
+  "create_cache_secs": {
+    "id": 0.0,
+    "ext": 17.0,
+    "cust": 15.0
+  },
+  "checks_total": 60,
+  "checks_equal_local": 50,
+  "checks_failed": [
+    {
+      "q": "id",
+      "key": "5433012",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    },
+    {
+      "q": "ext",
+      "key": "6e4a14c3318dd834129303bf",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    },
+    {
+      "q": "cust",
+      "key": "433012",
+      "route": "databend",
+      "equal": true,
+      "rows": 10
+    },
+    {
+      "q": "id",
+      "key": "2530829",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    },
+    {
+      "q": "ext",
+      "key": "7b885fabb6596c190ac909f9",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    },
+    {
+      "q": "cust",
+      "key": "530829",
+      "route": "databend",
+      "equal": true,
+      "rows": 10
+    },
+    {
+      "q": "id",
+      "key": "6624039",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    },
+    {
+      "q": "ext",
+      "key": "7433f89fd4deb57b23c7fd40",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    },
+    {
+      "q": "cust",
+      "key": "624039",
+      "route": "databend",
+      "equal": true,
+      "rows": 10
+    },
+    {
+      "q": "id",
+      "key": "810111",
+      "route": "databend",
+      "equal": true,
+      "rows": 1
+    }
+  ]
+}

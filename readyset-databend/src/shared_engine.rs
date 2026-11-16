@@ -4,7 +4,8 @@
 //! Restarts reuse ReadySet's own persistence (standalone authority recipe + base RocksDB,
 //! synchronous WAL). A per-table restart marker in the native replication offset
 //! ([`crate::restart_marker`]) tells whether the persisted rows match the Stream; only
-//! tables that do not are rebuilt. Graph migrations remain exclusive. Storage, replay, and
+//! tables that do not are rebuilt. Graph migrations are exclusive per source: a cache
+//! change on one table never pauses another table's batches. Storage, replay, and
 //! reader fences are not reimplemented.
 use crate::Action;
 use crate::cache_control::{self, CacheControl};
@@ -40,6 +41,10 @@ struct Source {
     /// recovered, needs a new handle (and connection).
     table: Arc<Mutex<Table>>,
     gate: Arc<RwLock<()>>,
+    /// This source's batches hold the shared side for their whole lifetime; a cache DDL on
+    /// this source (and cache restore) takes it before the Table lock, so a graph change
+    /// never spans this source's incomplete batch. Lock order: `migration`, then `table`.
+    migration: Arc<RwLock<()>>,
     failed: AtomicBool,
     busy: AtomicBool,
     /// Last sequence whose batch completed (all native ACKs + fence). Only advanced while
@@ -131,10 +136,9 @@ pub struct SharedEngine {
     /// Restart markers of the native base tables found at start, by local relation name.
     recovered: StdMutex<BTreeMap<String, Option<Marker>>>,
     routes: StdRwLock<Vec<Arc<Route>>>,
-    /// Batches hold a shared guard for their complete lifetime; user cache DDL takes the
-    /// exclusive side. Per-source recovery never takes it: its graph changes touch only its
-    /// own table and caches, serialized by the native handle lock and that source's Table.
-    migrations: Arc<RwLock<()>>,
+    /// Serializes user cache DDL (routes, declarations). Batches never take it; the graph
+    /// exclusion itself is per source (`Source::migration`).
+    ddl: Mutex<()>,
     cache: CacheConfig,
     /// `caches.json` next to the native storage; rewritten atomically.
     declarations_path: PathBuf,
@@ -220,7 +224,7 @@ impl SharedEngine {
             sources: StdRwLock::new(BTreeMap::new()),
             recovered: StdMutex::new(recovered),
             routes: StdRwLock::new(Vec::new()),
-            migrations: Arc::new(RwLock::new(())),
+            ddl: Mutex::new(()),
             cache,
             declarations_path,
             declarations: StdMutex::new(declarations),
@@ -304,6 +308,7 @@ impl SharedEngine {
                     schema,
                     table: Arc::new(Mutex::new(table)),
                     gate: Arc::new(RwLock::new(())),
+                    migration: Arc::new(RwLock::new(())),
                     failed: AtomicBool::new(previous.is_some()),
                     busy: AtomicBool::new(false),
                     checkpoint: AtomicU64::new(0),
@@ -494,10 +499,12 @@ impl SharedEngine {
     }
     /// Rebind (or recreate) this source's declared caches, then fence them and publish the
     /// routes. Graph changes touch only this source's caches (the native handle lock
-    /// serializes them with user cache DDL); the fence holds only this source's Table and a
-    /// shared migration guard, exactly like a batch. A declaration that no longer compiles
-    /// for the current schema is removed from the native recipe and from `caches.json`.
+    /// serializes them with user cache DDL); like a batch, this holds this source's shared
+    /// migration guard (taken before its Table, the global lock order) and its Table.
+    /// A declaration that no longer compiles for the current schema is removed from the
+    /// native recipe and from `caches.json`.
     async fn restore_caches(&self, id: &str, source: &Source) -> Result<()> {
+        let _migration = Arc::clone(&source.migration).read_owned().await;
         let mut table = source.table.lock().await;
         let mut created = Vec::new();
         let mut stale = Vec::new();
@@ -543,7 +550,6 @@ impl SharedEngine {
             self.save_declarations(|all| all.retain(|d| !stale.contains(&d.name)))?;
         }
         if !created.is_empty() {
-            let _migration = Arc::clone(&self.migrations).read_owned().await;
             let mut views: Vec<View> = created.iter().map(|r| r.view.clone()).collect();
             self.fence(source, &mut table, &mut views).await?;
             self.routes
@@ -573,9 +579,11 @@ impl SharedEngine {
     }
     pub async fn begin_batch(self: &Arc<Self>, id: &str, sequence: u64) -> Result<SharedBatch> {
         self.alive()?;
-        let migration = Arc::clone(&self.migrations).read_owned().await;
-        self.alive()?;
         let source = self.source(id)?;
+        // Only this source's migration guard: another table's cache DDL never waits for,
+        // nor delays, this batch.
+        let migration = Arc::clone(&source.migration).read_owned().await;
+        self.alive()?;
         // Lock BEFORE checking sequence/failed: two same-source begin calls must not both
         // validate an old sequence and subsequently apply the same batch twice.
         let table = Arc::clone(&source.table).lock_owned().await;
@@ -601,22 +609,34 @@ impl SharedEngine {
         })
     }
     pub async fn query(&self, sql: &str, database: &str) -> Result<ReadOutcome> {
+        self.query_explained(sql, database).await.map(|(o, _)| o)
+    }
+    /// `query` plus why a read was not served locally (`"local"` when it was). The reason
+    /// is diagnostic only: every non-local outcome is still a plain upstream read.
+    pub async fn query_explained(
+        &self,
+        sql: &str,
+        database: &str,
+    ) -> Result<(ReadOutcome, &'static str)> {
         self.alive()?;
         let Some(id) = self.read_source(sql, database) else {
-            return Ok(ReadOutcome::NotMatched);
+            return Ok((ReadOutcome::NotMatched, "not_cached_table"));
         };
         let Ok(source) = self.source(&id) else {
-            return Ok(ReadOutcome::NotMatched);
+            return Ok((ReadOutcome::NotMatched, "source_detached"));
         };
-        if source.failed.load(Acquire) || source.busy.load(Acquire) {
-            return Ok(ReadOutcome::NotMatched);
+        if source.failed.load(Acquire) {
+            return Ok((ReadOutcome::NotMatched, "source_failed"));
+        }
+        if source.busy.load(Acquire) {
+            return Ok((ReadOutcome::NotMatched, "source_applying"));
         }
         let Ok(_gate) = source.gate.try_read() else {
-            return Ok(ReadOutcome::NotMatched);
+            return Ok((ReadOutcome::NotMatched, "source_gate_busy"));
         };
         // Recheck after acquiring the gate: a failed writer may have released it meanwhile.
         if source.failed.load(Acquire) {
-            return Ok(ReadOutcome::NotMatched);
+            return Ok((ReadOutcome::NotMatched, "source_failed"));
         }
         let query = native_query::compile_for_source(
             native_query::parse_read_select(sql)?,
@@ -634,7 +654,7 @@ impl SharedEngine {
             .filter(|r| r.source == id)
             .find_map(|r| r.template.query.read_params(&query).map(|p| (r, p)))
         else {
-            return Ok(ReadOutcome::NotMatched);
+            return Ok((ReadOutcome::NotMatched, "shape_not_matched"));
         };
         let mut view = route.view.clone();
         let misses = if self.cache.partial {
@@ -679,7 +699,7 @@ impl SharedEngine {
                 })
         }) {
             self.timeouts.fetch_add(1, Relaxed);
-            return Ok(ReadOutcome::NotMatched);
+            return Ok((ReadOutcome::NotMatched, "upquery_timeout"));
         }
         let result = result?;
         if misses > 0 {
@@ -688,12 +708,15 @@ impl SharedEngine {
             self.hits.fetch_add(1, Relaxed);
         }
         Ok(match result {
-            Some((data, schema)) => ReadOutcome::Matched {
-                template: route.template.name.clone(),
-                schema,
-                data,
-            },
-            None => ReadOutcome::LimitMiss,
+            Some((data, schema)) => (
+                ReadOutcome::Matched {
+                    template: route.template.name.clone(),
+                    schema,
+                    data,
+                },
+                "local",
+            ),
+            None => (ReadOutcome::LimitMiss, "limit_miss"),
         })
     }
     /// Compile one cache declaration for its configured source (used by CREATE CACHE and
@@ -736,7 +759,7 @@ impl SharedEngine {
         available: impl Fn(&str) -> bool + Send,
     ) -> Result<Value> {
         self.alive()?;
-        let _migration = self.migrations.write().await;
+        let _ddl = self.ddl.lock().await;
         self.alive()?;
         let routes = self
             .routes
@@ -758,6 +781,33 @@ impl SharedEngine {
             Ok(c) => c,
             Err(e) => return Ok(json!({"ok":false,"rejected":true,"error":format!("{e:#}")})),
         };
+        // Exclusive graph guard of the ONE source this change touches: it waits for that
+        // source's in-flight batch only, and pauses only that source's next batches. Other
+        // tables keep syncing and serving throughout (the native handle lock still orders
+        // graph changes). Waiting here is cancel-safe: no native change has happened yet.
+        let target = match &control {
+            CacheControl::Create(template) => {
+                let select = native_query::parse_select(&template.source_sql)?;
+                let schema = self.bind(&select, database)?;
+                Some(source_id(&schema))
+            }
+            CacheControl::Drop(name) => routes
+                .iter()
+                .find(|r| &r.template.name == name)
+                .map(|r| r.source.clone()),
+            CacheControl::Show => None,
+        };
+        let target = target.map(|id| self.source(&id)).transpose()?;
+        let _exclusive = match &target {
+            Some(source) => Some(Arc::clone(&source.migration).write_owned().await),
+            None => None,
+        };
+        self.alive()?;
+        if matches!(&control, CacheControl::Create(_))
+            && target.as_ref().is_some_and(|s| s.failed.load(Acquire))
+        {
+            return Ok(json!({"ok":false,"rejected":true,"error":"source is not ready"}));
+        }
         let mut migration = MigrationGuard {
             failed: &self.failed,
             complete: matches!(&control, CacheControl::Show),
@@ -765,11 +815,8 @@ impl SharedEngine {
         let result = async {
             match control {
                 CacheControl::Create(template) => {
-                    let select = native_query::parse_select(&template.source_sql)?;
-                    let schema = self.bind(&select, database)?;
-                    let id = source_id(&schema);
-                    let source = self.source(&id)?;
-                    let source = source.as_ref();
+                    let source = target.as_deref().context("cache source missing")?;
+                    let id = source_id(&source.schema);
                     let mut handle = self.handle.lock().await;
                     handle
                         .extend_recipe(ChangeList::from_change(

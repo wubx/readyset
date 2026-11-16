@@ -295,7 +295,7 @@ async fn shared_zero_wait_replay_and_cancelled_migration_fail_closed() {
     });
     tokio::time::timeout(Duration::from_secs(10), async {
         loop {
-            if engine.migrations.try_read().is_err() {
+            if engine.src("a.items").migration.try_read().is_err() {
                 break;
             }
             tokio::task::yield_now().await;

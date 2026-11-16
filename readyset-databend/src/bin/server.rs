@@ -39,6 +39,10 @@ const CONTROL_RESPONSE_RESERVE: usize = 2 * 1024 * 1024;
 const MAX_LOCAL_RESULTS: usize = 2048;
 const MAX_INFLIGHT: usize = 2048;
 const LOCAL_RESULT_TTL: Duration = Duration::from_secs(60);
+/// Client-chosen query IDs (x-databend-query-id) remembered after a local /final or /kill,
+/// so a repeated lifecycle call never reaches Databend and the ID is not reused locally.
+/// Generated `rs_local_` IDs need no memory: their prefix alone keeps them local.
+const MAX_FINALIZED: usize = 65_536;
 
 #[derive(Parser)]
 #[command(about = "Databend HTTP front end with an in-process ReadySet replica (phase 1)")]
@@ -439,6 +443,8 @@ struct Counters {
     empty_local: u64,
     sync_batches: u64,
     cache_ddl: u64,
+    /// Why each query start was not answered locally (diagnostic; see `count_forward`).
+    forward_reasons: std::collections::BTreeMap<&'static str, u64>,
 }
 
 /// Routing state. Same meaning as the gateway's fields; held only briefly, never across I/O.
@@ -461,18 +467,34 @@ struct RouteState {
     /// Timing of the last batch with changes, and of the initial snapshot.
     last_batch: Value,
     snapshot: Value,
+    /// Why the last completed capture left `ready` false (diagnostic).
+    not_ready: Option<&'static str>,
 }
 
 impl RouteState {
+    /// First reason local reads are off, or `None` when they are allowed.
+    fn unavailable(&self, now: Instant, max_staleness: Duration) -> Option<&'static str> {
+        if self.failed.is_some() {
+            Some("table_failed")
+        } else if self.uncertain {
+            Some("uncertain_upstream")
+        } else if !self.inflight.is_empty() {
+            Some("upstream_inflight")
+        } else if self.active_forwards != 0 {
+            Some("active_forward")
+        } else if !self.ready {
+            Some(self.not_ready.unwrap_or("not_ready"))
+        } else if !self
+            .last_sync
+            .is_some_and(|t| now.saturating_duration_since(t) <= max_staleness)
+        {
+            Some("stale")
+        } else {
+            None
+        }
+    }
     fn available(&self, now: Instant, max_staleness: Duration) -> bool {
-        self.ready
-            && self.failed.is_none()
-            && !self.uncertain
-            && self.inflight.is_empty()
-            && self.active_forwards == 0
-            && self
-                .last_sync
-                .is_some_and(|t| now.saturating_duration_since(t) <= max_staleness)
+        self.unavailable(now, max_staleness).is_none()
     }
 }
 
@@ -483,7 +505,42 @@ struct Stored {
     bytes: usize,
 }
 
-type LocalResults = HashMap<String, (Instant, Option<Stored>)>;
+/// Live local results only. A result leaves at /final, /kill or TTL, so the bound limits
+/// concurrently open local queries, never the local read rate.
+type LocalResults = HashMap<String, (Instant, Stored)>;
+
+/// Bounded FIFO memory of finalized client-chosen local query IDs (see `MAX_FINALIZED`).
+#[derive(Default)]
+struct Finalized {
+    order: std::collections::VecDeque<(Instant, String)>,
+    ids: HashSet<String>,
+}
+
+impl Finalized {
+    fn prune(&mut self, now: Instant) {
+        while self
+            .order
+            .front()
+            .is_some_and(|(expires, _)| *expires <= now || self.order.len() > MAX_FINALIZED)
+        {
+            if let Some((_, id)) = self.order.pop_front() {
+                self.ids.remove(&id);
+            }
+        }
+    }
+    fn insert(&mut self, id: &str) {
+        let now = Instant::now();
+        if self.ids.insert(id.to_owned()) {
+            self.order
+                .push_back((now + LOCAL_RESULT_TTL, id.to_owned()));
+        }
+        self.prune(now);
+    }
+    fn contains(&mut self, id: &str) -> bool {
+        self.prune(Instant::now());
+        self.ids.contains(id)
+    }
+}
 
 struct App {
     s: Settings,
@@ -497,6 +554,8 @@ struct App {
     default_role: StdMutex<Option<String>>,
     state: StdMutex<RouteState>,
     results: StdMutex<LocalResults>,
+    /// Lock order: `results` before `finalized`.
+    finalized: StdMutex<Finalized>,
     passive: StdMutex<HashMap<String, Instant>>,
     /// Cache DDL is serialized, like the gateway's single request lock.
     control: tokio::sync::Mutex<()>,
@@ -504,6 +563,9 @@ struct App {
     /// table reports its own last completed checkpoint and current `syncing` flag.
     capturing: tokio::sync::Mutex<()>,
     routes_journal: Option<Arc<Journal>>,
+    /// Operational events (table failures, retries, recoveries, fail-closed), one JSON
+    /// object per line, also mirrored to stderr for journald / docker logs.
+    events: Arc<Journal>,
     stop: watch::Sender<bool>,
 }
 
@@ -530,10 +592,17 @@ impl CacheEngine {
             _ => bail!("legacy operation on shared runtime"),
         }
     }
-    async fn query(&self, sql: &str, database: &str) -> Result<ReadOutcome> {
+    async fn query(&self, sql: &str, database: &str) -> Result<(ReadOutcome, &'static str)> {
         match self {
-            Self::Legacy(e) => e.query(sql, database).await,
-            Self::Shared(e) => e.query(sql, database).await,
+            Self::Legacy(e) => e.query(sql, database).await.map(|o| {
+                let why = match &o {
+                    ReadOutcome::Matched { .. } => "local",
+                    ReadOutcome::LimitMiss => "limit_miss",
+                    ReadOutcome::NotMatched => "not_matched",
+                };
+                (o, why)
+            }),
+            Self::Shared(e) => e.query_explained(sql, database).await,
         }
     }
     fn cache_status(&self) -> Value {
@@ -799,20 +868,52 @@ impl App {
     }
 
     fn table_available(&self, id: &str) -> bool {
-        if matches!(&self.engine, CacheEngine::Shared(e) if e.is_failed() || e.source_busy(id)) {
+        self.table_unavailable(id).is_none()
+    }
+
+    /// A cache may be declared on a table that finished its initial load and is not failed.
+    /// Freshness is not required: the new cache is fenced to the local base table, and every
+    /// read still checks `table_available`, so a lagging table just keeps reading upstream.
+    /// (Requiring freshness rejected back-to-back CREATE CACHE: building one cache pauses
+    /// that table's sync for the native index build.)
+    fn table_loaded(&self, id: &str) -> bool {
+        if matches!(&self.engine, CacheEngine::Shared(e) if e.is_failed()) {
             return false;
+        }
+        self.tables.get(id).is_some_and(|t| {
+            let state = t.lock();
+            state.failed.is_none() && state.last_sync.is_some()
+        })
+    }
+
+    /// First reason this table's local reads are off, or `None` when they are allowed.
+    fn table_unavailable(&self, id: &str) -> Option<&'static str> {
+        if let CacheEngine::Shared(e) = &self.engine {
+            if e.is_failed() {
+                return Some("engine_failed");
+            }
+            if e.source_busy(id) {
+                return Some("source_applying");
+            }
         }
         let global = self.lock();
         let Some(table) = self.tables.get(id) else {
-            return false;
+            return Some("unknown_table");
         };
         let state = table.lock();
-        global.failed.is_none()
-            && !global.uncertain
-            && global.active_forwards == 0
-            && global.inflight.is_empty()
-            && state.forward_epoch == global.forward_epoch
-            && state.available(Instant::now(), self.s.max_staleness)
+        if global.failed.is_some() {
+            Some("engine_failed")
+        } else if global.uncertain {
+            Some("uncertain_upstream")
+        } else if global.active_forwards != 0 {
+            Some("active_forward")
+        } else if !global.inflight.is_empty() {
+            Some("upstream_inflight")
+        } else if state.forward_epoch != global.forward_epoch {
+            Some("forward_epoch")
+        } else {
+            state.unavailable(Instant::now(), self.s.max_staleness)
+        }
     }
 
     fn ready(&self) -> bool {
@@ -823,13 +924,59 @@ impl App {
         }
     }
 
-    fn read_available(&self, sql: &str, database: &str) -> bool {
+    /// The cached table a read targets (shared mode) and why it cannot be local, if so.
+    fn read_route(&self, sql: &str, database: &str) -> (Option<String>, Option<&'static str>) {
         match &self.engine {
-            CacheEngine::Legacy(_) => self.ready(),
-            CacheEngine::Shared(engine) => engine
-                .read_source(sql, database)
-                .is_some_and(|id| self.table_available(&id)),
+            CacheEngine::Legacy(_) => (
+                None,
+                self.lock()
+                    .unavailable(Instant::now(), self.s.max_staleness),
+            ),
+            CacheEngine::Shared(engine) => match engine.read_source(sql, database) {
+                Some(id) => {
+                    let why = self.table_unavailable(&id);
+                    (Some(id), why)
+                }
+                None => (None, Some("not_cached_table")),
+            },
         }
+    }
+
+    fn count_forward(&self, table: Option<&str>, reason: &'static str) {
+        *self
+            .lock()
+            .counters
+            .forward_reasons
+            .entry(reason)
+            .or_default() += 1;
+        if let Some(state) = table.and_then(|t| self.tables.get(t)) {
+            *state
+                .lock()
+                .counters
+                .forward_reasons
+                .entry(reason)
+                .or_default() += 1;
+        }
+    }
+
+    /// One operational event: appended to `events.jsonl` and written to stderr.
+    fn event(&self, event: &str, table: Option<&str>, detail: Value) {
+        let utc = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0.0, |d| d.as_secs_f64());
+        let mut line = Map::new();
+        line.insert("utc".into(), json!(utc));
+        line.insert("event".into(), json!(event));
+        line.insert("instance_id".into(), json!(self.s.instance_id));
+        if let Some(table) = table {
+            line.insert("table".into(), json!(table));
+        }
+        if let Value::Object(detail) = detail {
+            line.extend(detail);
+        }
+        let line = Value::Object(line);
+        eprintln!("{line}");
+        self.events.write(&line);
     }
 
     fn fail_source(&self, id: &str, reason: String) {
@@ -847,10 +994,11 @@ impl App {
     fn status(&self) -> Value {
         if !self.tables.is_empty() {
             let tables: Vec<_> = self.tables.iter().map(|(id,table)| {
-                let ready = self.table_available(id);
+                let unavailable = self.table_unavailable(id);
+                let ready = unavailable.is_none();
                 let state = table.lock();
                 json!({"table":id,"stream":table.names.stream,"checkpoint":state.sequence,"rows":state.rows,
-                    "ready":ready,"syncing":table.syncing.load(std::sync::atomic::Ordering::Acquire),
+                    "ready":ready,"unavailable":unavailable,"syncing":table.syncing.load(std::sync::atomic::Ordering::Acquire),
                     "applying":matches!(&self.engine,CacheEngine::Shared(e) if e.source_busy(id)),
                     "last_sync_age_ms":state.last_sync.map(|t| t.elapsed().as_millis()),"failed":state.failed,"phase":if state.failed.is_some() {"error"} else if state.last_sync.is_some() {"online"} else {"snapshotting"},
                     "snapshot":state.snapshot,"last_batch":state.last_batch,"counters":state.counters})
@@ -900,20 +1048,34 @@ impl App {
         {
             let mut st = self.lock();
             st.ready = false;
-            st.failed.get_or_insert(reason);
+            st.failed.get_or_insert(reason.clone());
         }
+        self.event("engine_failed_closed", None, json!({"reason": reason}));
         let _ = self.stop.send(true);
     }
 
     fn local_bytes(results: &LocalResults) -> usize {
         // Budget retained JSON payload, not a claim about exact heap usage.
-        results
-            .values()
-            .filter_map(|(_, s)| s.as_ref().map(|s| s.bytes))
-            .sum()
+        results.values().map(|(_, s)| s.bytes).sum()
     }
 
-    fn local_query_id(headers: &HeaderMap, results: &LocalResults) -> Result<String, String> {
+    /// Whether a lifecycle request for this ID belongs to a local result (live, generated,
+    /// or a finalized client-chosen ID). Caller holds `results`.
+    fn local_id(&self, results: &LocalResults, id: &str) -> bool {
+        results.contains_key(id)
+            || id.starts_with("rs_local_")
+            || self
+                .finalized
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(id)
+    }
+
+    fn local_query_id(
+        &self,
+        headers: &HeaderMap,
+        results: &LocalResults,
+    ) -> Result<String, String> {
         let qid = headers
             .get("x-databend-query-id")
             .and_then(|v| v.to_str().ok())
@@ -927,7 +1089,13 @@ impl App {
         {
             return Err("invalid query ID".into());
         }
-        if results.contains_key(&qid) {
+        if results.contains_key(&qid)
+            || self
+                .finalized
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(&qid)
+        {
             return Err("query ID already used locally".into());
         }
         Ok(qid)
@@ -1008,7 +1176,7 @@ impl App {
             bytes: size,
         };
         let page = local_page(&stored, &prefix, 0);
-        results.insert(qid, (Instant::now() + LOCAL_RESULT_TTL, Some(stored)));
+        results.insert(qid, (Instant::now() + LOCAL_RESULT_TTL, stored));
         let mut headers = route("readyset");
         headers.push((
             HeaderName::from_static("x-readyset-template"),
@@ -1111,7 +1279,7 @@ impl App {
             let mut results = self.results();
             results.retain(|_, (expires, _)| *expires > now);
             if let Some((id, kind)) = &cycle
-                && (results.contains_key(id) || id.starts_with("rs_local_"))
+                && self.local_id(&results, id)
             {
                 return self.local_lifecycle(&mut results, id, kind);
             }
@@ -1133,19 +1301,34 @@ impl App {
                 .cache_control(&body, &headers, sql, &database, sane)
                 .await;
         }
-        let eligible = start
-            && sane
-            && self.read_available(sql, &database)
-            && self.results().len() < MAX_LOCAL_RESULTS;
-        if eligible {
+        let (read_table, unavailable) = if start && sane {
+            self.read_route(sql, &database)
+        } else {
+            (None, None)
+        };
+        let mut forward_reason = if !start {
+            None
+        } else if !sane {
+            Some("unsafe_session")
+        } else if unavailable.is_some() {
+            unavailable
+        } else if self.results().len() >= MAX_LOCAL_RESULTS {
+            Some("local_results_full")
+        } else {
+            None
+        };
+        if start && forward_reason.is_none() {
             match self.engine.query(sql, &database).await {
-                Ok(ReadOutcome::Matched {
-                    template,
-                    schema,
-                    data,
-                }) => {
+                Ok((
+                    ReadOutcome::Matched {
+                        template,
+                        schema,
+                        data,
+                    },
+                    _,
+                )) => {
                     let mut results = self.results();
-                    let qid = match Self::local_query_id(&headers, &results) {
+                    let qid = match self.local_query_id(&headers, &results) {
                         Ok(qid) => qid,
                         Err(e) => {
                             let status = if e == "query ID already used locally" {
@@ -1168,10 +1351,12 @@ impl App {
                         return response;
                     }
                     // Over the local budget: serve this read from upstream, once.
+                    forward_reason = Some("local_result_budget");
                 }
-                Ok(ReadOutcome::LimitMiss | ReadOutcome::NotMatched) => {}
+                Ok((_, why)) => forward_reason = Some(why),
                 // Do not send further engine RPCs after an uncertain engine result.
                 Err(error) => {
+                    forward_reason = Some("engine_error");
                     if let CacheEngine::Shared(engine) = &self.engine {
                         if let Some(id) = engine.read_source(sql, &database) {
                             self.fail_source(&id, format!("engine query failure: {error:#}"));
@@ -1183,6 +1368,9 @@ impl App {
                     }
                 }
             }
+        }
+        if let Some(reason) = forward_reason {
+            self.count_forward(read_table.as_deref(), reason);
         }
         let passive_start = start
             && sane
@@ -1240,10 +1428,9 @@ impl App {
                 route("readyset"),
             )
         };
-        let Some((expires, Some(stored))) = results.get(id) else {
+        let Some((_, stored)) = results.get(id) else {
             return not_found("local query expired or finalized");
         };
-        let expires = *expires;
         let prefix = format!("/v1/query/{id}");
         let page = match kind {
             Lifecycle::Page(number) => {
@@ -1265,8 +1452,15 @@ impl App {
         };
         let mut data = local_page(stored, &prefix, page);
         if matches!(kind, Lifecycle::Final | Lifecycle::Kill) {
-            // Tombstone: a finalized local ID is never forwarded upstream.
-            results.insert(id.to_owned(), (expires, None));
+            // Release the result now; only a client-chosen ID is remembered (bounded), so a
+            // finalized local ID is never forwarded upstream nor reused locally.
+            results.remove(id);
+            if !id.starts_with("rs_local_") {
+                self.finalized
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .insert(id);
+            }
             data["data"] = json!([]);
             data["next_uri"] = Value::Null;
         }
@@ -1305,18 +1499,37 @@ impl App {
             );
         }
         // Validate the query ID BEFORE any mutation.
-        let qid = match Self::local_query_id(headers, &self.results()) {
+        let qid = match self.local_query_id(headers, &self.results()) {
             Ok(qid) => qid,
             Err(e) => return reply(StatusCode::BAD_REQUEST, error_body(&e), vec![]),
         };
+        let ddl_started = Instant::now();
         let applied = match &self.engine {
             CacheEngine::Legacy(engine) => engine.cache_ddl(sql, database).await,
             CacheEngine::Shared(engine) => {
                 engine
-                    .cache_ddl(sql, database, |id| self.table_available(id))
+                    .cache_ddl(sql, database, |id| self.table_loaded(id))
                     .await
             }
         };
+        // A native cache build pauses its own table's sync for the index build; record how
+        // long, so operators can see (and schedule) it. SHOW CACHES changes nothing.
+        if !sql.trim_start().to_ascii_uppercase().starts_with("SHOW") {
+            self.event(
+                "cache_ddl",
+                None,
+                json!({
+                    "sql": sql.chars().take(2000).collect::<String>(),
+                    "secs": ddl_started.elapsed().as_secs_f64(),
+                    "ok": applied.as_ref().is_ok_and(|r| r["ok"] == true),
+                    "rejected": applied.as_ref().ok().and_then(|r| r["rejected"].as_bool()).unwrap_or(false),
+                    "error": match &applied {
+                        Ok(r) => r.get("error").cloned().unwrap_or(Value::Null),
+                        Err(e) => json!(format!("{e:#}")),
+                    },
+                }),
+            );
+        }
         let failure = match applied {
             Ok(result) if result["ok"] == true || result["rejected"] == true => {
                 if result["ok"] == true {
@@ -1703,11 +1916,18 @@ async fn sync_once(app: &App, replicator: &mut Replicator) -> Result<()> {
         }
         // Ready only if no forwarded statement could have changed the source after this
         // capture began, or was still running when it began.
-        st.ready = clean
-            && st.forward_epoch == epoch
-            && st.inflight.is_empty()
-            && !st.uncertain
-            && capture_started.elapsed() <= app.s.max_staleness;
+        st.not_ready = if !clean || st.forward_epoch != epoch {
+            Some("forward_during_capture")
+        } else if !st.inflight.is_empty() {
+            Some("upstream_inflight")
+        } else if st.uncertain {
+            Some("uncertain_upstream")
+        } else if capture_started.elapsed() > app.s.max_staleness {
+            Some("capture_slow")
+        } else {
+            None
+        };
+        st.ready = st.not_ready.is_none();
     }
     app.write_status("status.json");
     Ok(())
@@ -1749,6 +1969,9 @@ async fn shutdown_signal() {
 #[cfg(test)]
 #[path = "server/config_tests.rs"]
 mod config_tests;
+#[cfg(test)]
+#[path = "server/lifecycle_tests.rs"]
+mod lifecycle_tests;
 #[path = "server/shared.rs"]
 mod shared_http;
 use shared_http::run_shared;
@@ -1824,10 +2047,12 @@ async fn run(s: Settings) -> Result<()> {
         default_role: StdMutex::new(replicator.default_role.clone()),
         state: StdMutex::new(state),
         results: StdMutex::new(HashMap::new()),
+        finalized: StdMutex::new(Finalized::default()),
         passive: StdMutex::new(HashMap::new()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),
         routes_journal,
+        events: Journal::open(&s.run_dir.join("events.jsonl"))?,
         stop,
         s,
     });
@@ -1858,6 +2083,7 @@ async fn serve(app: Arc<App>, workers: Vec<tokio::task::JoinHandle<()>>) -> Resu
     });
     fs::write(app.s.run_dir.join("listening.json"), format!("{info:#}\n"))?;
     println!("{info}");
+    app.event("listening", None, info.clone());
     let router = axum::Router::new()
         .fallback(dispatch)
         .with_state(Arc::clone(&app));
@@ -1906,8 +2132,14 @@ async fn serve(app: Arc<App>, workers: Vec<tokio::task::JoinHandle<()>>) -> Resu
     }
     app.engine.shutdown().await;
     app.write_status("final_status.json");
+    let failed_closed = matches!(&app.engine, CacheEngine::Shared(e) if e.is_failed());
+    app.event(
+        "stopped",
+        None,
+        json!({"failed_closed": failed_closed, "serve_error": served.as_ref().err().map(|e| e.to_string())}),
+    );
     served?;
-    if matches!(&app.engine, CacheEngine::Shared(e) if e.is_failed()) {
+    if failed_closed {
         bail!("shared native engine failed closed; restart required");
     }
     Ok(())

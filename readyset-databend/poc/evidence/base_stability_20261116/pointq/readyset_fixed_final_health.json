@@ -1,0 +1,91 @@
+{
+  "all_tables_ready": true,
+  "cache": {
+    "allocated_bytes": 4289302640,
+    "base_tables": 1,
+    "durability": "native_sync_wal",
+    "failed": false,
+    "hit_queries": 8760142,
+    "materialization": "partial",
+    "memory_limit_bytes": 4294967296,
+    "miss_keys": 3873336,
+    "native_server_instances": 1,
+    "readers": [
+      {
+        "eviction_epoch": 3296,
+        "key_slots": 245553,
+        "name": "pq_id"
+      },
+      {
+        "eviction_epoch": 2596,
+        "key_slots": 228405,
+        "name": "pq_ext"
+      },
+      {
+        "eviction_epoch": 4017,
+        "key_slots": 340779,
+        "name": "pq_cust"
+      }
+    ],
+    "replay_timeouts": 0,
+    "upquery_timeout_ms": 5000
+  },
+  "checkpoint": 964,
+  "counters": {
+    "cache_ddl": 6,
+    "databend": 10,
+    "empty_local": 0,
+    "forward_reasons": {
+      "capture_slow": 9,
+      "stale": 1
+    },
+    "readyset": 12633478,
+    "sync_batches": 964
+  },
+  "engine_mode": "shared",
+  "engine_pid": 5316,
+  "failed": null,
+  "fault_injection": false,
+  "generation": "rs_pointq1_962ff70796e7",
+  "inflight": 0,
+  "instance_id": "pointq1",
+  "mode": "production",
+  "ready": true,
+  "rows": 10000000,
+  "single_process": true,
+  "tables": [
+    {
+      "applying": false,
+      "checkpoint": 964,
+      "counters": {
+        "cache_ddl": 0,
+        "databend": 0,
+        "empty_local": 0,
+        "forward_reasons": {
+          "capture_slow": 9,
+          "stale": 1
+        },
+        "readyset": 0,
+        "sync_batches": 964
+      },
+      "failed": null,
+      "last_batch": null,
+      "last_sync_age_ms": 1024,
+      "phase": "online",
+      "ready": true,
+      "rows": 10000000,
+      "snapshot": {
+        "attempt": 1,
+        "previous_failure": null,
+        "recovery": "created",
+        "rows": 10000000,
+        "total_secs": 45.442886927
+      },
+      "stream": "readyset_gateway_pointq_20261115_090730.readyset_pointq1_src",
+      "syncing": false,
+      "table": "readyset_gateway_pointq_20261115_090730.src",
+      "unavailable": null
+    }
+  ],
+  "uncertain_upstream": false
+}

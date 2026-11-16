@@ -58,7 +58,9 @@ server.rs：现有 HTTP auth/session/分页/lifecycle/透明代理
 - 缓存声明（名称、库、原 SQL）写入 `caches.json`（临时文件 + fsync + rename）。原生 recipe 保存缓存本身；
   启动时删除没有声明的原生缓存，按声明重建读路由。CREATE 先建原生缓存再记声明，DROP 先删声明再删原生缓存，
   任一步崩溃都只会留下下次启动会清理的原生缓存。
-- 批次完整生命周期持共享 migration guard；快照和图变更持排他 guard，不允许迁移跨越未完成批次。迁移排队仍可能延迟新的同步轮。
+- migration guard 按表划分：批次在整个生命周期持本表的共享 guard，`CREATE`/`DROP CACHE` 只持目标表的排他 guard，不允许迁移跨越本表未完成的批次；其他表的批次和本地读不受影响（双表验证见证据 `cache_ddl_isolation`）。
+  加锁顺序统一为：本表 migration guard → 本表 Table 锁（批次、缓存恢复、缓存 DDL 一致）；不同表的缓存 DDL 由引擎内 DDL 互斥锁串行。
+  目标表在原生建索引期间仍会暂停同步（同一 base domain 串行），超过 `max_staleness` 后它的读转发 Databend。
 - 缓存读不拿 migration guard；A 的 batch gate 不排除 B 的读。空批次不抢该表读 gate。
 - 旧单表/声明/oracle 启动仍选择原来的 1s 后台 WAL 和 global Persisted barrier，不改其语义。
 - 实际数据变更期间禁用该表本地读，直到持久化和该表全部 reader 的内容 fence 完成。
@@ -146,3 +148,4 @@ A 400 万变更批次从 62.8s 增至 73.6–73.7s；新版多了范围并发探
 [单表自恢复与先监听启动](poc/evidence/self_recovery_20261114/README.md)：13 次启动重启/自恢复 394/394（含 Databend 不可用启动、
 运行中 Databend 中断、Stream 重建、在线加列）；A/B 隔离 244/244（A 进程内自恢复，B 全程不受影响）；完整回归 20/20；
 千万行 A 在线重建 50s 期间 B 15/15 轮本地且新鲜。
+[单实例基础稳定性](poc/evidence/base_stability_20261116/README.md)：本地结果暂存表不再限制本地读速率（千万行点查 27 轮 1,263 万次本地、10 次转发，均匀 1.1–1.7 万 QPS，Databend 最优配置 52–385 QPS）；按表 migration guard（A 连续建 3 个缓存期间 B 本地 98.1%、写后可见最大 1.2s，对照组 67%、18s）；完整回归 20/20；A/B 隔离 247/247。

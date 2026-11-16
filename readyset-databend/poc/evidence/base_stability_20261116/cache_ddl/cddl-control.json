@@ -1,0 +1,184 @@
+{
+  "db": "readyset_gateway_cddl_20261116_205704_52adfc",
+  "checks": [
+    {
+      "name": "B reads never failed",
+      "passed": true,
+      "before": {
+        "reads": 917,
+        "local": 899,
+        "forwarded": 18,
+        "errors": 0
+      },
+      "during_ddl": {
+        "reads": 654,
+        "local": 438,
+        "forwarded": 216,
+        "errors": 0
+      },
+      "after": {
+        "reads": 897,
+        "local": 847,
+        "forwarded": 50,
+        "errors": 0
+      }
+    },
+    {
+      "name": "negative control: B stalls during A cache DDL",
+      "passed": true,
+      "ratio": {
+        "before": 0.9804,
+        "during_ddl": 0.6697
+      },
+      "reads": {
+        "reads": 654,
+        "local": 438,
+        "forwarded": 216,
+        "errors": 0
+      },
+      "health": {
+        "samples": 85,
+        "not_ready_other_than_applying": 38,
+        "unavailable": [
+          "stale"
+        ],
+        "max_last_sync_age_ms": 17583
+      },
+      "fresh": {
+        "writes": 29,
+        "never_seen_locally": 0,
+        "p50_secs": 9.718727350234985,
+        "max_secs": 18.113733768463135
+      }
+    },
+    {
+      "name": "A local again after its DDL",
+      "passed": true,
+      "reads": 233,
+      "local": 233,
+      "forwarded": 0,
+      "errors": 0
+    },
+    {
+      "name": "B final row local and equal to Databend",
+      "passed": false,
+      "got": [
+        [
+          "7",
+          "w94",
+          "94"
+        ]
+      ]
+    },
+    {
+      "name": "a_ext local and equal to Databend",
+      "passed": true,
+      "rows": 1
+    },
+    {
+      "name": "clean exit",
+      "passed": true
+    }
+  ],
+  "ddl": [
+    {
+      "sql": "CREATE CACHE a_ext",
+      "secs": 17.04,
+      "ok": true,
+      "error": null
+    },
+    {
+      "sql": "CREATE CACHE a_cust",
+      "secs": 0.03,
+      "ok": false,
+      "error": "200 {\"code\": 1005, \"message\": \"source is not ready\"}"
+    },
+    {
+      "sql": "CREATE CACHE a_payload",
+      "secs": 0.0,
+      "ok": false,
+      "error": "200 {\"code\": 1005, \"message\": \"source is not ready\"}"
+    },
+    {
+      "sql": "DROP CACHE a_payload",
+      "secs": 0.0,
+      "ok": false,
+      "error": "200 {\"code\": 1005, \"message\": \"cache not found\"}"
+    }
+  ],
+  "binary": "/data1/vmbox/readyset-base-release",
+  "load_secs": 24.1,
+  "b_reads": {
+    "before": {
+      "reads": 917,
+      "local": 899,
+      "forwarded": 18,
+      "errors": 0
+    },
+    "during_ddl": {
+      "reads": 654,
+      "local": 438,
+      "forwarded": 216,
+      "errors": 0
+    },
+    "after": {
+      "reads": 897,
+      "local": 847,
+      "forwarded": 50,
+      "errors": 0
+    }
+  },
+  "a_reads": {
+    "before": {
+      "reads": 932,
+      "local": 932,
+      "forwarded": 0,
+      "errors": 0
+    },
+    "during_ddl": {
+      "reads": 570,
+      "local": 456,
+      "forwarded": 114,
+      "errors": 0
+    },
+    "after_last_5s": {
+      "reads": 233,
+      "local": 233,
+      "forwarded": 0,
+      "errors": 0
+    }
+  },
+  "b_health_during_ddl": {
+    "samples": 85,
+    "not_ready_other_than_applying": 38,
+    "unavailable": [
+      "stale"
+    ],
+    "max_last_sync_age_ms": 17583
+  },
+  "b_fresh_during_ddl": {
+    "writes": 29,
+    "never_seen_locally": 0,
+    "p50_secs": 9.718727350234985,
+    "max_secs": 18.113733768463135
+  },
+  "ddl_window_secs": 17.06,
+  "b_local_ratio": {
+    "before": 0.9804,
+    "during_ddl": 0.6697
+  },
+  "forward_reasons": {
+    "readyset_gateway_cddl_20261116_205704_52adfc.a": {
+      "capture_slow": 17,
+      "stale": 115
+    },
+    "readyset_gateway_cddl_20261116_205704_52adfc.b": {
+      "capture_slow": 32,
+      "source_applying": 36,
+      "stale": 216
+    }
+  },
+  "cache_ddl_events": [],
+  "exit_code": 0,
+  "passed": false
+}

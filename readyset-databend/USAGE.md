@@ -256,6 +256,13 @@ DROP CACHE customers_by_region;
 - 单个本地结果最多 10,000 行或 4 MB，超过时这次查询转发。
 - 响应头 `X-ReadySet-Route` 表示这次请求由 `readyset`（本地）还是 `databend`（转发）处理。
 
+**建缓存对同步的影响：**
+- `CREATE CACHE` 和 `DROP CACHE` 只暂停目标表的同步，同一实例的其他表照常同步、照常本地读。
+- 目标表要等原生索引建完才继续同步：实测约每百万行 1.1–1.7 秒，1,000 万行约 11–17 秒，1 亿行估计 2–3 分钟。
+  这段时间目标表的数据超过 `max_staleness` 后，它的读请求转发给 Databend，结果正确，只是变慢；建完后自动恢复本地读。
+- 大表建缓存建议放在低峰期。每次执行都会在 `events.jsonl` 里记录一条 `cache_ddl` 事件，包含耗时和结果。
+- 只要表已完成首次加载且没有失败，就可以建缓存，不要求此刻数据新鲜，所以可以连续执行多条 `CREATE CACHE`。
+
 ## 5. 重启与持久化
 
 本地数据都在 `[storage].dir`：
@@ -313,18 +320,40 @@ DROP CACHE customers_by_region;
 
 `/health.tables[]` 的主要字段：
 - `ready`、`failed`：这张表能否本地读，以及失败原因；
+- `unavailable`：这张表当前不能本地读的原因，能本地读时为空，取值见下面"转发原因"；
 - `last_sync_age_ms`：距上次同步完成的时间；
 - `rows`：本地行数；
 - `syncing`、`applying`：是否正在拉取、是否正在写入本地；
 - `snapshot.recovery`：最近一次恢复对这张表的处理，取值为 `created`、`resumed` 或 `rebuilt: <原因>`；
-  `snapshot.attempt` 是第几次尝试，`snapshot.previous_failure` 是恢复前的失败原因。
+  `snapshot.attempt` 是第几次尝试，`snapshot.previous_failure` 是恢复前的失败原因；
+- `counters.forward_reasons`：这张表的查询没有在本地返回的次数，按原因统计。
 
-`all_tables_ready` 表示所有表是否都已就绪。
+`all_tables_ready` 表示所有表是否都已就绪。顶层的 `counters` 是全实例汇总：`readyset`（本地返回次数）、
+`databend`（转发次数）和 `forward_reasons`。
+
+**转发原因**（`forward_reasons` 的键和 `unavailable` 的取值）：
+
+| 原因 | 含义 | 是否需要处理 |
+|---|---|---|
+| `not_cached_table` | 查询的表不在本实例配置里 | 正常 |
+| `shape_not_matched` | 表已缓存，但查询形状和任何声明都不一致 | 看是否要加声明 |
+| `source_applying`、`source_gate_busy` | 这张表正在写入一批变更 | 正常，持续很高说明写入很频繁 |
+| `stale`、`capture_slow` | 同步落后超过 `max_staleness`，或一轮同步耗时超过它 | 偶发正常（如建缓存期间）；持续出现要排查 |
+| `forward_epoch`、`forward_during_capture`、`active_forward`、`upstream_inflight` | 经本服务转发了可能是写入的语句，等下一轮同步追上 | 正常；持续出现说明应用经本服务执行了大量非缓存语句 |
+| `uncertain_upstream`、`table_failed`、`engine_failed` | 上游结果不确定、这张表失败或整个运行时 fail-closed | 需要处理 |
+| `unsafe_session` | 请求带有事务、非默认角色、未知的会话字段或请求头 | 看应用的会话用法（JDBC 兼容时要重点检查） |
+| `upquery_timeout` | partial 模式冷键回填超过 `upquery_timeout_ms` | 持续出现要调大内存或超时 |
+| `limit_miss`、`local_result_budget`、`local_results_full` | 结果超过单次行数或字节上限，或同时打开的本地结果太多 | 看查询返回的行数 |
+
+**事件日志：** 表失败（`table_sync_failed`、`table_recovery_failed`，附带 `retry_in_secs`）、恢复成功（`table_recovered`，附带恢复方式）、
+缓存 DDL（`cache_ddl`）、全局 fail-closed（`engine_failed_closed`）、启动监听（`listening`）和退出（`stopped`），
+每条一行 JSON，同时写到 stderr（journald 或 `docker logs` 能看到）和 `runs/<启动时间>/events.jsonl`。
 
 建议告警：
 - 任一表 `failed` 持续非空（短暂非空是正在自动恢复）；
-- 进程频繁重启；
+- 进程频繁重启，或出现 `engine_failed_closed` 事件；
 - `last_sync_age_ms` 持续超过 `max_staleness`；
+- `forward_reasons` 里需要处理的原因持续增长；
 - 进程 RSS 接近容器上限。
 
 ## 7. 资源与限制

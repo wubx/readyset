@@ -1,0 +1,3313 @@
+{
+  "passed": false,
+  "checks": 182,
+  "attempts": 6,
+  "cases": [
+    {
+      "passed": true,
+      "mode": "full",
+      "fault": "rejects_requests",
+      "databases": [
+        "readyset_gateway_isolation_0ebbe2d1cc58_a",
+        "readyset_gateway_isolation_0ebbe2d1cc58_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "A stopped before its domain fault",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "A fails closed (not ready)",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend with upstream bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B new cache local during A fault",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed during A fault",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A recovered in-process",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local equals Databend after self-recovery",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B never failed",
+          "actual": null,
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "SIGTERM exit after A fault",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "A recovery after restart",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "B resumed after restart",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_0ebbe2d1cc58_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "after restart local equals Databend: SELECT id,val FROM readyset_gateway_isolation_0ebb",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_0ebbe2d1cc58_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "after restart local equals Databend: SELECT id,label FROM readyset_gateway_isolation_0e",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A rows after restart",
+          "actual": "200004",
+          "expected": "200004",
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_0ebbe2d1cc58_a.items": 0,
+            "readyset_gateway_isolation_0ebbe2d1cc58_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:32983/",
+          "event": "targets",
+          "utc": 1794835633.846894
+        },
+        {
+          "action": "return(0)",
+          "event": "failpoint",
+          "utc": 1794835634.565603
+        },
+        {
+          "seconds": 0.014,
+          "reason": "sync failure: source failed closed",
+          "event": "a_failed",
+          "utc": 1794835634.6653624
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794835636.2716963
+        },
+        {
+          "seconds": 42.475,
+          "recovery": "resumed",
+          "event": "a_self_recovery",
+          "utc": 1794835679.1793008
+        },
+        {
+          "readyset_gateway_isolation_0ebbe2d1cc58_a.items": "resumed",
+          "readyset_gateway_isolation_0ebbe2d1cc58_b.items": "resumed",
+          "event": "restart_recovery",
+          "utc": 1794835681.4484022
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794835681.6879284
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794835681.6881998
+        }
+      ],
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "passed": false,
+      "mode": "full",
+      "fault": "transient_crash",
+      "databases": [
+        "readyset_gateway_isolation_6bca3af9866f_a",
+        "readyset_gateway_isolation_6bca3af9866f_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_6bca3af9866f_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_6bca3af9866f_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_6bca3af9866f_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_6bca3af9866f_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: 1*return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_6bca3af9866f_a.items": 0,
+            "readyset_gateway_isolation_6bca3af9866f_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:45059/",
+          "event": "targets",
+          "utc": 1794835684.363586
+        },
+        {
+          "action": "1*return(0)",
+          "event": "failpoint",
+          "utc": 1794835684.6679292
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794835774.7307374
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794835774.8577614
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794835774.8580444
+        }
+      ],
+      "error": "Traceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 298, in run\n    self.isolated_phase()\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 174, in isolated_phase\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 109, in wait\n    raise TimeoutError(what + ': ' + json.dumps(self.health())[:3000])\nTimeoutError: A fail closed: {\"all_tables_ready\": true, \"cache\": {\"allocated_bytes\": 183475840, \"base_tables\": 2, \"durability\": \"native_sync_wal\", \"failed\": false, \"hit_queries\": 2, \"materialization\": \"full\", \"memory_limit_bytes\": null, \"miss_keys\": 0, \"native_server_instances\": 1, \"readers\": [{\"eviction_epoch\": 0, \"key_slots\": 200004, \"name\": \"a_bag\"}, {\"eviction_epoch\": 0, \"key_slots\": 3, \"name\": \"b_id\"}], \"replay_timeouts\": 0, \"upquery_timeout_ms\": 10000}, \"checkpoint\": null, \"counters\": {\"cache_ddl\": 2, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 2, \"sync_batches\": 1108}, \"engine_mode\": \"shared\", \"engine_pid\": 53997, \"failed\": null, \"fault_injection\": true, \"generation\": \"rs_di6bca3af9866f_c51d678529a8\", \"inflight\": 0, \"instance_id\": \"di6bca3af9866f\", \"mode\": \"production\", \"ready\": true, \"rows\": 200007, \"single_process\": true, \"tables\": [{\"applying\": false, \"checkpoint\": 546, \"counters\": {\"cache_ddl\": 0, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 0, \"sync_batches\": 546}, \"failed\": null, \"last_batch\": {\"cancelled\": 0, \"changes\": 400008, \"committed\": true, \"deletes\": 200004, \"finish\": {\"cancelled\": 0, \"checkpoint\": 9, \"deletes\": 200004, \"inserts\": 200004, \"ok\": true}, \"inserts\": 200004, \"sequence\": 9, \"total_ms\": 2181.372584}, \"last_sync_age_ms\": 87, \"phase\": \"online\", \"ready\": true, \"rows\": 200004, \"snapshot\": {\"attempt\": 1, \"previous_failure\": null, \"recovery\": \"created\", \"rows\": 200004, \"total_secs\": 0.59994614}, \"stream\": \"readyset_gateway_isolation_6bca3af9866f_a.readyset_di6bca3af9866f_items\", \"syncing\": false, \"table\": \"readyset_gateway_isolation_6bca3af9866f_a.items\", \"unavailable\": null}, {\"applying\": false, \"checkpoint\": 562, \"counters\": {\"cache_ddl\": 0, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 0, \"sync_batches\": 562}, \"failed\": null, \"last_batch\": {\"cancelled\": 0, \"changes\": 6, \"committed\": true, \"deletes\": 3, \"finish\": {\"cancelled\": 0, \"checkpoint\": 9, \"deletes\": 3, \"inserts\": 3, \"ok\": true}, \"inserts\": 3, \"sequence\": 9, \"total_ms\": 145.181681}, \"last_sync_age_ms\": 138, \"phase\": \"online\", \"ready\": true, \"rows\": 3, \"snapshot\": {\"attempt\": 1, \"previous_failure\": null, \"recovery\": \"created\", \"rows\": 3, \"total_secs\": 0.283348276}, \"stream\": \"readyset_gateway_isolation_6bca3af9866f_b.readyset_di6bca3af9866f_items\", \"syncing\": false, \"table\": \"readyset_gateway_isolation_6bca3af9866f_b.items\", \"unavailable\": null}], \"uncertain_upstream\": false}\n",
+      "attempt": 1
+    },
+    {
+      "passed": false,
+      "mode": "full",
+      "fault": "transient_crash",
+      "databases": [
+        "readyset_gateway_isolation_62aead21348c_a",
+        "readyset_gateway_isolation_62aead21348c_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_62aead21348c_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_62aead21348c_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_62aead21348c_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_62aead21348c_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: 1*return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_62aead21348c_a.items": 0,
+            "readyset_gateway_isolation_62aead21348c_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:42041/",
+          "event": "targets",
+          "utc": 1794835777.6373732
+        },
+        {
+          "action": "1*return(0)",
+          "event": "failpoint",
+          "utc": 1794835778.004875
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794835868.0794637
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794835868.2073472
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794835868.2075653
+        }
+      ],
+      "error": "Traceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 298, in run\n    self.isolated_phase()\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 174, in isolated_phase\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 109, in wait\n    raise TimeoutError(what + ': ' + json.dumps(self.health())[:3000])\nTimeoutError: A fail closed: {\"all_tables_ready\": true, \"cache\": {\"allocated_bytes\": 175150848, \"base_tables\": 2, \"durability\": \"native_sync_wal\", \"failed\": false, \"hit_queries\": 2, \"materialization\": \"full\", \"memory_limit_bytes\": null, \"miss_keys\": 0, \"native_server_instances\": 1, \"readers\": [{\"eviction_epoch\": 0, \"key_slots\": 3, \"name\": \"b_id\"}, {\"eviction_epoch\": 0, \"key_slots\": 200004, \"name\": \"a_bag\"}], \"replay_timeouts\": 0, \"upquery_timeout_ms\": 10000}, \"checkpoint\": null, \"counters\": {\"cache_ddl\": 2, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 2, \"sync_batches\": 1107}, \"engine_mode\": \"shared\", \"engine_pid\": 64300, \"failed\": null, \"fault_injection\": true, \"generation\": \"rs_di62aead21348c_73e2295cce35\", \"inflight\": 0, \"instance_id\": \"di62aead21348c\", \"mode\": \"production\", \"ready\": true, \"rows\": 200007, \"single_process\": true, \"tables\": [{\"applying\": false, \"checkpoint\": 546, \"counters\": {\"cache_ddl\": 0, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 0, \"sync_batches\": 546}, \"failed\": null, \"last_batch\": {\"cancelled\": 0, \"changes\": 400008, \"committed\": true, \"deletes\": 200004, \"finish\": {\"cancelled\": 0, \"checkpoint\": 9, \"deletes\": 200004, \"inserts\": 200004, \"ok\": true}, \"inserts\": 200004, \"sequence\": 9, \"total_ms\": 2059.467174}, \"last_sync_age_ms\": 151, \"phase\": \"online\", \"ready\": true, \"rows\": 200004, \"snapshot\": {\"attempt\": 1, \"previous_failure\": null, \"recovery\": \"created\", \"rows\": 200004, \"total_secs\": 0.646064822}, \"stream\": \"readyset_gateway_isolation_62aead21348c_a.readyset_di62aead21348c_items\", \"syncing\": false, \"table\": \"readyset_gateway_isolation_62aead21348c_a.items\", \"unavailable\": null}, {\"applying\": false, \"checkpoint\": 561, \"counters\": {\"cache_ddl\": 0, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 0, \"sync_batches\": 561}, \"failed\": null, \"last_batch\": {\"cancelled\": 0, \"changes\": 6, \"committed\": true, \"deletes\": 3, \"finish\": {\"cancelled\": 0, \"checkpoint\": 9, \"deletes\": 3, \"inserts\": 3, \"ok\": true}, \"inserts\": 3, \"sequence\": 9, \"total_ms\": 131.826455}, \"last_sync_age_ms\": 210, \"phase\": \"online\", \"ready\": true, \"rows\": 3, \"snapshot\": {\"attempt\": 1, \"previous_failure\": null, \"recovery\": \"created\", \"rows\": 3, \"total_secs\": 0.286272691}, \"stream\": \"readyset_gateway_isolation_62aead21348c_b.readyset_di62aead21348c_items\", \"syncing\": true, \"table\": \"readyset_gateway_isolation_62aead21348c_b.items\", \"unavailable\": null}], \"uncertain_upstream\": false}\n",
+      "attempt": 2
+    },
+    {
+      "passed": false,
+      "mode": "full",
+      "fault": "transient_crash",
+      "databases": [
+        "readyset_gateway_isolation_9ac2cb71e54d_a",
+        "readyset_gateway_isolation_9ac2cb71e54d_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_9ac2cb71e54d_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_9ac2cb71e54d_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_9ac2cb71e54d_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_9ac2cb71e54d_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: 1*return(0)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_9ac2cb71e54d_a.items": 0,
+            "readyset_gateway_isolation_9ac2cb71e54d_b.items": 1
+          },
+          "native_http": "http://127.0.0.1:32947/",
+          "event": "targets",
+          "utc": 1794835870.8592217
+        },
+        {
+          "action": "1*return(0)",
+          "event": "failpoint",
+          "utc": 1794835871.2217371
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794835961.2944243
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794835961.372032
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794835961.3722491
+        }
+      ],
+      "error": "Traceback (most recent call last):\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 298, in run\n    self.isolated_phase()\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 174, in isolated_phase\n    a_failed = self.wait(lambda: self.states()[self.a]['failed'], self.args.a_fail_timeout, 'A fail closed')\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/vmbox/readyset-single-binary/readyset-databend/poc/domain_isolation_verify.py\", line 109, in wait\n    raise TimeoutError(what + ': ' + json.dumps(self.health())[:3000])\nTimeoutError: A fail closed: {\"all_tables_ready\": true, \"cache\": {\"allocated_bytes\": 183223120, \"base_tables\": 2, \"durability\": \"native_sync_wal\", \"failed\": false, \"hit_queries\": 2, \"materialization\": \"full\", \"memory_limit_bytes\": null, \"miss_keys\": 0, \"native_server_instances\": 1, \"readers\": [{\"eviction_epoch\": 0, \"key_slots\": 200004, \"name\": \"a_bag\"}, {\"eviction_epoch\": 0, \"key_slots\": 3, \"name\": \"b_id\"}], \"replay_timeouts\": 0, \"upquery_timeout_ms\": 10000}, \"checkpoint\": null, \"counters\": {\"cache_ddl\": 2, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 2, \"sync_batches\": 1099}, \"engine_mode\": \"shared\", \"engine_pid\": 9490, \"failed\": null, \"fault_injection\": true, \"generation\": \"rs_di9ac2cb71e54d_d200d0afe1d4\", \"inflight\": 0, \"instance_id\": \"di9ac2cb71e54d\", \"mode\": \"production\", \"ready\": true, \"rows\": 200007, \"single_process\": true, \"tables\": [{\"applying\": false, \"checkpoint\": 542, \"counters\": {\"cache_ddl\": 0, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 0, \"sync_batches\": 542}, \"failed\": null, \"last_batch\": {\"cancelled\": 0, \"changes\": 400008, \"committed\": true, \"deletes\": 200004, \"finish\": {\"cancelled\": 0, \"checkpoint\": 8, \"deletes\": 200004, \"inserts\": 200004, \"ok\": true}, \"inserts\": 200004, \"sequence\": 8, \"total_ms\": 2141.034842}, \"last_sync_age_ms\": 171, \"phase\": \"online\", \"ready\": true, \"rows\": 200004, \"snapshot\": {\"attempt\": 1, \"previous_failure\": null, \"recovery\": \"created\", \"rows\": 200004, \"total_secs\": 0.681636641}, \"stream\": \"readyset_gateway_isolation_9ac2cb71e54d_a.readyset_di9ac2cb71e54d_items\", \"syncing\": true, \"table\": \"readyset_gateway_isolation_9ac2cb71e54d_a.items\", \"unavailable\": null}, {\"applying\": false, \"checkpoint\": 557, \"counters\": {\"cache_ddl\": 0, \"databend\": 0, \"empty_local\": 0, \"forward_reasons\": {}, \"readyset\": 0, \"sync_batches\": 557}, \"failed\": null, \"last_batch\": {\"cancelled\": 0, \"changes\": 6, \"committed\": true, \"deletes\": 3, \"finish\": {\"cancelled\": 0, \"checkpoint\": 9, \"deletes\": 3, \"inserts\": 3, \"ok\": true}, \"inserts\": 3, \"sequence\": 9, \"total_ms\": 135.088267}, \"last_sync_age_ms\": 69, \"phase\": \"online\", \"ready\": true, \"rows\": 3, \"snapshot\": {\"attempt\": 1, \"previous_failure\": null, \"recovery\": \"created\", \"rows\": 3, \"total_secs\": 0.255734742}, \"stream\": \"readyset_gateway_isolation_9ac2cb71e54d_b.readyset_di9ac2cb71e54d_items\", \"syncing\": false, \"table\": \"readyset_gateway_isolation_9ac2cb71e54d_b.items\", \"unavailable\": null}], \"uncertain_upstream\": false}\n",
+      "attempt": 3
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "rejects_requests",
+      "databases": [
+        "readyset_gateway_isolation_211e0e447f27_a",
+        "readyset_gateway_isolation_211e0e447f27_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "A stopped before its domain fault",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: return(1)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "A fails closed (not ready)",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend with upstream bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B new cache local during A fault",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed during A fault",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A recovered in-process",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local equals Databend after self-recovery",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B never failed",
+          "actual": null,
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "SIGTERM exit after A fault",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "A recovery after restart",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "B resumed after restart",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_211e0e447f27_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "after restart local equals Databend: SELECT id,val FROM readyset_gateway_isolation_211e",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_211e0e447f27_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "after restart local equals Databend: SELECT id,label FROM readyset_gateway_isolation_21",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A rows after restart",
+          "actual": "200004",
+          "expected": "200004",
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_211e0e447f27_a.items": 1,
+            "readyset_gateway_isolation_211e0e447f27_b.items": 0
+          },
+          "native_http": "http://127.0.0.1:37949/",
+          "event": "targets",
+          "utc": 1794835963.604583
+        },
+        {
+          "action": "return(1)",
+          "event": "failpoint",
+          "utc": 1794835964.2269292
+        },
+        {
+          "seconds": 0.016,
+          "reason": "sync failure: injected table failure",
+          "event": "a_failed",
+          "utc": 1794835964.329754
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794835966.034769
+        },
+        {
+          "seconds": 42.476,
+          "recovery": "resumed",
+          "event": "a_self_recovery",
+          "utc": 1794836008.9624758
+        },
+        {
+          "readyset_gateway_isolation_211e0e447f27_a.items": "resumed",
+          "readyset_gateway_isolation_211e0e447f27_b.items": "resumed",
+          "event": "restart_recovery",
+          "utc": 1794836010.4213502
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794836010.5755181
+        },
+        {
+          "domain_failed": 0,
+          "controller_recovery": 0,
+          "event": "native_log",
+          "utc": 1794836010.5757039
+        }
+      ],
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "transient_crash",
+      "databases": [
+        "readyset_gateway_isolation_7620b83e539a_a",
+        "readyset_gateway_isolation_7620b83e539a_b"
+      ],
+      "checks": [
+        {
+          "name": "query HTTP success: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_bag FROM SELECT id,val FROM readyset_gateway_isolation_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id FROM SELECT id,label FROM readyset_gateway_isolation",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local before fault",
+          "actual": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ],
+            [
+              "bag",
+              "old"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-before",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ],
+            [
+              "18446744073709551615",
+              "b-before"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault target discovery",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "A and B have separate native base domains",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: 1*return(1)",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "A fails closed (not ready)",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "A served from Databend with upstream bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-0",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-1",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-1"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-during-2",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_label FROM SELECT id,label FROM readyset_gateway_isolat",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B new cache local during A fault",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ],
+            [
+              "18446744073709551615",
+              "b-during-2"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed during A fault",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "native failpoint accepted: off",
+          "actual": [
+            200,
+            "00000000"
+          ],
+          "expected": [
+            200,
+            "00000000"
+          ],
+          "passed": true
+        },
+        {
+          "name": "B upstream duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B local fresh duplicate bag b-after",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ],
+            [
+              "18446744073709551615",
+              "b-after"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A recovered in-process",
+          "actual": "rebuilt: interrupted batch was not committed",
+          "expected": "rebuilt: interrupted batch was not committed",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "A local equals Databend after self-recovery",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "B never failed",
+          "actual": null,
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "engine not globally failed",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "SIGTERM exit after A fault",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "name": "A recovery after restart",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "B resumed after restart",
+          "actual": "resumed",
+          "expected": "resumed",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_isolation_7620b83e539a_a.items WHE",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "after restart local equals Databend: SELECT id,val FROM readyset_gateway_isolation_7620",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_isolation_7620b83e539a_b.items W",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "after restart local equals Databend: SELECT id,label FROM readyset_gateway_isolation_76",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ],
+            [
+              "18446744073709551615",
+              "b-restart"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A rows after restart",
+          "actual": "200004",
+          "expected": "200004",
+          "passed": true
+        },
+        {
+          "name": "native replica of A really exited",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "controller ran native domain recovery",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "native recovery succeeded (no controller failure)",
+          "actual": 0,
+          "expected": 0,
+          "passed": true
+        }
+      ],
+      "events": [
+        {
+          "base_domains": {
+            "readyset_gateway_isolation_7620b83e539a_a.items": 1,
+            "readyset_gateway_isolation_7620b83e539a_b.items": 0
+          },
+          "native_http": "http://127.0.0.1:45063/",
+          "event": "targets",
+          "utc": 1794836012.5226412
+        },
+        {
+          "action": "1*return(1)",
+          "event": "failpoint",
+          "utc": 1794836012.8938682
+        },
+        {
+          "seconds": 0.094,
+          "reason": "sync failure: Failed to manipulate table rs_source_1b2f3e18022e6bfb2657bed0: Error during RPC (Table::input): Client was dropped: Error during RPC (Table::input): Client was dropped: Client was dropped",
+          "event": "a_failed",
+          "utc": 1794836012.9877017
+        },
+        {
+          "action": "off",
+          "event": "failpoint",
+          "utc": 1794836014.6212146
+        },
+        {
+          "seconds": 46.413,
+          "recovery": "rebuilt: interrupted batch was not committed",
+          "event": "a_self_recovery",
+          "utc": 1794836061.484299
+        },
+        {
+          "readyset_gateway_isolation_7620b83e539a_a.items": "resumed",
+          "readyset_gateway_isolation_7620b83e539a_b.items": "resumed",
+          "event": "restart_recovery",
+          "utc": 1794836062.9580238
+        },
+        {
+          "code": 0,
+          "event": "shutdown",
+          "utc": 1794836063.109345
+        },
+        {
+          "domain_failed": 1,
+          "controller_recovery": 1,
+          "event": "native_log",
+          "utc": 1794836063.1095219
+        }
+      ],
+      "error": null,
+      "attempt": 1
+    }
+  ]
+}

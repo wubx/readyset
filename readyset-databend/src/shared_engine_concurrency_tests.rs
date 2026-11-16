@@ -128,12 +128,24 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
                 .await
         });
         tokio::time::timeout(Duration::from_secs(5), async {
-            while engine.migrations.try_read().is_ok() {
+            while engine.src("a.items").migration.try_read().is_ok() {
                 tokio::task::yield_now().await;
             }
         })
         .await
         .unwrap();
+        assert!(!migration.is_finished());
+        // The queued migration is A's only: B's batches neither wait for it nor delay it.
+        // A timeout here is a regression to an instance-wide migration lock.
+        let b = tokio::time::timeout(Duration::from_secs(5), engine.begin_batch("b.items", 4))
+            .await
+            .expect("B's batch must not wait for A's cache DDL")
+            .unwrap();
+        b.finish().await.unwrap();
+        assert!(matches!(
+            engine.query(bq, "b").await.unwrap(),
+            ReadOutcome::Matched { .. }
+        ));
         assert!(!migration.is_finished());
         migration.abort();
         assert!(migration.await.unwrap_err().is_cancelled());
@@ -156,7 +168,7 @@ async fn independent_native_wal_batches_and_same_source_ordering() {
         drop(abandoned);
         tokio::time::timeout(Duration::from_secs(5), async {
             engine
-                .begin_batch("b.items", 4)
+                .begin_batch("b.items", 5)
                 .await
                 .unwrap()
                 .finish()

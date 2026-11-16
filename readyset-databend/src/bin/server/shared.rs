@@ -50,6 +50,7 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
     } else {
         None
     };
+    let events = Journal::open(&s.run_dir.join("events.jsonl"))?;
     let app = Arc::new(App {
         s,
         auth,
@@ -60,10 +61,12 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
         default_role: StdMutex::new(None),
         state: StdMutex::new(RouteState::default()),
         results: StdMutex::new(HashMap::new()),
+        finalized: StdMutex::new(Finalized::default()),
         passive: StdMutex::new(HashMap::new()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),
         routes_journal,
+        events,
         stop,
     });
     // HTTP starts immediately: until a table is ready its reads go to Databend, so a long
@@ -124,35 +127,52 @@ async fn table_worker(
         }
         attempt += 1;
         let mut capture = new_capture();
-        let healthy_since = match recover(&app, &engine, &id, &mut capture, attempt).await {
-            Ok(()) => Some(Instant::now()),
-            Err(e) => {
-                app.fail_source(&id, format!("recovery failed (attempt {attempt}): {e:#}"));
-                None
-            }
-        };
-        if healthy_since.is_some() {
-            loop {
-                tokio::select! { _=tokio::time::sleep(app.s.interval)=>{}, _=stop.changed()=>{} }
-                if *stop.borrow() {
-                    return;
-                }
-                // An external fail-closed (fault injection, engine) also ends this run.
-                let failed = app.tables[&id].lock().failed.clone();
-                let result = match failed {
-                    Some(reason) => Err(anyhow::anyhow!("{reason}")),
-                    None => sync_source(&app, &engine, &id, &mut capture).await,
+        let (healthy_since, event, reason) = match recover(
+            &app,
+            &engine,
+            &id,
+            &mut capture,
+            attempt,
+        )
+        .await
+        {
+            Ok(()) => {
+                let snapshot = app.tables[&id].lock().snapshot.clone();
+                app.event("table_recovered", Some(&id), snapshot);
+                let healthy_since = Instant::now();
+                let reason = loop {
+                    tokio::select! { _=tokio::time::sleep(app.s.interval)=>{}, _=stop.changed()=>{} }
+                    if *stop.borrow() {
+                        return;
+                    }
+                    // An external fail-closed (fault injection, engine) also ends this run.
+                    let failed = app.tables[&id].lock().failed.clone();
+                    let result = match failed {
+                        Some(reason) => Err(anyhow::anyhow!("{reason}")),
+                        None => sync_source(&app, &engine, &id, &mut capture).await,
+                    };
+                    if let Err(e) = result {
+                        break format!("sync failure: {e:#}");
+                    }
                 };
-                if let Err(e) = result {
-                    app.fail_source(&id, format!("sync failure: {e:#}"));
-                    break;
-                }
+                (Some(healthy_since), "table_sync_failed", reason)
             }
-        }
+            Err(e) => (
+                None,
+                "table_recovery_failed",
+                format!("recovery failed (attempt {attempt}): {e:#}"),
+            ),
+        };
+        app.fail_source(&id, reason.clone());
         app.write_status("status.json");
         if healthy_since.is_some_and(|t| t.elapsed() >= HEALTHY_RESET) {
             backoff = app.s.retry_backoff;
         }
+        app.event(
+            event,
+            Some(&id),
+            json!({"attempt": attempt, "reason": reason, "retry_in_secs": backoff.as_secs_f64()}),
+        );
         tokio::select! { _=tokio::time::sleep(backoff)=>{}, _=stop.changed()=>{} }
         backoff = (backoff * 2).min(RETRY_MAX);
     }
@@ -262,13 +282,20 @@ async fn sync_source(
             state.last_batch = summary;
         }
         state.forward_epoch = epoch;
-        state.ready = state.failed.is_none()
-            && clean
-            && epoch == global.forward_epoch
-            && global.active_forwards == 0
-            && global.inflight.is_empty()
-            && !global.uncertain
-            && started.elapsed() <= app.s.max_staleness;
+        state.not_ready = if state.failed.is_some() {
+            Some("table_failed")
+        } else if !clean || epoch != global.forward_epoch || global.active_forwards != 0 {
+            Some("forward_during_capture")
+        } else if !global.inflight.is_empty() {
+            Some("upstream_inflight")
+        } else if global.uncertain {
+            Some("uncertain_upstream")
+        } else if started.elapsed() > app.s.max_staleness {
+            Some("capture_slow")
+        } else {
+            None
+        };
+        state.ready = state.not_ready.is_none();
     }
     app.write_status("status.json");
     Ok(())

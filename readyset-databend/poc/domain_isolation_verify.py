@@ -256,9 +256,23 @@ upquery_timeout_ms = 10000
                 # Large A batch (every row deleted+inserted, many 10K Table RPCs). Once A is
                 # applying, a ONE-SHOT native failpoint makes A's next Input packet fail: the
                 # replica exits and ReadySet's controller recovers the domain on its own.
+                # fail's one-shot count is consumed by the next packet of ANY domain (also the
+                # idle Spin packets of other domains) and fails it only if that packet is A's
+                # (readyset-dataflow Domain::check_failpoint). So re-arm while A is still
+                # applying, and disarm as soon as A failed: no pending one-shot may hit B later.
                 self.source.sql("UPDATE " + self.a + " SET val='new'")
                 self.wait(lambda: self.states()[self.a]['applying'], 120, 'A applying')
-                self.failpoint('1*return(' + str(domains[self.a]) + ')')
+                arms = 0
+                until = time.monotonic() + 60
+                while time.monotonic() < until:
+                    self.failpoint('1*return(' + str(domains[self.a]) + ')')
+                    arms += 1
+                    time.sleep(.02)
+                    state = self.states()[self.a]
+                    if state['failed'] or not state['applying']:
+                        break
+                self.failpoint('off')
+                self.note('one_shot_arms', arms=arms)
             else:
                 # A is first stopped by the adapter, so no adapter traffic reaches A's domain.
                 # Then A's native domain rejects every packet/request, for as long as needed.
