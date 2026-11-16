@@ -14,7 +14,7 @@
 //! replica after each batch, and is bounded to small tables with unique ids.
 use std::collections::{BTreeMap, HashSet};
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use readyset_client::Table;
 
@@ -33,6 +33,26 @@ pub const MAX_KNOWN_KEYS: usize = 12000;
 const MAX_BATCH: usize = 10000;
 /// Rows per HTTP page for snapshots and production batches (about 9 MB of JSON).
 pub const PAGE_ROWS: usize = 50000;
+/// Retries of one read-only admin metadata statement after a transient upstream failure
+/// (backoff 0.4s, 0.8s, 1.6s).
+const ADMIN_READ_RETRIES: u32 = 3;
+
+/// An upstream failure that says nothing about the statement itself, so a read-only one
+/// may simply be repeated: transport errors (connect, reset, timeout), HTTP 5xx / 429, and
+/// Databend's internal connection error (code 2001, e.g. query node <-> meta broken pipe).
+/// SQL errors (bad statement, missing object, permission) are never transient.
+pub fn transient_upstream(error: &anyhow::Error) -> bool {
+    if error
+        .chain()
+        .any(|cause| cause.downcast_ref::<reqwest::Error>().is_some())
+    {
+        return true;
+    }
+    let text = format!("{error:#}");
+    text.contains("Databend HTTP 5")
+        || text.contains("Databend HTTP 429")
+        || text.contains("\"code\":2001")
+}
 
 #[derive(Clone, Debug)]
 pub struct Names {
@@ -221,8 +241,7 @@ impl Replicator {
             .split_once('.')
             .context("qualified stream name")?;
         let rows = self
-            .admin
-            .sql(&format!(
+            .admin_read(&format!(
                 "SELECT stream_id, table_version, invalid_reason FROM system.streams WHERE database = '{database}' AND name = '{stream}'"
             ))
             .await?;
@@ -585,10 +604,9 @@ impl Replicator {
     }
 
     pub async fn check_schema(&mut self) -> Result<()> {
-        if let Some(schema) = &self.schema {
+        if let Some(schema) = self.schema.clone() {
             let rows = self
-                .admin
-                .sql(&format!("DESCRIBE {}", schema.qualified()))
+                .admin_read(&format!("DESCRIBE {}", schema.qualified()))
                 .await?;
             let current = SourceSchema::from_describe(&schema.database, &schema.table, &rows)?;
             ensure!(
@@ -597,6 +615,24 @@ impl Replicator {
             );
         }
         Ok(())
+    }
+
+    /// A read-only metadata statement on the autocommit admin session (never the capture
+    /// transaction), so repeating it cannot change anything. A transient upstream failure
+    /// (see [`transient_upstream`]) is retried with backoff instead of failing the table:
+    /// failing a batch after its rows were applied locally forces a full table rebuild.
+    async fn admin_read(&mut self, sql: &str) -> Result<Vec<Vec<Value>>> {
+        let mut attempt = 0u32;
+        loop {
+            match self.admin.sql(sql).await {
+                Ok(rows) => return Ok(rows),
+                Err(e) if attempt < ADMIN_READ_RETRIES && transient_upstream(&e) => {
+                    attempt += 1;
+                    tokio::time::sleep(Duration::from_millis(200 << attempt)).await;
+                }
+                Err(e) => return Err(e),
+            }
+        }
     }
 
     /// Production mode: the batch is applied in ReadySet; advance the Stream. Only call this

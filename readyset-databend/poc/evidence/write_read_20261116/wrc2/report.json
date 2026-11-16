@@ -1,0 +1,332 @@
+{
+  "db": "readyset_gateway_wrc_20261116_222244_095937",
+  "args": {
+    "endpoint": "http://192.168.191.96:8000",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-base3-release",
+    "loadtest": "/data1/vmbox/databend-loadtest",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/wrc2",
+    "rows": 10000000,
+    "port": 18103,
+    "memory_limit_mb": 2048,
+    "query": "ext",
+    "concurrency": [
+      64,
+      256
+    ],
+    "duration": 40,
+    "tick": 1.0,
+    "insert_rows": 1000,
+    "update_rows": 100,
+    "pids": [
+      "databend=16747",
+      "rustfs=50700"
+    ],
+    "confirm_create": true
+  },
+  "phases": [
+    {
+      "phase": "reads-c64",
+      "concurrency": 64,
+      "reads": {
+        "qps": 10920.0,
+        "p50_ms": 5.954,
+        "p99_ms": 10.176,
+        "p999_ms": 24.284,
+        "max_ms": 83.593,
+        "ok": 436798,
+        "failed": 0,
+        "routes": {
+          "readyset": 436798
+        },
+        "errors": {}
+      },
+      "cpu": {
+        "host_busy_pct": 34.4,
+        "cores": {
+          "readyset": 7.78,
+          "databend": 0.04,
+          "rustfs": 0.01,
+          "loadtest": 1.96
+        }
+      },
+      "forward_reasons": {},
+      "a_samples": {
+        "samples": 222,
+        "unavailable_share": 0.0,
+        "reasons": {},
+        "max_last_sync_age_ms": 1213
+      },
+      "batches": {
+        "distinct": 0,
+        "p50_ms": null,
+        "p90_ms": null,
+        "max_ms": null
+      }
+    },
+    {
+      "phase": "writes-only-c64",
+      "concurrency": 0,
+      "cpu": {
+        "host_busy_pct": 39.5,
+        "cores": {
+          "readyset": 0.07,
+          "databend": 9.89,
+          "rustfs": 1.31,
+          "loadtest": 0.0
+        }
+      },
+      "forward_reasons": {
+        "source_applying": 72
+      },
+      "a_samples": {
+        "samples": 221,
+        "unavailable_share": 0.1357,
+        "reasons": {
+          "source_applying": 30
+        },
+        "max_last_sync_age_ms": 7760
+      },
+      "batches": {
+        "distinct": 10,
+        "p50_ms": 3313.92,
+        "p90_ms": 3445.471,
+        "max_ms": 3445.471236
+      },
+      "writes": {
+        "rounds": 14,
+        "errors": 0,
+        "insert_ms_p50": 75,
+        "update_ms_p50": 3472,
+        "probes": 14,
+        "cut_by_phase_end": 2,
+        "never_visible": 0,
+        "visible_p50_secs": 5.1,
+        "visible_p99_secs": 7.626,
+        "visible_max_secs": 7.625873804092407
+      }
+    },
+    {
+      "phase": "reads+writes-c64",
+      "concurrency": 64,
+      "reads": {
+        "qps": 6787.9,
+        "p50_ms": 6.875,
+        "p99_ms": 29.281,
+        "p999_ms": 800.906,
+        "max_ms": 1223.181,
+        "ok": 271516,
+        "failed": 0,
+        "routes": {
+          "databend": 630,
+          "readyset": 270886
+        },
+        "errors": {}
+      },
+      "cpu": {
+        "host_busy_pct": 69.9,
+        "cores": {
+          "readyset": 5.57,
+          "databend": 10.78,
+          "rustfs": 2.4,
+          "loadtest": 1.51
+        }
+      },
+      "forward_reasons": {
+        "source_applying": 585,
+        "stale": 118
+      },
+      "a_samples": {
+        "samples": 217,
+        "unavailable_share": 0.0737,
+        "reasons": {
+          "source_applying": 12,
+          "stale": 4
+        },
+        "max_last_sync_age_ms": 10442
+      },
+      "batches": {
+        "distinct": 10,
+        "p50_ms": 4434.727,
+        "p90_ms": 5121.58,
+        "max_ms": 5121.579575
+      },
+      "writes": {
+        "rounds": 8,
+        "errors": 0,
+        "insert_ms_p50": 652,
+        "update_ms_p50": 5136,
+        "probes": 8,
+        "cut_by_phase_end": 1,
+        "never_visible": 0,
+        "visible_p50_secs": 5.151,
+        "visible_p99_secs": 5.942,
+        "visible_max_secs": 5.942059278488159
+      }
+    },
+    {
+      "phase": "reads-c256",
+      "concurrency": 256,
+      "reads": {
+        "qps": 10838.9,
+        "p50_ms": 17.233,
+        "p99_ms": 93.653,
+        "p999_ms": 205.979,
+        "max_ms": 422.623,
+        "ok": 433554,
+        "failed": 0,
+        "routes": {
+          "readyset": 433554
+        },
+        "errors": {}
+      },
+      "cpu": {
+        "host_busy_pct": 62.5,
+        "cores": {
+          "readyset": 7.13,
+          "databend": 0.92,
+          "rustfs": 0.46,
+          "loadtest": 1.83
+        }
+      },
+      "forward_reasons": {
+        "source_applying": 569
+      },
+      "a_samples": {
+        "samples": 218,
+        "unavailable_share": 0.0046,
+        "reasons": {
+          "source_applying": 1
+        },
+        "max_last_sync_age_ms": 8542
+      },
+      "batches": {
+        "distinct": 2,
+        "p50_ms": 4141.503,
+        "p90_ms": 4141.503,
+        "max_ms": 4141.503154
+      }
+    },
+    {
+      "phase": "writes-only-c256",
+      "concurrency": 0,
+      "cpu": {
+        "host_busy_pct": 97.4,
+        "cores": {
+          "readyset": 0.06,
+          "databend": 8.47,
+          "rustfs": 0.73,
+          "loadtest": 0.0
+        }
+      },
+      "forward_reasons": {
+        "source_applying": 7,
+        "stale": 4
+      },
+      "a_samples": {
+        "samples": 219,
+        "unavailable_share": 0.21,
+        "reasons": {
+          "source_applying": 28,
+          "stale": 18
+        },
+        "max_last_sync_age_ms": 12746
+      },
+      "batches": {
+        "distinct": 7,
+        "p50_ms": 5817.142,
+        "p90_ms": 6037.404,
+        "max_ms": 6037.404381
+      },
+      "writes": {
+        "rounds": 7,
+        "errors": 0,
+        "insert_ms_p50": 181,
+        "update_ms_p50": 6365,
+        "probes": 7,
+        "cut_by_phase_end": 1,
+        "never_visible": 0,
+        "visible_p50_secs": 6.723,
+        "visible_p99_secs": 7.2,
+        "visible_max_secs": 7.1995038986206055
+      }
+    },
+    {
+      "phase": "reads+writes-c256",
+      "concurrency": 256,
+      "reads": {
+        "qps": 150.2,
+        "p50_ms": 15.136,
+        "p99_ms": 8670.059,
+        "p999_ms": 8790.467,
+        "max_ms": 8865.657,
+        "ok": 6006,
+        "failed": 0,
+        "routes": {
+          "databend": 1147,
+          "readyset": 4859
+        },
+        "errors": {}
+      },
+      "cpu": {
+        "host_busy_pct": 98.3,
+        "cores": {
+          "readyset": 0.39,
+          "databend": 7.51,
+          "rustfs": 2.63,
+          "loadtest": 0.09
+        }
+      },
+      "forward_reasons": {
+        "capture_slow": 319,
+        "source_applying": 243,
+        "stale": 1255
+      },
+      "a_samples": {
+        "samples": 250,
+        "unavailable_share": 0.888,
+        "reasons": {
+          "stale": 128,
+          "source_applying": 29,
+          "capture_slow": 65
+        },
+        "max_last_sync_age_ms": 24423
+      },
+      "batches": {
+        "distinct": 5,
+        "p50_ms": 9076.951,
+        "p90_ms": 14463.766,
+        "max_ms": 14463.766132
+      },
+      "writes": {
+        "rounds": 4,
+        "errors": 0,
+        "insert_ms_p50": 5945,
+        "update_ms_p50": 14325,
+        "probes": 4,
+        "cut_by_phase_end": 3,
+        "never_visible": 0,
+        "visible_p50_secs": 8.893,
+        "visible_p99_secs": 8.893,
+        "visible_max_secs": 8.893068790435791
+      }
+    }
+  ],
+  "load_secs": 39.7,
+  "final": {
+    "local_rows": 10033000,
+    "databend_rows": 10033000,
+    "ready": true,
+    "failed": null,
+    "sample_keys": 40,
+    "sample_mismatch_or_forwarded": 0,
+    "cache": {
+      "allocated_bytes": 2140201960,
+      "hit_queries": 61452,
+      "miss_keys": 1205575,
+      "replay_timeouts": 0
+    }
+  },
+  "memory": "2840276 kB",
+  "exit_code": 0
+}

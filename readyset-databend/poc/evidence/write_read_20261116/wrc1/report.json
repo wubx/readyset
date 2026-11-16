@@ -1,0 +1,274 @@
+{
+  "db": "readyset_gateway_wrc_20261116_214529_e39071",
+  "args": {
+    "endpoint": "http://192.168.191.96:8000",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-base2-release",
+    "loadtest": "/data1/vmbox/databend-loadtest",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/wrc1",
+    "rows": 10000000,
+    "port": 18103,
+    "memory_limit_mb": 2048,
+    "query": "ext",
+    "concurrency": [
+      64,
+      256
+    ],
+    "duration": 40,
+    "tick": 1.0,
+    "insert_rows": 1000,
+    "update_rows": 100,
+    "confirm_create": true
+  },
+  "phases": [
+    {
+      "phase": "reads-c64",
+      "concurrency": 64,
+      "reads": {
+        "qps": 10699.4,
+        "p50_ms": 6.1,
+        "p99_ms": 10.481,
+        "p999_ms": 18.493,
+        "max_ms": 75.82,
+        "ok": 427974,
+        "failed": 0,
+        "routes": {
+          "readyset": 427974
+        },
+        "errors": {}
+      },
+      "forward_reasons": {},
+      "a_samples": {
+        "samples": 222,
+        "unavailable_share": 0.0,
+        "reasons": {},
+        "max_last_sync_age_ms": 1175
+      },
+      "batches": {
+        "distinct": 0,
+        "p50_ms": null,
+        "p90_ms": null,
+        "max_ms": null
+      }
+    },
+    {
+      "phase": "writes-only-c64",
+      "concurrency": 0,
+      "forward_reasons": {
+        "source_applying": 44
+      },
+      "a_samples": {
+        "samples": 221,
+        "unavailable_share": 0.0995,
+        "reasons": {
+          "source_applying": 22
+        },
+        "max_last_sync_age_ms": 7920
+      },
+      "batches": {
+        "distinct": 11,
+        "p50_ms": 3234.669,
+        "p90_ms": 3461.314,
+        "max_ms": 3650.575984
+      },
+      "writes": {
+        "rounds": 13,
+        "errors": 0,
+        "insert_ms_p50": 73,
+        "update_ms_p50": 3559,
+        "probes": 13,
+        "never_visible": 1,
+        "visible_p50_secs": 4.146,
+        "visible_p99_secs": 7.039,
+        "visible_max_secs": 7.0389344692230225
+      }
+    },
+    {
+      "phase": "reads+writes-c64",
+      "concurrency": 64,
+      "reads": {
+        "qps": 6930.9,
+        "p50_ms": 6.876,
+        "p99_ms": 28.013,
+        "p999_ms": 738.38,
+        "max_ms": 1305.557,
+        "ok": 277236,
+        "failed": 0,
+        "routes": {
+          "databend": 533,
+          "readyset": 276703
+        },
+        "errors": {}
+      },
+      "forward_reasons": {
+        "source_applying": 644,
+        "stale": 44
+      },
+      "a_samples": {
+        "samples": 222,
+        "unavailable_share": 0.0856,
+        "reasons": {
+          "source_applying": 16,
+          "stale": 3
+        },
+        "max_last_sync_age_ms": 10277
+      },
+      "batches": {
+        "distinct": 10,
+        "p50_ms": 4556.208,
+        "p90_ms": 4747.855,
+        "max_ms": 4747.854695
+      },
+      "writes": {
+        "rounds": 8,
+        "errors": 0,
+        "insert_ms_p50": 527,
+        "update_ms_p50": 5281,
+        "probes": 8,
+        "never_visible": 1,
+        "visible_p50_secs": 5.257,
+        "visible_p99_secs": 10.688,
+        "visible_max_secs": 10.688209295272827
+      }
+    },
+    {
+      "phase": "reads-c256",
+      "concurrency": 256,
+      "reads": {
+        "qps": 78.2,
+        "p50_ms": 3018.853,
+        "p99_ms": 3240.795,
+        "p999_ms": 3255.28,
+        "max_ms": 3294.77,
+        "ok": 3128,
+        "failed": 0,
+        "routes": {
+          "databend": 3128
+        },
+        "errors": {}
+      },
+      "forward_reasons": {
+        "source_applying": 256,
+        "source_failed": 139,
+        "table_failed": 4366
+      },
+      "a_samples": {
+        "samples": 234,
+        "unavailable_share": 0.9359,
+        "reasons": {
+          "table_failed": 219
+        },
+        "max_last_sync_age_ms": 49194
+      },
+      "batches": {
+        "distinct": 1,
+        "p50_ms": 150.257,
+        "p90_ms": 150.257,
+        "max_ms": 150.257328
+      }
+    },
+    {
+      "phase": "writes-only-c256",
+      "concurrency": 0,
+      "forward_reasons": {
+        "table_failed": 2637
+      },
+      "a_samples": {
+        "samples": 221,
+        "unavailable_share": 1.0,
+        "reasons": {
+          "table_failed": 221
+        },
+        "max_last_sync_age_ms": 95167
+      },
+      "batches": {
+        "distinct": 1,
+        "p50_ms": 150.257,
+        "p90_ms": 150.257,
+        "max_ms": 150.257328
+      },
+      "writes": {
+        "rounds": 13,
+        "errors": 0,
+        "insert_ms_p50": 74,
+        "update_ms_p50": 3327,
+        "probes": 13,
+        "never_visible": 13,
+        "visible_p50_secs": null,
+        "visible_p99_secs": null,
+        "visible_max_secs": null
+      }
+    },
+    {
+      "phase": "reads+writes-c256",
+      "concurrency": 256,
+      "reads": {
+        "qps": 515.6,
+        "p50_ms": 15.865,
+        "p99_ms": 5531.329,
+        "p999_ms": 6045.876,
+        "max_ms": 6145.768,
+        "ok": 20625,
+        "failed": 0,
+        "routes": {
+          "databend": 2200,
+          "readyset": 18425
+        },
+        "errors": {}
+      },
+      "forward_reasons": {
+        "capture_slow": 538,
+        "not_ready": 517,
+        "source_applying": 201,
+        "stale": 1311,
+        "table_failed": 3099
+      },
+      "a_samples": {
+        "samples": 238,
+        "unavailable_share": 0.8866,
+        "reasons": {
+          "table_failed": 20,
+          "not_ready": 40,
+          "source_applying": 24,
+          "capture_slow": 36,
+          "stale": 91
+        },
+        "max_last_sync_age_ms": 109581
+      },
+      "batches": {
+        "distinct": 6,
+        "p50_ms": 8186.074,
+        "p90_ms": 8560.997,
+        "max_ms": 8560.996575000001
+      },
+      "writes": {
+        "rounds": 6,
+        "errors": 2,
+        "insert_ms_p50": 3347,
+        "update_ms_p50": 9821,
+        "probes": 4,
+        "never_visible": 2,
+        "visible_p50_secs": 14.035,
+        "visible_p99_secs": 14.035,
+        "visible_max_secs": 14.035098791122437
+      }
+    }
+  ],
+  "load_secs": 40.2,
+  "final": {
+    "local_rows": 10039000,
+    "databend_rows": 10039000,
+    "ready": true,
+    "failed": null,
+    "sample_keys": 40,
+    "sample_mismatch_or_forwarded": 0,
+    "cache": {
+      "allocated_bytes": 1236205000,
+      "hit_queries": 31258,
+      "miss_keys": 786562,
+      "replay_timeouts": 0
+    }
+  },
+  "memory": "3464384 kB",
+  "exit_code": 0
+}

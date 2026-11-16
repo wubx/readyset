@@ -133,3 +133,101 @@ async fn commit_conflict_stops_capture_without_retrying_transaction_or_sql() {
     assert_eq!(sql.iter().filter(|s| *s == "COMMIT").count(), 1);
     server.abort();
 }
+
+#[test]
+fn only_statement_independent_upstream_failures_are_transient() {
+    let broken_pipe = anyhow::anyhow!(
+        "Databend HTTP 500 Internal Server Error: {{\"error\":{{\"code\":2001,\"message\":\"ConnectionError: broken pipe\"}}}}"
+    );
+    assert!(transient_upstream(&broken_pipe));
+    assert!(transient_upstream(&anyhow::anyhow!(
+        "Databend HTTP 503 Service Unavailable: busy"
+    )));
+    assert!(transient_upstream(&anyhow::anyhow!(
+        "Databend HTTP 429 Too Many Requests: slow down"
+    )));
+    assert!(transient_upstream(&anyhow::anyhow!(
+        "Databend SQL error: {}",
+        json!({"code": 2001, "message": "ConnectionError"})
+    )));
+    // Errors about the statement itself must surface at once, never be retried.
+    assert!(!transient_upstream(&anyhow::anyhow!(
+        "Databend SQL error: {}",
+        json!({"code": 1025, "message": "Unknown table"})
+    )));
+    assert!(!transient_upstream(&anyhow::anyhow!(
+        "Databend HTTP 401 Unauthorized: denied"
+    )));
+    assert!(!transient_upstream(&anyhow::anyhow!(
+        "source schema changed; rebuild this table before resuming capture"
+    )));
+}
+
+/// A DESCRIBE that fails transiently during a batch's schema check is retried on the admin
+/// session, not turned into a table failure (which would force a full rebuild).
+#[tokio::test]
+async fn schema_check_retries_transient_admin_failure() {
+    #[derive(Default)]
+    struct Flaky {
+        describes: Mutex<u32>,
+    }
+    async fn handle(
+        State(f): State<Arc<Flaky>>,
+        Json(body): Json<Value>,
+    ) -> axum::response::Response {
+        use axum::response::IntoResponse;
+        let sql = body["sql"].as_str().unwrap_or_default().to_owned();
+        if sql.starts_with("DESCRIBE") {
+            let mut n = f.describes.lock().unwrap();
+            *n += 1;
+            if *n == 1 {
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    r#"{"error":{"code":2001,"message":"ConnectionError: broken pipe"}}"#,
+                )
+                    .into_response();
+            }
+            return Json(
+                json!({"id":"q2","state":"Succeeded","session":{},"error":null,
+                "data":[["id","BIGINT","NO","",""]],"next_uri":null}),
+            )
+            .into_response();
+        }
+        Json(json!({"id":"q1","state":"Succeeded","session":{},"error":null,"data":[],"next_uri":null}))
+            .into_response()
+    }
+    let flaky = Arc::new(Flaky::default());
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let app = Router::new()
+        .route("/v1/query", post(handle))
+        .fallback(|| async { Json(json!({})) })
+        .with_state(Arc::clone(&flaky));
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let client = |label: &str| {
+        DatabendClient::new(
+            http_client().unwrap(),
+            &origin,
+            &basic_auth("u", "p"),
+            label,
+            None,
+        )
+    };
+    let names = Names::new("db", "t", "inst", "gen");
+    let mut replicator = Replicator::new(names, client("bootstrap"), client("capture"), false);
+    replicator.schema = Some(Arc::new(
+        SourceSchema::from_describe(
+            "db",
+            "t",
+            &[vec![json!("id"), json!("BIGINT"), json!("NO")]],
+        )
+        .unwrap(),
+    ));
+    replicator.check_schema().await.unwrap();
+    assert_eq!(
+        *flaky.describes.lock().unwrap(),
+        2,
+        "one transient failure, one retry"
+    );
+    server.abort();
+}

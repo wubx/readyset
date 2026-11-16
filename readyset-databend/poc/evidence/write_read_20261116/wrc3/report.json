@@ -1,0 +1,190 @@
+{
+  "db": "readyset_gateway_wrc_20261116_223001_516a01",
+  "args": {
+    "endpoint": "http://192.168.191.96:8000",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-base3-release",
+    "loadtest": "/data1/vmbox/databend-loadtest",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/wrc3",
+    "rows": 10000000,
+    "port": 18103,
+    "memory_limit_mb": 2048,
+    "query": "ext",
+    "concurrency": [
+      256
+    ],
+    "duration": 40,
+    "tick": 1.0,
+    "insert_rows": 1000,
+    "update_rows": 100,
+    "pids": [
+      "databend=16747",
+      "rustfs=50700"
+    ],
+    "confirm_create": true
+  },
+  "phases": [
+    {
+      "phase": "reads-c256",
+      "concurrency": 256,
+      "reads": {
+        "qps": 15217.9,
+        "p50_ms": 16.995,
+        "p99_ms": 25.537,
+        "p999_ms": 58.766,
+        "max_ms": 125.804,
+        "ok": 608714,
+        "failed": 0,
+        "routes": {
+          "readyset": 608714
+        },
+        "errors": {}
+      },
+      "cpu": {
+        "host_busy_pct": 43.8,
+        "cores": {
+          "readyset": 9.29,
+          "databend": 0.04,
+          "rustfs": 0.01,
+          "loadtest": 2.41
+        }
+      },
+      "forward_reasons": {},
+      "a_samples": {
+        "samples": 221,
+        "unavailable_share": 0.0,
+        "reasons": {},
+        "max_last_sync_age_ms": 1597
+      },
+      "batches": {
+        "distinct": 0,
+        "p50_ms": null,
+        "p90_ms": null,
+        "max_ms": null
+      }
+    },
+    {
+      "phase": "writes-only-c256",
+      "concurrency": 0,
+      "cpu": {
+        "host_busy_pct": 42.3,
+        "cores": {
+          "readyset": 0.07,
+          "databend": 9.94,
+          "rustfs": 1.29,
+          "loadtest": 0.0
+        }
+      },
+      "forward_reasons": {
+        "source_applying": 45
+      },
+      "a_samples": {
+        "samples": 221,
+        "unavailable_share": 0.0814,
+        "reasons": {
+          "source_applying": 18
+        },
+        "max_last_sync_age_ms": 7827
+      },
+      "batches": {
+        "distinct": 10,
+        "p50_ms": 3392.995,
+        "p90_ms": 3572.139,
+        "max_ms": 3572.139454
+      },
+      "writes": {
+        "rounds": 13,
+        "errors": 0,
+        "insert_ms_p50": 75,
+        "update_ms_p50": 3581,
+        "probes": 13,
+        "cut_by_phase_end": 2,
+        "never_visible": 0,
+        "visible_p50_secs": 5.113,
+        "visible_p99_secs": 7.579,
+        "visible_max_secs": 7.579415559768677
+      }
+    },
+    {
+      "phase": "reads+writes-c256",
+      "concurrency": 256,
+      "reads": {
+        "qps": 2210.2,
+        "p50_ms": 22.275,
+        "p99_ms": 3561.803,
+        "p999_ms": 5391.09,
+        "max_ms": 6008.224,
+        "ok": 88409,
+        "failed": 2464,
+        "routes": {
+          "databend": 2187,
+          "readyset": 86222
+        },
+        "errors": {
+          "http 500": 1557,
+          "http 500 on page": 10,
+          "query error 2001": 897
+        }
+      },
+      "cpu": {
+        "host_busy_pct": 71.1,
+        "cores": {
+          "readyset": 2.27,
+          "databend": 11.54,
+          "rustfs": 4.88,
+          "loadtest": 0.59
+        }
+      },
+      "forward_reasons": {
+        "source_applying": 2216,
+        "stale": 3509,
+        "table_failed": 755
+      },
+      "a_samples": {
+        "samples": 238,
+        "unavailable_share": 0.6345,
+        "reasons": {
+          "source_applying": 18,
+          "stale": 71,
+          "table_failed": 62
+        },
+        "max_last_sync_age_ms": 24487
+      },
+      "batches": {
+        "distinct": 5,
+        "p50_ms": 6011.181,
+        "p90_ms": 8339.451,
+        "max_ms": 8339.451035
+      },
+      "writes": {
+        "rounds": 5,
+        "errors": 0,
+        "insert_ms_p50": 3014,
+        "update_ms_p50": 6765,
+        "probes": 5,
+        "cut_by_phase_end": 2,
+        "never_visible": 0,
+        "visible_p50_secs": 14.819,
+        "visible_p99_secs": 15.343,
+        "visible_max_secs": 15.343148946762085
+      }
+    }
+  ],
+  "load_secs": 39.7,
+  "final": {
+    "local_rows": 10016000,
+    "databend_rows": 10018000,
+    "ready": false,
+    "failed": "sync failure: rollback also failed: Databend HTTP 500 Internal Server Error: {\"error\":{\"code\":2001,\"message\":\"ConnectionError:  source: tonic::status::Status: code: 'Unknown error', message: \\\"transport error\\\", source: tonic::transport::Error(Transport, hyper::Error(Io, Custom { kind: BrokenPipe, error: \\\"stream closed because of a broken pipe\\\" })); source: transport error; source: connection error; source: stream closed because of a broken pipe\"}}: Databend HTTP 500 Internal Server Error: {\"error\":{\"code\":2001,\"message\":\"ConnectionError:  source: tonic::status::Status: code: 'Some resource has been exhausted', message: \\\"h2 protocol error: http2 error\\\", source: tonic::transport::Error(Transport, hyper::Error(Http2, Error { kind: GoAway(b\\\"too_many_data_frames\\\", ENHANCE_YOUR_CALM, Remote) })); source: transport error; source: http2 error; source: connection error received: detected excessive load generating behavior (b\\\"too_many_data_frames\\\")\"}}",
+    "sample_keys": 40,
+    "sample_mismatch_or_forwarded": 40,
+    "cache": {
+      "allocated_bytes": 1203970848,
+      "hit_queries": 28847,
+      "miss_keys": 737796,
+      "replay_timeouts": 0
+    }
+  },
+  "memory": "2429856 kB",
+  "exit_code": 0
+}
