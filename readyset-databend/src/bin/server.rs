@@ -33,7 +33,16 @@ use tokio::sync::watch;
 use readyset_alloc as _;
 
 const MAX_BODY: usize = 1024 * 1024;
+/// Driver session endpoints forwarded as-is (see `App::session_endpoint`). `/v1/session/refresh`
+/// is not among them: it needs a Databend session token, which the gateway never hands out.
+const SESSION_PATHS: [&str; 3] = [
+    "/v1/session/login",
+    "/v1/session/heartbeat",
+    "/v1/session/logout",
+];
 const MAX_LOCAL_QUERY_BYTES: usize = 8 * 1024 * 1024;
+/// Rows per page of a local result, whatever page size the client asks for.
+const MAX_LOCAL_PAGE_ROWS: usize = 10_000;
 const MAX_LOCAL_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const CONTROL_RESPONSE_RESERVE: usize = 2 * 1024 * 1024;
 const MAX_LOCAL_RESULTS: usize = 2048;
@@ -43,6 +52,9 @@ const LOCAL_RESULT_TTL: Duration = Duration::from_secs(60);
 /// so a repeated lifecycle call never reaches Databend and the ID is not reused locally.
 /// Generated `rs_local_` IDs need no memory: their prefix alone keeps them local.
 const MAX_FINALIZED: usize = 65_536;
+/// Bounds of `Drained` (fully delivered local results kept for a late lifecycle call).
+const MAX_DRAINED: usize = 65_536;
+const MAX_DRAINED_BYTES: usize = 64 * 1024 * 1024;
 
 #[derive(Parser)]
 #[command(about = "Databend HTTP front end with an in-process ReadySet replica (phase 1)")]
@@ -509,6 +521,69 @@ struct Stored {
 /// concurrently open local queries, never the local read rate.
 type LocalResults = HashMap<String, (Instant, Stored)>;
 
+/// Whether serving `page` gives the client the last rows of the result.
+fn last_page(stored: &Stored, page: usize) -> bool {
+    (page + 1) * stored.page_size >= stored.rows.len()
+}
+
+/// Local results whose last page the client already received. databend-jdbc never calls
+/// /final after reading a result to the end (Databend keeps such a query until
+/// `result_timeout_secs`), so these must not hold one of the `MAX_LOCAL_RESULTS` live slots.
+/// They are kept oldest first, for the TTL or until `MAX_DRAINED` entries / `MAX_DRAINED_BYTES`,
+/// so a prompt /final, /kill, state poll or last-page retry is still answered locally.
+#[derive(Default)]
+struct Drained {
+    order: std::collections::VecDeque<(Instant, String)>,
+    entries: HashMap<String, (Instant, Stored)>,
+    bytes: usize,
+}
+
+impl Drained {
+    /// Returns the IDs evicted to stay within bounds.
+    fn insert(&mut self, id: String, expires: Instant, stored: Stored) -> Vec<String> {
+        self.bytes += stored.bytes;
+        self.order.push_back((expires, id.clone()));
+        if let Some((_, old)) = self.entries.insert(id, (expires, stored)) {
+            self.bytes -= old.bytes;
+        }
+        self.prune(Instant::now())
+    }
+
+    fn remove(&mut self, id: &str) -> Option<(Instant, Stored)> {
+        let entry = self.entries.remove(id)?;
+        self.bytes -= entry.1.bytes;
+        Some(entry)
+    }
+
+    fn contains(&self, id: &str) -> bool {
+        self.entries.contains_key(id)
+    }
+
+    /// Drop expired entries, then the oldest while over a bound. `order` may hold stale
+    /// positions of entries already removed; it is bounded too.
+    fn prune(&mut self, now: Instant) -> Vec<String> {
+        let mut evicted = Vec::new();
+        while let Some((expires, _)) = self.order.front() {
+            let over = self.entries.len() > MAX_DRAINED
+                || self.bytes > MAX_DRAINED_BYTES
+                || self.order.len() > 2 * MAX_DRAINED;
+            if !over && *expires > now {
+                break;
+            }
+            let Some((expires, id)) = self.order.pop_front() else {
+                break;
+            };
+            if self.entries.get(&id).is_some_and(|(e, _)| *e == expires)
+                && let Some((_, stored)) = self.entries.remove(&id)
+            {
+                self.bytes -= stored.bytes;
+                evicted.push(id);
+            }
+        }
+        evicted
+    }
+}
+
 /// Bounded FIFO memory of finalized client-chosen local query IDs (see `MAX_FINALIZED`).
 #[derive(Default)]
 struct Finalized {
@@ -556,6 +631,8 @@ struct App {
     results: StdMutex<LocalResults>,
     /// Lock order: `results` before `finalized`.
     finalized: StdMutex<Finalized>,
+    /// Lock order: `results`, then `drained`, then `finalized`.
+    drained: StdMutex<Drained>,
     passive: StdMutex<HashMap<String, Instant>>,
     /// Cache DDL is serialized, like the gateway's single request lock.
     control: tokio::sync::Mutex<()>,
@@ -636,7 +713,12 @@ fn reply(status: StatusCode, body: impl Into<Bytes>, headers: Headers) -> Respon
         HeaderValue::from_static("application/json"),
     );
     for (k, v) in headers {
-        h.insert(k, v);
+        // Several cookies are several Set-Cookie headers; everything else is single-valued.
+        if k == header::SET_COOKIE {
+            h.append(k, v);
+        } else {
+            h.insert(k, v);
+        }
     }
     response
 }
@@ -731,7 +813,7 @@ fn safe_session(body: &Map<String, Value>, default_role: Option<&str>) -> bool {
         Some(Value::Object(s)) => s,
         Some(_) => return false,
     };
-    const ALLOWED: [&str; 8] = [
+    const ALLOWED: [&str; 9] = [
         "database",
         "catalog",
         "settings",
@@ -740,8 +822,15 @@ fn safe_session(body: &Map<String, Value>, default_role: Option<&str>) -> bool {
         "need_keep_alive",
         "role",
         "internal",
+        // databend-jdbc's Connection.setAutoCommit flag. Databend ignores it (a transaction
+        // starts only with an explicit BEGIN, reported in txn_state), so it does not change
+        // what a read sees.
+        "autoCommit",
     ];
     if s.keys().any(|k| !ALLOWED.contains(&k.as_str())) {
+        return false;
+    }
+    if s.get("autoCommit").is_some_and(|v| !v.is_boolean()) {
         return false;
     }
     if let Some(role) = s.get("role")
@@ -783,17 +872,22 @@ fn safe_session(body: &Map<String, Value>, default_role: Option<&str>) -> bool {
     s.get("catalog").is_none_or(|c| c == "default")
         && s.get("settings")
             .is_none_or(|v| v.is_null() || v.as_object().is_some_and(Map::is_empty))
-        && s.get("txn_state").is_none_or(|t| t == "AutoCommit")
+        // databend-jdbc sends `"txn_state": null` before its first reply; Databend reads null
+        // as absent (autocommit).
+        && s.get("txn_state")
+            .is_none_or(|t| t.is_null() || t == "AutoCommit")
         && s.get("need_sticky") != Some(&Value::Bool(true))
         && s.get("need_keep_alive") != Some(&Value::Bool(true))
         && s.get("database").is_none_or(Value::is_string)
-        && pagination.keys().all(|k| {
-            matches!(
-                k.as_str(),
-                "wait_time_secs" | "max_rows_per_page" | "max_rows_in_buffer"
-            )
+        && pagination.iter().all(|(k, v)| match k.as_str() {
+            "wait_time_secs" => small_int(v),
+            // Client buffer/page-size hints (databend-jdbc: 5,000,000 / 10,000). A local
+            // result is bounded by its own limits and pages at most MAX_LOCAL_PAGE_ROWS rows.
+            "max_rows_per_page" | "max_rows_in_buffer" => {
+                v.as_u64().is_some_and(|n| n > 0) && !v.is_f64()
+            }
+            _ => false,
         })
-        && pagination.values().all(small_int)
 }
 
 fn session_database(body: &Map<String, Value>) -> String {
@@ -865,6 +959,31 @@ impl App {
 
     fn results(&self) -> std::sync::MutexGuard<'_, LocalResults> {
         self.results.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    fn drained(&self) -> std::sync::MutexGuard<'_, Drained> {
+        self.drained.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// An evicted client-chosen ID is remembered like a finalized one, so a late lifecycle
+    /// call never reaches Databend and the ID is not reused locally.
+    fn remember_evicted(&self, evicted: Vec<String>) {
+        let ids: Vec<_> = evicted
+            .into_iter()
+            .filter(|id| !id.starts_with("rs_local_"))
+            .collect();
+        if !ids.is_empty() {
+            let mut finalized = self.finalized.lock().unwrap_or_else(|e| e.into_inner());
+            for id in &ids {
+                finalized.insert(id);
+            }
+        }
+    }
+
+    /// Keep a result whose last page the client has received (caller holds `results`).
+    fn park_drained(&self, id: String, expires: Instant, stored: Stored) {
+        let evicted = self.drained().insert(id, expires, stored);
+        self.remember_evicted(evicted);
     }
 
     fn table_available(&self, id: &str) -> bool {
@@ -1064,6 +1183,7 @@ impl App {
     fn local_id(&self, results: &LocalResults, id: &str) -> bool {
         results.contains_key(id)
             || id.starts_with("rs_local_")
+            || self.drained().contains(id)
             || self
                 .finalized
                 .lock()
@@ -1090,6 +1210,7 @@ impl App {
             return Err("invalid query ID".into());
         }
         if results.contains_key(&qid)
+            || self.drained().contains(&qid)
             || self
                 .finalized
                 .lock()
@@ -1172,11 +1293,16 @@ impl App {
             rows,
             page_size: limit("max_rows_per_page")
                 .min(limit("max_rows_in_buffer"))
-                .max(1),
+                .clamp(1, MAX_LOCAL_PAGE_ROWS),
             bytes: size,
         };
         let page = local_page(&stored, &prefix, 0);
-        results.insert(qid, (Instant::now() + LOCAL_RESULT_TTL, stored));
+        let expires = Instant::now() + LOCAL_RESULT_TTL;
+        if last_page(&stored, 0) {
+            self.park_drained(qid, expires, stored);
+        } else {
+            results.insert(qid, (expires, stored));
+        }
         let mut headers = route("readyset");
         headers.push((
             HeaderName::from_static("x-readyset-template"),
@@ -1235,6 +1361,9 @@ impl App {
             };
         }
         let start = path == "/v1/query" && method == Method::POST;
+        if method == Method::POST && SESSION_PATHS.contains(&path) {
+            return self.session_endpoint(&uri, &headers, raw).await;
+        }
         let cycle = lifecycle(path);
         let lifecycle_ok = cycle.as_ref().is_some_and(|(_, kind)| {
             method == Method::GET || (method == Method::POST && matches!(kind, Lifecycle::Kill))
@@ -1278,6 +1407,8 @@ impl App {
         {
             let mut results = self.results();
             results.retain(|_, (expires, _)| *expires > now);
+            let evicted = self.drained().prune(now);
+            self.remember_evicted(evicted);
             if let Some((id, kind)) = &cycle
                 && self.local_id(&results, id)
             {
@@ -1428,33 +1559,40 @@ impl App {
                 route("readyset"),
             )
         };
-        let Some((_, stored)) = results.get(id) else {
-            return not_found("local query expired or finalized");
+        let (live, (expires, stored)) = match results.remove(id) {
+            Some(entry) => (true, entry),
+            None => match self.drained().remove(id) {
+                Some(entry) => (false, entry),
+                None => return not_found("local query expired or finalized"),
+            },
+        };
+        let page = match kind {
+            Lifecycle::Page(number) => match number.parse::<usize>() {
+                Ok(page)
+                    if number.len() <= 10
+                        && number == &page.to_string()
+                        && page >= 1
+                        && page * stored.page_size < stored.rows.len() =>
+                {
+                    Some(page)
+                }
+                _ => None,
+            },
+            _ => Some(0),
+        };
+        let Some(page) = page else {
+            if live {
+                results.insert(id.to_owned(), (expires, stored));
+            } else {
+                self.park_drained(id.to_owned(), expires, stored);
+            }
+            return not_found("local page does not exist");
         };
         let prefix = format!("/v1/query/{id}");
-        let page = match kind {
-            Lifecycle::Page(number) => {
-                if number.len() > 10 {
-                    return not_found("local page does not exist");
-                }
-                let Ok(page) = number.parse::<usize>() else {
-                    return not_found("local page does not exist");
-                };
-                if number != &page.to_string()
-                    || page < 1
-                    || page * stored.page_size >= stored.rows.len()
-                {
-                    return not_found("local page does not exist");
-                }
-                page
-            }
-            _ => 0,
-        };
-        let mut data = local_page(stored, &prefix, page);
+        let mut data = local_page(&stored, &prefix, page);
         if matches!(kind, Lifecycle::Final | Lifecycle::Kill) {
             // Release the result now; only a client-chosen ID is remembered (bounded), so a
             // finalized local ID is never forwarded upstream nor reused locally.
-            results.remove(id);
             if !id.starts_with("rs_local_") {
                 self.finalized
                     .lock()
@@ -1463,6 +1601,10 @@ impl App {
             }
             data["data"] = json!([]);
             data["next_uri"] = Value::Null;
+        } else if !live || (matches!(kind, Lifecycle::Page(_)) && last_page(&stored, page)) {
+            self.park_drained(id.to_owned(), expires, stored);
+        } else {
+            results.insert(id.to_owned(), (expires, stored));
         }
         reply(StatusCode::OK, data.to_string(), route("readyset"))
     }
@@ -1560,6 +1702,68 @@ impl App {
         )
     }
 
+    /// Driver session endpoints: databend-jdbc logs in on connect (and needs the server
+    /// version from the reply), heartbeats while results are open, and logs out on close.
+    /// They run no SQL, so they are forwarded without touching forward tracking. Login never
+    /// issues Databend session tokens through the gateway (clients authenticate to the
+    /// gateway, never to Databend directly) and does not advertise Arrow results, which local
+    /// reads do not serve; the driver then stays on JSON, its default.
+    async fn session_endpoint(
+        &self,
+        uri: &axum::http::Uri,
+        headers: &HeaderMap,
+        raw: Bytes,
+    ) -> Response {
+        let login = uri.path() == "/v1/session/login";
+        let target = if login {
+            "/v1/session/login?disable_session_token=true"
+        } else {
+            uri.path()
+        };
+        let target: axum::http::Uri = match target.parse() {
+            Ok(t) => t,
+            Err(_) => {
+                return reply(StatusCode::BAD_REQUEST, error_body("invalid path"), vec![]);
+            }
+        };
+        let (status, content, mut kept) =
+            match self.forward(&Method::POST, &target, raw, headers).await {
+                Ok(outcome) => outcome,
+                Err(_) => {
+                    return reply(
+                        StatusCode::BAD_GATEWAY,
+                        error_body("gateway/upstream failure"),
+                        vec![],
+                    );
+                }
+            };
+        let content = if login && status.is_success() {
+            match serde_json::from_slice::<Value>(&content) {
+                Ok(Value::Object(mut r)) => {
+                    for k in [
+                        "tokens",
+                        "server_max_arrow_result_version",
+                        "server_arrow_features",
+                    ] {
+                        r.remove(k);
+                    }
+                    Bytes::from(Value::Object(r).to_string())
+                }
+                _ => {
+                    return reply(
+                        StatusCode::BAD_GATEWAY,
+                        error_body("unexpected upstream login response"),
+                        vec![],
+                    );
+                }
+            }
+        } else {
+            content
+        };
+        kept.extend(route("databend"));
+        reply(status, content, kept)
+    }
+
     async fn forward(
         &self,
         method: &Method,
@@ -1575,7 +1779,9 @@ impl App {
             .header(header::CONTENT_TYPE, "application/json")
             .timeout(Duration::from_secs(15));
         for (name, value) in headers {
-            if name.as_str().starts_with("x-databend-") {
+            // Databend cookie sessions (databend-jdbc sends `cookie_enabled`) keep server-side
+            // session state such as temporary tables; pass them through both ways.
+            if name.as_str().starts_with("x-databend-") || *name == header::COOKIE {
                 request = request.header(name, value);
             }
         }
@@ -1587,7 +1793,11 @@ impl App {
         let kept: Headers = response
             .headers()
             .iter()
-            .filter(|(k, _)| k.as_str().starts_with("x-databend-") || *k == header::CONTENT_TYPE)
+            .filter(|(k, _)| {
+                k.as_str().starts_with("x-databend-")
+                    || *k == header::CONTENT_TYPE
+                    || *k == header::SET_COOKIE
+            })
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
         let body = bounded_body(response, MAX_RESPONSE).await?;
@@ -2048,6 +2258,7 @@ async fn run(s: Settings) -> Result<()> {
         state: StdMutex::new(state),
         results: StdMutex::new(HashMap::new()),
         finalized: StdMutex::new(Finalized::default()),
+        drained: StdMutex::new(Drained::default()),
         passive: StdMutex::new(HashMap::new()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),

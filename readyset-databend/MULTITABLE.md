@@ -8,7 +8,7 @@ TOML `replication.tables` 已接入共享运行时，单项列表也使用真实
 旧 CLI `--database/--table`、`--declarations` 和 oracle 路径保留，不与 TOML 列表混用。
 
 支持静态配置来源和动态公共缓存，重启复用本地持久化数据（见 [USAGE.md](USAGE.md#5-重启与持久化)）；
-不支持在线 ADD/DROP TABLE、自动 DDL 迁移、本地 JOIN 或 JDBC。
+不支持在线 ADD/DROP TABLE、自动 DDL 迁移或本地 JOIN。databend-jdbc 0.4.8 已支持（见 USAGE.md §4.1）。
 仍是实验组件，不以功能接通代替生产 SLA、最小权限或 cgroup/RSS 硬限测试。
 
 ## schema 与来源绑定

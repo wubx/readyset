@@ -62,6 +62,7 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
         state: StdMutex::new(RouteState::default()),
         results: StdMutex::new(HashMap::new()),
         finalized: StdMutex::new(Finalized::default()),
+        drained: StdMutex::new(Drained::default()),
         passive: StdMutex::new(HashMap::new()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),

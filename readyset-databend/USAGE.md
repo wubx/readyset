@@ -237,7 +237,7 @@ curl -s -u "readyset:$DATABEND_PASSWORD" http://127.0.0.1:8001/health \
 
 ## 4. 声明和使用缓存
 
-用同一个账号，通过 bendsql、Python driver 或 HTTP 连接本服务：
+用同一个账号，通过 bendsql、Python driver、databend-jdbc 或 HTTP 连接本服务：
 
 ```sql
 CREATE CACHE orders_by_id FROM
@@ -262,6 +262,24 @@ DROP CACHE customers_by_region;
   这段时间目标表的数据超过 `max_staleness` 后，它的读请求转发给 Databend，结果正确，只是变慢；建完后自动恢复本地读。
 - 大表建缓存建议放在低峰期。每次执行都会在 `events.jsonl` 里记录一条 `cache_ddl` 事件，包含耗时和结果。
 - 只要表已完成首次加载且没有失败，就可以建缓存，不要求此刻数据新鲜，所以可以连续执行多条 `CREATE CACHE`。
+
+### 4.1 用 databend-jdbc 连接（已验证 0.4.8）
+
+- **连接串：** `jdbc:databend://<本服务地址>:<端口>/<库名>`，用户名和密码用本服务配置的同一个账号。
+- **登录：** 驱动连接时调用 `/v1/session/login`，本服务转给 Databend，把版本号返回给驱动。
+  - 本服务不签发 Databend session token。
+  - 本服务不声明支持 Arrow 结果，所以即使配置了 `query_result_format=arrow`，驱动也用 JSON，点查照样本地返回。
+- **PreparedStatement：** 驱动在客户端把 `?` 替换成字面量，本地匹配和直接写字面量一样。
+- **写入和其他 SQL：** 写入、DDL 和未缓存的查询都转发给 Databend。同一连接写完立刻读，能读到自己的写入：这些读会转发，直到下一轮同步追上。
+  - **注意：** 这种转发目前对**所有会话、所有表**生效。转发的语句执行期间，以及之后直到每张表的下一轮同步，所有读都转发。
+    实测同一地址上每秒写一次，本地读就降到 0（`poc/evidence/jdbc_20261117/`）。写入频繁的应用，写入请直连 Databend。
+- **事务：**
+  - `setAutoCommit(false)` 只是驱动里的一个标志，不开启事务，每条语句照常自动提交，和直连 Databend 一样。
+  - 要用事务，必须显式执行 `BEGIN`，然后 `commit()` 或 `rollback()`。事务里的读全部转发。
+- **临时表：** Databend 的 Cookie 会话原样透传。一个会话建了临时表以后，这个会话的读全部转发，即使临时表和缓存的表同名也不会读错。
+- **批量插入：** `addBatch`/`executeBatch` 通过 presign 直接上传到对象存储，客户端要能访问对象存储，和直连 Databend 一样。
+- **连接复用：** 每新建一个连接都要经本服务向 Databend 登录一次。实测"新建连接 + 一次点查"约 10–25 ms；复用连接时点查 p50 约 5–11 ms。不用连接池时，建议每个线程长期持有一个连接。
+- **结果释放：** 驱动读完结果后不调用 `/final`（Databend 自己靠 `result_timeout_secs` 回收）。本服务把已读完的本地结果单独存放，有上限且会淘汰最早的，所以不占用同时打开的本地结果名额（2,048 个）。
 
 ## 5. 重启与持久化
 
@@ -341,7 +359,7 @@ DROP CACHE customers_by_region;
 | `stale`、`capture_slow` | 同步落后超过 `max_staleness`，或一轮同步耗时超过它 | 偶发正常（如建缓存期间）；持续出现要排查 |
 | `forward_epoch`、`forward_during_capture`、`active_forward`、`upstream_inflight` | 经本服务转发了可能是写入的语句，等下一轮同步追上 | 正常；持续出现说明应用经本服务执行了大量非缓存语句 |
 | `uncertain_upstream`、`table_failed`、`engine_failed` | 上游结果不确定、这张表失败或整个运行时 fail-closed | 需要处理 |
-| `unsafe_session` | 请求带有事务、非默认角色、未知的会话字段或请求头 | 看应用的会话用法（JDBC 兼容时要重点检查） |
+| `unsafe_session` | 请求在事务中、使用非默认角色、会话有临时表，或带有未知的会话字段或请求头 | 看应用的会话用法 |
 | `upquery_timeout` | partial 模式冷键回填超过 `upquery_timeout_ms` | 持续出现要调大内存或超时 |
 | `limit_miss`、`local_result_budget`、`local_results_full` | 结果超过单次行数或字节上限，或同时打开的本地结果太多 | 看查询返回的行数 |
 
@@ -366,4 +384,4 @@ DROP CACHE customers_by_region;
 - **部署：** 单进程、单节点，不提供高可用。只有一个配置账号，没有多用户权限隔离。
 - **数据安全：** 本地存储目录保存业务表的明文完整副本，要限制目录权限，必要时使用加密卷。
 - **DDL：** schema 变化在每轮同步前后检查，不是原子的 DDL 协调；检测到变化后这张表停止同步，随后按新结构自动重新加载。
-- **客户端：** JDBC 暂不能连接；bendsql 和 Python driver 可用。
+- **客户端：** bendsql、Python driver 和 databend-jdbc 0.4.8 可用（JDBC 见 §4.1）。
