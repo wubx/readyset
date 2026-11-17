@@ -51,9 +51,9 @@ fn route_state_reports_first_unavailable_reason() {
     assert_eq!(st.unavailable(now, max), Some("capture_slow"));
     st.active_forwards = 1;
     assert_eq!(st.unavailable(now, max), Some("active_forward"));
-    st.inflight.insert("q".into());
+    st.inflight.insert("q".into(), now);
     assert_eq!(st.unavailable(now, max), Some("upstream_inflight"));
-    st.uncertain = true;
+    st.mark_unresolved("u1");
     assert_eq!(st.unavailable(now, max), Some("uncertain_upstream"));
     st.failed = Some("x".into());
     assert_eq!(st.unavailable(now, max), Some("table_failed"));
@@ -244,4 +244,51 @@ fn cookie_session_reads_only_a_well_formed_session_id() {
     assert_eq!(cookie_session(&headers("session_id=a b")), None);
     assert_eq!(cookie_session(&headers("session_id=a; session_id=b")), None);
     assert_eq!(cookie_session(&HeaderMap::new()), None);
+}
+
+#[test]
+fn unresolved_outcomes_are_tracked_by_id_and_bounded() {
+    let mut st = RouteState::default();
+    assert!(!st.uncertain());
+    st.mark_unresolved("rs_fwd_1");
+    st.mark_unresolved("rs_fwd_1");
+    assert!(st.uncertain() && st.unresolved.len() == 1 && st.counters.unresolved == 2);
+    st.unresolved.remove("rs_fwd_1");
+    assert!(!st.uncertain());
+    // An ID that cannot be quoted into the resolver's SQL is never resolved.
+    st.mark_unresolved("x'; DROP TABLE t; --");
+    assert!(st.uncertain() && st.unresolved.is_empty() && st.unresolved_overflow);
+    let mut st = RouteState::default();
+    for i in 0..MAX_INFLIGHT {
+        st.mark_unresolved(&format!("q{i}"));
+    }
+    assert!(!st.unresolved_overflow);
+    st.mark_unresolved("one-more");
+    assert!(st.unresolved_overflow);
+}
+
+#[test]
+fn only_a_failed_start_without_a_query_is_rejected_before_start() {
+    // Databend's reply to `{"sql":"SELECT 1","session":{"role":"no_such_role"}}`.
+    let rejected = json!({"id": "", "session_id": null, "node_id": "", "state": "Failed",
+        "error": {"code": 2206, "message": "Invalid role no_such_role"}});
+    assert!(rejected_before_start(&rejected));
+    let ran = json!({"id": "q1", "state": "Failed", "error": {"code": 1065, "message": "x"}});
+    assert!(!rejected_before_start(&ran));
+    assert!(!rejected_before_start(
+        &json!({"id": "", "state": "Running", "error": null})
+    ));
+    assert!(!rejected_before_start(
+        &json!({"id": "", "state": "Failed", "error": null})
+    ));
+    assert!(!rejected_before_start(&json!({})));
+}
+
+#[test]
+fn query_ids_are_restricted_to_quotable_characters() {
+    assert!(valid_query_id("d38e17ccb25e41dcacbff9e39d023a2d"));
+    assert!(valid_query_id("rs_fwd_0123-abc"));
+    assert!(!valid_query_id(""));
+    assert!(!valid_query_id("a'b"));
+    assert!(!valid_query_id(&"a".repeat(129)));
 }

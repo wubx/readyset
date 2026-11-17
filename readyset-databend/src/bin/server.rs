@@ -48,6 +48,9 @@ const MAX_LOCAL_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const CONTROL_RESPONSE_RESERVE: usize = 2 * 1024 * 1024;
 const MAX_LOCAL_RESULTS: usize = 2048;
 const MAX_INFLIGHT: usize = 2048;
+/// Minimum time an unknown forwarded outcome waits before `resolve_upstream` checks it.
+const UNRESOLVED_QUIET: Duration = Duration::from_secs(10);
+const RESOLVE_EVERY: Duration = Duration::from_secs(2);
 const LOCAL_RESULT_TTL: Duration = Duration::from_secs(60);
 /// Client-chosen query IDs (x-databend-query-id) remembered after a local /final or /kill,
 /// so a repeated lifecycle call never reaches Databend and the ID is not reused locally.
@@ -144,6 +147,9 @@ struct CacheSection {
 struct UpstreamSection {
     url: Option<String>,
     user: Option<String>,
+    /// Longest wait for Databend's answer to one forwarded request (default 30s). Longer
+    /// statements still run, but their outcome is unknown until `resolve_upstream`.
+    forward_timeout: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -183,6 +189,7 @@ struct Settings {
     interval: Duration,
     max_staleness: Duration,
     retry_backoff: Duration,
+    forward_timeout: Duration,
     route_journal: bool,
     fault_injection: bool,
     oracle: bool,
@@ -246,7 +253,13 @@ fn settings(cli: Cli) -> Result<Settings> {
     let upstream = file.upstream.unwrap_or(UpstreamSection {
         url: None,
         user: None,
+        forward_timeout: None,
     });
+    let forward_timeout = duration(upstream.forward_timeout.as_deref().unwrap_or("30s"))?;
+    ensure!(
+        forward_timeout >= Duration::from_secs(5) && forward_timeout <= Duration::from_secs(600),
+        "upstream.forward_timeout must be within 5s..600s"
+    );
     let replication = file.replication.unwrap_or(ReplicationSection {
         tables: None,
         poll_interval: None,
@@ -427,6 +440,7 @@ fn settings(cli: Cli) -> Result<Settings> {
         interval,
         max_staleness,
         retry_backoff,
+        forward_timeout,
         route_journal: cli.route_journal,
         fault_injection: cli.enable_fault_injection,
         oracle: cli.oracle,
@@ -458,6 +472,10 @@ struct Counters {
     empty_local: u64,
     sync_batches: u64,
     cache_ddl: u64,
+    /// Forwarded statements whose outcome could not be confirmed (see `mark_unresolved`).
+    unresolved: u64,
+    /// Of those, resolved after Databend no longer ran them (see `resolve_upstream`).
+    resolved: u64,
     /// Why each query start was not answered locally (diagnostic; see `count_forward`).
     forward_reasons: std::collections::BTreeMap<&'static str, u64>,
 }
@@ -468,10 +486,14 @@ struct RouteState {
     /// Last completed capture covered every forwarded statement (see `sync_once`).
     ready: bool,
     failed: Option<String>,
-    /// An upstream outcome is unknown (possible unobserved write): local reads stay off.
-    uncertain: bool,
-    /// Upstream queries reported Running/Starting, not yet terminal.
-    inflight: HashSet<String>,
+    /// Forwarded statements whose outcome is unknown (possible unobserved write), by query
+    /// ID, with when that became known. Local reads stay off until `resolve_upstream` sees
+    /// none of them running in Databend any more (see `UNRESOLVED_QUIET`).
+    unresolved: HashMap<String, Instant>,
+    /// More unknown outcomes than `MAX_INFLIGHT`: no longer tracked, never resolved.
+    unresolved_overflow: bool,
+    /// Upstream queries reported Running/Starting, not yet terminal, with since when.
+    inflight: HashMap<String, Instant>,
     active_forwards: usize,
     /// Bumped whenever a forwarded statement starts or reaches a terminal state.
     forward_epoch: u64,
@@ -554,11 +576,25 @@ impl WriteFence {
 }
 
 impl RouteState {
+    fn uncertain(&self) -> bool {
+        !self.unresolved.is_empty() || self.unresolved_overflow
+    }
+    /// Record a forwarded statement whose outcome is unknown.
+    fn mark_unresolved(&mut self, id: &str) {
+        self.counters.unresolved += 1;
+        if self.unresolved.len() >= MAX_INFLIGHT || !valid_query_id(id) {
+            self.unresolved_overflow = true;
+        } else {
+            self.unresolved
+                .entry(id.to_owned())
+                .or_insert_with(Instant::now);
+        }
+    }
     /// First reason local reads are off, or `None` when they are allowed.
     fn unavailable(&self, now: Instant, max_staleness: Duration) -> Option<&'static str> {
         if self.failed.is_some() {
             Some("table_failed")
-        } else if self.uncertain {
+        } else if self.uncertain() {
             Some("uncertain_upstream")
         } else if !self.inflight.is_empty() {
             Some("upstream_inflight")
@@ -1128,7 +1164,7 @@ impl App {
         let state = table.lock();
         if global.failed.is_some() {
             Some("engine_failed")
-        } else if global.uncertain {
+        } else if global.uncertain() {
             Some("uncertain_upstream")
         } else if global.active_forwards != 0 {
             Some("active_forward")
@@ -1263,7 +1299,7 @@ impl App {
             });
             return json!({"generation":self.names.generation,"instance_id":self.s.instance_id,
                 "ready":tables.iter().any(|t| t["ready"]==true),"all_tables_ready":tables.iter().all(|t| t["ready"]==true),
-                "failed":failed,"uncertain_upstream":global.uncertain,"inflight":global.inflight.len(),
+                "failed":failed,"uncertain_upstream":global.uncertain(),"unresolved_upstream":global.unresolved.len(),"inflight":global.inflight.len(),
                 "checkpoint":if tables.len()==1 {tables[0]["checkpoint"].clone()} else {Value::Null},
                 "rows":tables.iter().filter_map(|t| t["rows"].as_u64()).sum::<u64>(),"tables":tables,
                 "counters":global.counters,"cache":self.engine.cache_status(),"mode":"production","engine_mode":"shared",
@@ -1276,7 +1312,8 @@ impl App {
             "checkpoint": st.sequence,
             "ready": st.available(Instant::now(), self.s.max_staleness),
             "failed": st.failed,
-            "uncertain_upstream": st.uncertain,
+            "uncertain_upstream": st.uncertain(),
+            "unresolved_upstream": st.unresolved.len(),
             "inflight": st.inflight.len(),
             "rows": st.rows,
             "counters": st.counters,
@@ -1925,7 +1962,7 @@ impl App {
             .request(method.clone(), format!("{}{target}", self.s.endpoint))
             .header(header::AUTHORIZATION, &self.auth)
             .header(header::CONTENT_TYPE, "application/json")
-            .timeout(Duration::from_secs(15));
+            .timeout(self.s.forward_timeout);
         for (name, value) in headers {
             // Databend cookie sessions (databend-jdbc sends `cookie_enabled`) keep server-side
             // session state such as temporary tables; pass them through both ways.
@@ -1964,6 +2001,35 @@ impl App {
         start: Option<Scope>,
         cycle: Option<(String, Lifecycle)>,
     ) -> Response {
+        // Every tracked start carries a query ID, so an unknown outcome can be resolved later
+        // by looking for it in Databend (`resolve_upstream`). Client IDs are kept.
+        let mut headers = headers.clone();
+        let request_id = if start.is_some() {
+            match headers.get("x-databend-query-id").map(|v| v.to_str()) {
+                Some(Ok(id)) if valid_query_id(id) => Some(id.to_owned()),
+                Some(_) => {
+                    return reply(
+                        StatusCode::BAD_REQUEST,
+                        error_body("invalid query ID"),
+                        vec![],
+                    );
+                }
+                None => {
+                    let id = format!("rs_fwd_{}", uuid::Uuid::new_v4().simple());
+                    headers.insert(
+                        HeaderName::from_static("x-databend-query-id"),
+                        HeaderValue::from_str(&id).expect("ascii query id"),
+                    );
+                    Some(id)
+                }
+            }
+        } else {
+            None
+        };
+        // The ID an unknown outcome is recorded under: the start's, or the lifecycle path's.
+        let subject = request_id
+            .clone()
+            .or_else(|| cycle.as_ref().map(|(id, _)| id.clone()));
         // A write known to change one cached table fences that table for its session only;
         // every other forwarded start fences all tables for all sessions.
         let table_write = match &start {
@@ -1981,7 +2047,7 @@ impl App {
             st.active_forwards += 1;
             st.forward_epoch += 1;
         }
-        let outcome = self.forward(&method, uri, raw, headers).await;
+        let outcome = self.forward(&method, uri, raw, &headers).await;
         let mut st = self.lock();
         if global_start {
             st.active_forwards -= 1;
@@ -2004,23 +2070,28 @@ impl App {
                             let qid = r["id"].as_str().filter(|q| !q.is_empty());
                             let state = r["state"].as_str().unwrap_or_default();
                             if start
+                                && !rejected_before_start(&r)
                                 && (qid.is_none()
                                     || !matches!(
                                         state,
                                         "Running" | "Starting" | "Succeeded" | "Failed"
                                     ))
+                                && let Some(id) = &request_id
                             {
-                                st.uncertain = true;
+                                st.mark_unresolved(id);
                             }
                             if let Some(qid) = qid {
                                 if matches!(state, "Running" | "Starting") {
                                     if st.inflight.len() >= MAX_INFLIGHT {
-                                        st.uncertain = true;
+                                        st.mark_unresolved(qid);
                                     } else {
-                                        st.inflight.insert(qid.to_owned());
+                                        st.inflight
+                                            .entry(qid.to_owned())
+                                            .or_insert_with(Instant::now);
                                     }
                                 } else if matches!(state, "Succeeded" | "Failed") {
-                                    let tracked = st.inflight.remove(qid);
+                                    let tracked = st.inflight.remove(qid).is_some()
+                                        | st.unresolved.remove(qid).is_some();
                                     let mut settled =
                                         self.settled.lock().unwrap_or_else(|e| e.into_inner());
                                     // Already terminal when it started: nothing new to cover.
@@ -2040,13 +2111,15 @@ impl App {
                             // A final response without a terminal state cannot prove the
                             // statement finished.
                             if let Some((id, Lifecycle::Final)) = &cycle
-                                && st.inflight.contains(id)
+                                && st.inflight.contains_key(id)
                             {
-                                st.uncertain = true;
+                                st.mark_unresolved(id);
                             }
                         }
                         Err(error) => {
-                            st.uncertain = true;
+                            if let Some(id) = &subject {
+                                st.mark_unresolved(id);
+                            }
                             st.ready = false;
                             st.forward_epoch += 1;
                             return reply(
@@ -2056,17 +2129,18 @@ impl App {
                             );
                         }
                     }
-                } else if start {
+                } else if start && let Some(id) = &request_id {
                     // Conservative: do not infer non-execution from an HTTP status.
-                    st.uncertain = true;
+                    st.mark_unresolved(id);
                 }
                 kept.extend(route("databend"));
                 return reply(status, content, kept);
             }
             Err(error) => error,
         };
-        if start || !st.inflight.is_empty() {
-            st.uncertain = true;
+        // A failed lifecycle request leaves its query in `inflight` (resolved there later).
+        if let Some(id) = &request_id {
+            st.mark_unresolved(id);
         }
         st.ready = false;
         st.forward_epoch += 1;
@@ -2084,6 +2158,104 @@ impl App {
             }),
             vec![],
         )
+    }
+}
+
+/// A Databend reply to a statement start that failed before the query existed
+/// (`HttpQueryRequest::fail_to_start_sql`: empty ID, state Failed, an error), for example
+/// an unknown role or a session-setting check. Nothing ran, so nothing is uncertain.
+fn rejected_before_start(r: &Value) -> bool {
+    r["id"].as_str() == Some("") && r["state"] == "Failed" && r["error"].is_object()
+}
+
+/// Query IDs the gateway tracks or quotes into SQL: what Databend's own and drivers' IDs use.
+fn valid_query_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= 128
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+}
+
+/// Forwarded statements whose outcome is unknown are resolved once Databend no longer runs
+/// them: `system.processes` (warehouse-wide) lists a running query by `current_query_id`
+/// until it has finished, including after the gateway gave up waiting. Only IDs unknown for
+/// at least `UNRESOLVED_QUIET` (and twice the forward timeout) are checked, which covers a
+/// request still in transit when the gateway failed it. A resolved statement then needs a
+/// capture round that starts afterwards, like any finished forwarded statement.
+async fn resolve_upstream(app: Arc<App>) {
+    let mut client = DatabendClient::new(
+        app.http.clone(),
+        &app.s.endpoint,
+        &app.auth,
+        "resolver",
+        None,
+    );
+    let mut stop = app.stop.subscribe();
+    let quiet = UNRESOLVED_QUIET.max(app.s.forward_timeout * 2);
+    loop {
+        tokio::select! {
+            _ = tokio::time::sleep(RESOLVE_EVERY) => {}
+            _ = stop.changed() => return,
+        }
+        let ids: Vec<String> = {
+            let st = app.lock();
+            st.unresolved
+                .iter()
+                .chain(st.inflight.iter())
+                .filter(|(id, since)| since.elapsed() >= quiet && valid_query_id(id))
+                .map(|(id, _)| id.clone())
+                .take(256)
+                .collect()
+        };
+        if ids.is_empty() {
+            continue;
+        }
+        let list = ids
+            .iter()
+            .map(|id| format!("'{id}'"))
+            .collect::<Vec<_>>()
+            .join(",");
+        let sql = format!(
+            "SELECT current_query_id FROM system.processes WHERE current_query_id IN ({list})"
+        );
+        let running: HashSet<String> = match client.sql(&sql).await {
+            Ok(rows) => rows
+                .iter()
+                .filter_map(|r| r.first().and_then(Value::as_str).map(str::to_owned))
+                .collect(),
+            Err(error) => {
+                app.event(
+                    "upstream_resolve_failed",
+                    None,
+                    json!({"pending": ids.len(), "error": format!("{error:#}")}),
+                );
+                continue;
+            }
+        };
+        let resolved = {
+            let mut st = app.lock();
+            let mut resolved = 0u64;
+            for id in ids.iter().filter(|id| !running.contains(*id)) {
+                if st.unresolved.remove(id).is_some() | st.inflight.remove(id).is_some() {
+                    resolved += 1;
+                }
+            }
+            if resolved > 0 {
+                // Like a finished forwarded statement: wait for a capture started after it.
+                st.ready = false;
+                st.forward_epoch += 1;
+                st.counters.resolved += resolved;
+            }
+            resolved
+        };
+        if resolved > 0 {
+            app.event(
+                "upstream_resolved",
+                None,
+                json!({"resolved": resolved, "still_running": running.len()}),
+            );
+        }
     }
 }
 
@@ -2304,7 +2476,7 @@ async fn sync_once(app: &App, replicator: &mut Replicator) -> Result<()> {
             Some("forward_during_capture")
         } else if !st.inflight.is_empty() {
             Some("upstream_inflight")
-        } else if st.uncertain {
+        } else if st.uncertain() {
             Some("uncertain_upstream")
         } else if capture_started.elapsed() > app.s.max_staleness {
             Some("capture_slow")
@@ -2470,6 +2642,7 @@ async fn serve(app: Arc<App>, workers: Vec<tokio::task::JoinHandle<()>>) -> Resu
     fs::write(app.s.run_dir.join("listening.json"), format!("{info:#}\n"))?;
     println!("{info}");
     app.event("listening", None, info.clone());
+    tokio::spawn(resolve_upstream(Arc::clone(&app)));
     let router = axum::Router::new()
         .fallback(dispatch)
         .with_state(Arc::clone(&app));

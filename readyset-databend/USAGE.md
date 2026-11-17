@@ -39,6 +39,7 @@ confirm_create = true
 [upstream]
 url  = "http://databend:8000"
 user = "readyset"            # 密码只从环境变量 DATABEND_PASSWORD 读取
+# forward_timeout = "30s"    # 等 Databend 回复一个转发请求的最长时间（5s–600s）
 
 [listen]
 http = "0.0.0.0:8001"
@@ -366,21 +367,24 @@ DROP CACHE customers_by_region;
 | `source_applying`、`source_gate_busy` | 这张表正在写入一批变更 | 正常，持续很高说明写入很频繁 |
 | `stale`、`capture_slow` | 同步落后超过 `max_staleness`，或一轮同步耗时超过它 | 偶发正常（如建缓存期间）；持续出现要排查 |
 | `own_write_pending` | 这个会话刚经本服务写过这张表，同步还没覆盖这次写入，所以转发以读到自己的写入 | 正常 |
-| `forward_epoch`、`forward_during_capture`、`active_forward`、`upstream_inflight` | 经本服务转发了无法确定影响范围的语句（DDL、事务、多表语句等），等下一轮同步追上 | 偶发正常；持续出现说明应用经本服务执行了大量这类语句（见 §3.2） |
-| `uncertain_upstream`、`table_failed`、`engine_failed` | 上游结果不确定、这张表失败或整个运行时 fail-closed | 需要处理 |
+| `forward_epoch`、`forward_during_capture`、`active_forward` | 经本服务转发了无法确定影响范围的语句（DDL、事务、多表语句等），等下一轮同步追上 | 偶发正常；持续出现说明应用经本服务执行了大量这类语句（见 §3.2） |
+| `uncertain_upstream` | 有转发的语句结果无法确认（Databend 返回 5xx、超过 `forward_timeout`、响应无法解析） | 自动恢复：确认这条语句已不在 Databend 运行后（至少等 10 秒，且不少于 `forward_timeout` 的两倍），再完成一轮同步就恢复本地读；持续出现要查 Databend 和网络 |
+| `upstream_inflight` | 转发的语句第一次响应是 `Running`，还没结束 | 正常；客户端放弃轮询时，等语句在 Databend 结束后自动恢复 |
+| `table_failed`、`engine_failed` | 这张表失败或整个运行时 fail-closed | 需要处理 |
 | `unsafe_session` | 请求在事务中、使用非默认角色、会话有临时表，或带有未知的会话字段或请求头 | 看应用的会话用法 |
 | `upquery_timeout` | partial 模式冷键回填超过 `upquery_timeout_ms` | 持续出现要调大内存或超时 |
 | `limit_miss`、`local_result_budget`、`local_results_full` | 结果超过单次行数或字节上限，或同时打开的本地结果太多 | 看查询返回的行数 |
 
 **事件日志：** 表失败（`table_sync_failed`、`table_recovery_failed`，附带 `retry_in_secs`）、恢复成功（`table_recovered`，附带恢复方式）、
-缓存 DDL（`cache_ddl`）、全局 fail-closed（`engine_failed_closed`）、启动监听（`listening`）和退出（`stopped`），
+缓存 DDL（`cache_ddl`）、全局 fail-closed（`engine_failed_closed`）、结果无法确认的转发已确认结束（`upstream_resolved`）、
+确认时查询 Databend 失败（`upstream_resolve_failed`）、启动监听（`listening`）和退出（`stopped`），
 每条一行 JSON，同时写到 stderr（journald 或 `docker logs` 能看到）和 `runs/<启动时间>/events.jsonl`。
 
 建议告警：
 - 任一表 `failed` 持续非空（短暂非空是正在自动恢复）；
 - 进程频繁重启，或出现 `engine_failed_closed` 事件；
 - `last_sync_age_ms` 持续超过 `max_staleness`；
-- `forward_reasons` 里需要处理的原因持续增长；
+- `forward_reasons` 里需要处理的原因持续增长；`uncertain_upstream` 持续为真超过几分钟，或频繁出现 `upstream_resolve_failed`；
 - 进程 RSS 接近容器上限。
 
 ## 7. 资源与限制

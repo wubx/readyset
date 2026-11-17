@@ -264,7 +264,7 @@ async fn sync_source(
         let state = app.lock();
         (
             state.forward_epoch,
-            state.active_forwards == 0 && state.inflight.is_empty() && !state.uncertain,
+            state.active_forwards == 0 && state.inflight.is_empty() && !state.uncertain(),
         )
     };
     // Single-table forwarded writes this round will cover if it succeeds (see `WriteFence`).
@@ -293,7 +293,7 @@ async fn sync_source(
             Some("forward_during_capture")
         } else if !global.inflight.is_empty() {
             Some("upstream_inflight")
-        } else if global.uncertain {
+        } else if global.uncertain() {
             Some("uncertain_upstream")
         } else if started.elapsed() > app.s.max_staleness {
             Some("capture_slow")
