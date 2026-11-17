@@ -163,3 +163,85 @@ fn drained_results_are_bounded_by_count_bytes_and_ttl() {
     assert_eq!(d.prune(soon), ["old"]);
     assert_eq!(d.bytes, 0);
 }
+
+#[test]
+fn write_fence_is_per_session_and_needs_a_round_started_after_the_write() {
+    let mut f = WriteFence::default();
+    let round_before = f.snapshot();
+    let e = f.begin(Some("s1"));
+    assert!(f.pending(Some("s1")));
+    assert!(!f.pending(Some("s2")), "other sessions keep local reads");
+    assert!(
+        f.pending(None),
+        "a request without a session cannot prove it is not s1"
+    );
+    // A round that started before or during the write does not cover it.
+    let round_during = f.snapshot();
+    f.end(e);
+    f.synced(round_before);
+    assert!(f.pending(Some("s1")));
+    f.synced(round_during);
+    assert!(f.pending(Some("s1")));
+    // A round that started after the write completed does.
+    let round_after = f.snapshot();
+    f.synced(round_after);
+    assert!(!f.pending(Some("s1")) && !f.pending(None));
+    assert_eq!(f.waiting(), 0);
+}
+
+#[test]
+fn write_fence_covers_completed_writes_below_the_oldest_in_flight() {
+    let mut f = WriteFence::default();
+    let a = f.begin(Some("a"));
+    let b = f.begin(Some("b"));
+    let c = f.begin(Some("c"));
+    f.end(a);
+    f.end(c);
+    // b still in flight: a round now covers a, not b, and not c (above b).
+    f.synced(f.snapshot());
+    assert!(!f.pending(Some("a")));
+    assert!(f.pending(Some("b")) && f.pending(Some("c")));
+    f.end(b);
+    f.synced(f.snapshot());
+    assert!(!f.pending(Some("b")) && !f.pending(Some("c")));
+}
+
+#[test]
+fn write_fence_without_session_or_over_capacity_fences_everyone() {
+    let mut f = WriteFence::default();
+    let e = f.begin(None);
+    assert!(f.pending(Some("anyone")));
+    f.end(e);
+    f.synced(f.snapshot());
+    assert!(!f.pending(Some("anyone")));
+
+    let mut f = WriteFence::default();
+    for i in 0..MAX_SESSION_FENCES {
+        let e = f.begin(Some(&format!("s{i}")));
+        f.end(e);
+    }
+    let e = f.begin(Some("one-too-many"));
+    assert!(f.pending(Some("unrelated")));
+    f.end(e);
+    f.synced(f.snapshot());
+    assert!(!f.pending(Some("unrelated")) && f.by_session.is_empty());
+}
+
+#[test]
+fn cookie_session_reads_only_a_well_formed_session_id() {
+    let headers = |v: &'static str| {
+        let mut h = HeaderMap::new();
+        h.insert(header::COOKIE, HeaderValue::from_static(v));
+        h
+    };
+    assert_eq!(
+        cookie_session(&headers(
+            "cookie_enabled=true; session_id=01a1e704-dc6f; last_refresh_time=1"
+        )),
+        Some("01a1e704-dc6f".into())
+    );
+    assert_eq!(cookie_session(&headers("cookie_enabled=true")), None);
+    assert_eq!(cookie_session(&headers("session_id=a b")), None);
+    assert_eq!(cookie_session(&headers("session_id=a; session_id=b")), None);
+    assert_eq!(cookie_session(&HeaderMap::new()), None);
+}

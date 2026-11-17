@@ -231,6 +231,15 @@ curl -s -u "readyset:$DATABEND_PASSWORD" http://127.0.0.1:8001/health \
   服务会主动退出，重启后从本地数据续接，一般只需几秒。
 - **k8s 探针：** liveness 用 `/livez`；readiness 用 `/readyz`。大表重建期间 `/readyz` 可能是 503，
   不要把 readiness 失败当作重启条件。
+- **经本服务写入时的读一致性：** 写入经本服务转发给 Databend。之后的读按语句分三种情况：
+  - **单表写入：** 对本实例某张表的 `INSERT`、`UPDATE`、`DELETE`，在自动提交会话里发出，并且能确定写的是哪张表。
+    只有发出写入的那个会话会受影响：它读这张表时转发给 Databend，直到某一轮同步覆盖了这次写入（通常 1–2 秒），所以能读到自己的写入。
+    其他会话照常本地读，可能暂时看不到这次写入，最多落后 `max_staleness`，和平时读缓存一样。
+    会话按 Databend 的 `session_id` Cookie 区分。databend-jdbc 默认会带这个 Cookie；没带的请求，这次写入对这张表的所有会话都生效。
+  - **普通查询：** 只读的 `SELECT`（包括未缓存的查询和驱动发的 `SELECT version()`）不影响任何读。
+  - **其他语句：** 包括 DDL、`BEGIN`/`COMMIT`、`REPLACE INTO`、`MERGE`、多表语句，以及带注释或解析不了的语句。
+    执行期间和之后，所有会话、所有表的读都转发，直到每张表的下一轮同步。
+  - **转发原因：** 写入会话自己的读转发时记为 `own_write_pending`；其他语句导致的转发记为 `forward_epoch` 或 `active_forward`。
 - **单实例：** 同一个 `instance_id` 任何时候只能运行一个进程。同一存储目录的第二个进程会因 RocksDB 文件锁启动失败；
   但用不同存储卷同时运行两个相同 `instance_id` 的实例无法被检测，会互相消费 Stream、导致数据错误。
   发布时用单副本和"先停后起"（Recreate）策略。
@@ -270,9 +279,8 @@ DROP CACHE customers_by_region;
   - 本服务不签发 Databend session token。
   - 本服务不声明支持 Arrow 结果，所以即使配置了 `query_result_format=arrow`，驱动也用 JSON，点查照样本地返回。
 - **PreparedStatement：** 驱动在客户端把 `?` 替换成字面量，本地匹配和直接写字面量一样。
-- **写入和其他 SQL：** 写入、DDL 和未缓存的查询都转发给 Databend。同一连接写完立刻读，能读到自己的写入：这些读会转发，直到下一轮同步追上。
-  - **注意：** 这种转发目前对**所有会话、所有表**生效。转发的语句执行期间，以及之后直到每张表的下一轮同步，所有读都转发。
-    实测同一地址上每秒写一次，本地读就降到 0（`poc/evidence/jdbc_20261117/`）。写入频繁的应用，写入请直连 Databend。
+- **写入和其他 SQL：** 写入、DDL 和未缓存的查询都转发给 Databend。读写可以用同一个地址，读一致性见 §3.2"经本服务写入时的读一致性"。
+  JDBC 的每个连接是一个独立的 Databend 会话，所以"读到自己的写入"按连接生效。一个请求里先写后读，要用同一个连接。
 - **事务：**
   - `setAutoCommit(false)` 只是驱动里的一个标志，不开启事务，每条语句照常自动提交，和直连 Databend 一样。
   - 要用事务，必须显式执行 `BEGIN`，然后 `commit()` 或 `rollback()`。事务里的读全部转发。
@@ -357,7 +365,8 @@ DROP CACHE customers_by_region;
 | `shape_not_matched` | 表已缓存，但查询形状和任何声明都不一致 | 看是否要加声明 |
 | `source_applying`、`source_gate_busy` | 这张表正在写入一批变更 | 正常，持续很高说明写入很频繁 |
 | `stale`、`capture_slow` | 同步落后超过 `max_staleness`，或一轮同步耗时超过它 | 偶发正常（如建缓存期间）；持续出现要排查 |
-| `forward_epoch`、`forward_during_capture`、`active_forward`、`upstream_inflight` | 经本服务转发了可能是写入的语句，等下一轮同步追上 | 正常；持续出现说明应用经本服务执行了大量非缓存语句 |
+| `own_write_pending` | 这个会话刚经本服务写过这张表，同步还没覆盖这次写入，所以转发以读到自己的写入 | 正常 |
+| `forward_epoch`、`forward_during_capture`、`active_forward`、`upstream_inflight` | 经本服务转发了无法确定影响范围的语句（DDL、事务、多表语句等），等下一轮同步追上 | 偶发正常；持续出现说明应用经本服务执行了大量这类语句（见 §3.2） |
 | `uncertain_upstream`、`table_failed`、`engine_failed` | 上游结果不确定、这张表失败或整个运行时 fail-closed | 需要处理 |
 | `unsafe_session` | 请求在事务中、使用非默认角色、会话有临时表，或带有未知的会话字段或请求头 | 看应用的会话用法 |
 | `upquery_timeout` | partial 模式冷键回填超过 `upquery_timeout_ms` | 持续出现要调大内存或超时 |

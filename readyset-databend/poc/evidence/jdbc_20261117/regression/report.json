@@ -1,5 +1,5 @@
 {
-  "output": "/data1/vmbox/readyset-base-regression-20261117-092031",
+  "output": "/data1/vmbox/readyset-base-regression-20261117-121138",
   "steps": [
     {
       "name": "fmt",
@@ -17,7 +17,7 @@
         "readyset-client"
       ],
       "exit_code": 0,
-      "seconds": 0.684
+      "seconds": 0.722
     },
     {
       "name": "clippy",
@@ -42,7 +42,7 @@
         "warnings"
       ],
       "exit_code": 0,
-      "seconds": 9.011
+      "seconds": 9.209
     },
     {
       "name": "rust",
@@ -58,7 +58,7 @@
         "--test-threads=1"
       ],
       "exit_code": 0,
-      "seconds": 18.012
+      "seconds": 18.092
     },
     {
       "name": "sync_wal",
@@ -74,7 +74,7 @@
         "sync_wal_tests"
       ],
       "exit_code": 0,
-      "seconds": 1.079
+      "seconds": 1.01
     },
     {
       "name": "reopen",
@@ -90,7 +90,7 @@
         "replication_offset_databend_rows_and_checkpoint_reopen"
       ],
       "exit_code": 0,
-      "seconds": 0.676
+      "seconds": 0.677
     },
     {
       "name": "live_schema",
@@ -111,7 +111,7 @@
         "--nocapture"
       ],
       "exit_code": 0,
-      "seconds": 2.289
+      "seconds": 2.48
     },
     {
       "name": "release",
@@ -128,7 +128,7 @@
         "8"
       ],
       "exit_code": 0,
-      "seconds": 124.909
+      "seconds": 125.437
     },
     {
       "name": "python",
@@ -144,7 +144,7 @@
         "test_*.py"
       ],
       "exit_code": 0,
-      "seconds": 0.222
+      "seconds": 0.221
     },
     {
       "name": "native_server_offsets",
@@ -160,7 +160,7 @@
         "controller::tests::replication_offsets"
       ],
       "exit_code": 0,
-      "seconds": 0.613
+      "seconds": 0.577
     },
     {
       "name": "native_client",
@@ -175,7 +175,7 @@
         "--lib"
       ],
       "exit_code": 0,
-      "seconds": 120.467
+      "seconds": 126.389
     },
     {
       "name": "native_dataflow",
@@ -190,7 +190,7 @@
         "--lib"
       ],
       "exit_code": 0,
-      "seconds": 7.646
+      "seconds": 7.611
     },
     {
       "name": "multi_full",
@@ -205,11 +205,11 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/multi_full",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/multi_full",
         "--confirm-create"
       ],
       "exit_code": 0,
-      "seconds": 10.268
+      "seconds": 9.59
     },
     {
       "name": "multi_partial",
@@ -224,12 +224,12 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/multi_partial",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/multi_partial",
         "--confirm-create",
         "--partial"
       ],
       "exit_code": 0,
-      "seconds": 10.264
+      "seconds": 9.63
     },
     {
       "name": "gateway_full",
@@ -244,14 +244,14 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/gateway_full",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/gateway_full",
         "--confirm-create",
         "--sql-declarations",
         "--native-queries",
         "--in-range-queries"
       ],
       "exit_code": 0,
-      "seconds": 51.932
+      "seconds": 52.429
     },
     {
       "name": "gateway_partial",
@@ -266,7 +266,7 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/gateway_partial",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/gateway_partial",
         "--confirm-create",
         "--sql-declarations",
         "--native-queries",
@@ -274,7 +274,7 @@
         "--partial"
       ],
       "exit_code": 0,
-      "seconds": 47.101
+      "seconds": 46.781
     },
     {
       "name": "gateway_oracle",
@@ -289,7 +289,7 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/gateway_oracle",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/gateway_oracle",
         "--confirm-create",
         "--sql-declarations",
         "--native-queries",
@@ -297,7 +297,7 @@
         "--oracle"
       ],
       "exit_code": 0,
-      "seconds": 63.803
+      "seconds": 66.385
     },
     {
       "name": "pk_full",
@@ -312,11 +312,11 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/pk_full",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/pk_full",
         "--confirm-create"
       ],
       "exit_code": 0,
-      "seconds": 38.854
+      "seconds": 40.414
     },
     {
       "name": "pk_partial",
@@ -331,12 +331,12 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/pk_partial",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/pk_partial",
         "--confirm-create",
         "--partial"
       ],
       "exit_code": 0,
-      "seconds": 38.688
+      "seconds": 40.29
     },
     {
       "name": "restart_recovery",
@@ -349,11 +349,11 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/restart_recovery",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/restart_recovery",
         "--confirm-create"
       ],
       "exit_code": 0,
-      "seconds": 97.641
+      "seconds": 92.548
     },
     {
       "name": "bootstrap_recovery",
@@ -366,11 +366,11 @@
         "--gateway-binary",
         "/data1/vmbox/readyset/target/release/readyset-databend",
         "--output",
-        "/data1/vmbox/readyset-base-regression-20261117-092031/bootstrap_recovery",
+        "/data1/vmbox/readyset-base-regression-20261117-121138/bootstrap_recovery",
         "--confirm-create"
       ],
       "exit_code": 0,
-      "seconds": 53.807
+      "seconds": 45.46
     }
   ],
   "passed": true

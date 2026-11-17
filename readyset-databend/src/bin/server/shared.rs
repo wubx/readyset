@@ -64,6 +64,7 @@ pub(super) async fn run_shared(s: Settings) -> Result<()> {
         finalized: StdMutex::new(Finalized::default()),
         drained: StdMutex::new(Drained::default()),
         passive: StdMutex::new(HashMap::new()),
+        settled: StdMutex::new(Finalized::default()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),
         routes_journal,
@@ -266,6 +267,8 @@ async fn sync_source(
             state.active_forwards == 0 && state.inflight.is_empty() && !state.uncertain,
         )
     };
+    // Single-table forwarded writes this round will cover if it succeeds (see `WriteFence`).
+    let covered = app.tables[id].lock().fence.snapshot();
     let result = source_round(engine, id, capture).await;
     let summary = match result {
         Ok(value) => value,
@@ -283,6 +286,7 @@ async fn sync_source(
             state.last_batch = summary;
         }
         state.forward_epoch = epoch;
+        state.fence.synced(covered);
         state.not_ready = if state.failed.is_some() {
             Some("table_failed")
         } else if !clean || epoch != global.forward_epoch || global.active_forwards != 0 {

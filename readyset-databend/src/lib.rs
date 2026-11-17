@@ -4,6 +4,7 @@ pub mod cache_control;
 pub mod declaration;
 pub mod engine;
 mod engine_fence;
+pub mod forward_scope;
 pub mod native_query;
 pub mod reader_fence;
 pub mod replicator;

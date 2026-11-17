@@ -22,6 +22,7 @@ use axum::response::Response;
 use clap::Parser;
 use readyset_databend::declaration::{Declaration, identifier};
 use readyset_databend::engine::{BatchWriter, CacheConfig, Engine, EngineConfig, ReadOutcome};
+use readyset_databend::forward_scope::Effect;
 use readyset_databend::replicator::{Names, Replicator, parse_changes};
 use readyset_databend::upstream::{
     DatabendClient, Journal, MAX_RESPONSE, Pages, basic_auth, bounded_body, http_client,
@@ -55,6 +56,8 @@ const MAX_FINALIZED: usize = 65_536;
 /// Bounds of `Drained` (fully delivered local results kept for a late lifecycle call).
 const MAX_DRAINED: usize = 65_536;
 const MAX_DRAINED_BYTES: usize = 64 * 1024 * 1024;
+/// Sessions with a pending own-write fence per table; beyond this a write fences every session.
+const MAX_SESSION_FENCES: usize = 65_536;
 
 #[derive(Parser)]
 #[command(about = "Databend HTTP front end with an in-process ReadySet replica (phase 1)")]
@@ -481,6 +484,73 @@ struct RouteState {
     snapshot: Value,
     /// Why the last completed capture left `ready` false (diagnostic).
     not_ready: Option<&'static str>,
+    /// Per-table fence for forwarded writes known to change only this table (see
+    /// `WriteFence`). Unused in the instance-wide state.
+    fence: WriteFence,
+}
+
+/// Read-your-own-writes for forwarded single-table writes, per session. Each write takes the
+/// next `epoch` and records it for its session (`by_session`, or `all_sessions` when the
+/// request has no Databend session cookie). That session reads this table upstream until a
+/// capture round covers the write: a round covers every epoch below the oldest write still in
+/// flight when it started (`active`), because those writes had completed before it began
+/// consuming the Stream. Other sessions keep local reads, within `max_staleness` like any
+/// replica read.
+#[derive(Default)]
+struct WriteFence {
+    epoch: u64,
+    active: std::collections::BTreeSet<u64>,
+    synced: u64,
+    by_session: HashMap<String, u64>,
+    all_sessions: u64,
+}
+
+impl WriteFence {
+    /// Returns the write's epoch, to pass to `end` once Databend answered.
+    fn begin(&mut self, session: Option<&str>) -> u64 {
+        self.epoch += 1;
+        let epoch = self.epoch;
+        self.active.insert(epoch);
+        match session {
+            Some(s)
+                if self.by_session.len() < MAX_SESSION_FENCES
+                    || self.by_session.contains_key(s) =>
+            {
+                self.by_session.insert(s.to_owned(), epoch);
+            }
+            // No session to scope to, or too many: fence every session of this table.
+            _ => self.all_sessions = epoch,
+        }
+        epoch
+    }
+    fn end(&mut self, epoch: u64) {
+        self.active.remove(&epoch);
+    }
+    /// Taken when a capture round starts: the highest epoch it covers if it succeeds.
+    fn snapshot(&self) -> u64 {
+        self.active.first().map_or(self.epoch, |oldest| oldest - 1)
+    }
+    fn synced(&mut self, covered: u64) {
+        self.synced = self.synced.max(covered);
+        let synced = self.synced;
+        self.by_session.retain(|_, e| *e > synced);
+    }
+    /// Whether this session (or, without a session, any session) has a write of this table
+    /// that no completed capture covers yet.
+    fn pending(&self, session: Option<&str>) -> bool {
+        self.all_sessions > self.synced
+            || match session {
+                Some(s) => self.by_session.get(s).is_some_and(|e| *e > self.synced),
+                None => self.by_session.values().any(|e| *e > self.synced),
+            }
+    }
+    fn waiting(&self) -> usize {
+        self.by_session
+            .values()
+            .filter(|e| **e > self.synced)
+            .count()
+            + usize::from(self.all_sessions > self.synced)
+    }
 }
 
 impl RouteState {
@@ -634,6 +704,9 @@ struct App {
     /// Lock order: `results`, then `drained`, then `finalized`.
     drained: StdMutex<Drained>,
     passive: StdMutex<HashMap<String, Instant>>,
+    /// Forwarded statements already terminal in their first response (bounded FIFO): a later
+    /// lifecycle reply for them proves nothing new and must not fence local reads again.
+    settled: StdMutex<Finalized>,
     /// Cache DDL is serialized, like the gateway's single request lock.
     control: tokio::sync::Mutex<()>,
     /// Legacy-only capture fence. Shared `/health` never blocks unrelated tables: each
@@ -890,6 +963,39 @@ fn safe_session(body: &Map<String, Value>, default_role: Option<&str>) -> bool {
         })
 }
 
+/// How a forwarded statement start is tracked (see `forward_scope`).
+enum Scope {
+    /// Unclassified: fences every table for every session until a later capture.
+    Global,
+    /// Changes no cached source table: forwarded without any fence.
+    NoCachedWrite,
+    /// Changes exactly this cached source table: fences it for this session only.
+    Table { id: String, session: Option<String> },
+}
+
+/// The Databend client session (`session_id` cookie, issued on the first response to a
+/// client that sends `cookie_enabled`; databend-jdbc does). `None` when absent or malformed.
+fn cookie_session(headers: &HeaderMap) -> Option<String> {
+    let mut found = None;
+    for value in headers.get_all(header::COOKIE) {
+        for pair in value.to_str().ok()?.split(';') {
+            if let Some(v) = pair.trim().strip_prefix("session_id=") {
+                if found.is_some()
+                    || v.is_empty()
+                    || v.len() > 128
+                    || !v
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+                {
+                    return None;
+                }
+                found = Some(v.to_owned());
+            }
+        }
+    }
+    found
+}
+
 fn session_database(body: &Map<String, Value>) -> String {
     body.get("session")
         .and_then(|s| s.get("database"))
@@ -1061,6 +1167,32 @@ impl App {
         }
     }
 
+    /// Scope of a forwarded statement started in a safe autocommit session (see `Scope`).
+    fn write_scope(&self, sql: &str, database: &str, headers: &HeaderMap) -> Scope {
+        match readyset_databend::forward_scope::classify(sql) {
+            Effect::NoWrite => Scope::NoCachedWrite,
+            Effect::Writes(db, table) => {
+                let wanted = format!(
+                    "{}.{table}",
+                    db.unwrap_or_else(|| database.to_ascii_lowercase())
+                );
+                // Case-insensitive: fencing a differently quoted name too is only conservative.
+                match self
+                    .tables
+                    .keys()
+                    .find(|id| id.to_ascii_lowercase() == wanted)
+                {
+                    Some(id) => Scope::Table {
+                        id: id.clone(),
+                        session: cookie_session(headers),
+                    },
+                    None => Scope::NoCachedWrite,
+                }
+            }
+            Effect::Unknown => Scope::Global,
+        }
+    }
+
     fn count_forward(&self, table: Option<&str>, reason: &'static str) {
         *self
             .lock()
@@ -1120,7 +1252,8 @@ impl App {
                     "ready":ready,"unavailable":unavailable,"syncing":table.syncing.load(std::sync::atomic::Ordering::Acquire),
                     "applying":matches!(&self.engine,CacheEngine::Shared(e) if e.source_busy(id)),
                     "last_sync_age_ms":state.last_sync.map(|t| t.elapsed().as_millis()),"failed":state.failed,"phase":if state.failed.is_some() {"error"} else if state.last_sync.is_some() {"online"} else {"snapshotting"},
-                    "snapshot":state.snapshot,"last_batch":state.last_batch,"counters":state.counters})
+                    "snapshot":state.snapshot,"last_batch":state.last_batch,"counters":state.counters,
+                    "own_write_fences":state.fence.waiting()})
             }).collect();
             let global = self.lock();
             let failed = global.failed.clone().or_else(|| {
@@ -1437,12 +1570,19 @@ impl App {
         } else {
             (None, None)
         };
+        let session = cookie_session(&headers);
         let mut forward_reason = if !start {
             None
         } else if !sane {
             Some("unsafe_session")
         } else if unavailable.is_some() {
             unavailable
+        } else if read_table.as_ref().is_some_and(|id| {
+            self.tables
+                .get(id)
+                .is_some_and(|t| t.lock().fence.pending(session.as_deref()))
+        }) {
+            Some("own_write_pending")
         } else if self.results().len() >= MAX_LOCAL_RESULTS {
             Some("local_results_full")
         } else {
@@ -1503,9 +1643,17 @@ impl App {
         if let Some(reason) = forward_reason {
             self.count_forward(read_table.as_deref(), reason);
         }
+        // Scope of a statement that is not a local read: classified only in a safe autocommit
+        // session (settings such as the SQL dialect could change how Databend parses it).
+        let scope = if start && sane && read_table.is_none() && !self.tables.is_empty() {
+            self.write_scope(sql, &database, &headers)
+        } else {
+            Scope::Global
+        };
         let passive_start = start
             && sane
-            && matches!(&self.engine, CacheEngine::Shared(engine) if engine.read_source(sql,&database).is_some());
+            && (matches!(scope, Scope::NoCachedWrite)
+                || matches!(&self.engine, CacheEngine::Shared(engine) if engine.read_source(sql,&database).is_some()));
         let passive_cycle = if let Some((id, _)) = &cycle {
             let mut passive = self.passive.lock().unwrap_or_else(|e| e.into_inner());
             passive.retain(|_, t| *t > Instant::now());
@@ -1547,7 +1695,7 @@ impl App {
                 ),
             };
         }
-        self.forward_and_track(method, &uri, raw, &headers, start, cycle)
+        self.forward_and_track(method, &uri, raw, &headers, start.then_some(scope), cycle)
             .await
     }
 
@@ -1812,10 +1960,22 @@ impl App {
         uri: &axum::http::Uri,
         raw: Bytes,
         headers: &HeaderMap,
-        start: bool,
+        // `Some` for a statement start, with its scope; `None` for a lifecycle request.
+        start: Option<Scope>,
         cycle: Option<(String, Lifecycle)>,
     ) -> Response {
-        if start {
+        // A write known to change one cached table fences that table for its session only;
+        // every other forwarded start fences all tables for all sessions.
+        let table_write = match &start {
+            Some(Scope::Table { id, session }) => self
+                .tables
+                .get(id)
+                .map(|t| (Arc::clone(t), t.lock().fence.begin(session.as_deref()))),
+            _ => None,
+        };
+        let start = start.is_some();
+        let global_start = start && table_write.is_none();
+        if global_start {
             let mut st = self.lock();
             st.ready = false;
             st.active_forwards += 1;
@@ -1823,8 +1983,11 @@ impl App {
         }
         let outcome = self.forward(&method, uri, raw, headers).await;
         let mut st = self.lock();
-        if start {
+        if global_start {
             st.active_forwards -= 1;
+        }
+        if let Some((table, epoch)) = &table_write {
+            table.lock().fence.end(*epoch);
         }
         let failure = match outcome {
             Ok((status, content, mut kept)) => {
@@ -1857,10 +2020,21 @@ impl App {
                                         st.inflight.insert(qid.to_owned());
                                     }
                                 } else if matches!(state, "Succeeded" | "Failed") {
-                                    st.inflight.remove(qid);
-                                    // Needs a post-completion capture, even if it was a write.
-                                    st.ready = false;
-                                    st.forward_epoch += 1;
+                                    let tracked = st.inflight.remove(qid);
+                                    let mut settled =
+                                        self.settled.lock().unwrap_or_else(|e| e.into_inner());
+                                    // Already terminal when it started: nothing new to cover.
+                                    let known = !start && !tracked && settled.contains(qid);
+                                    if start {
+                                        settled.insert(qid);
+                                    }
+                                    drop(settled);
+                                    // Needs a post-completion capture, even if it was a write;
+                                    // a single-table write is covered by its table fence.
+                                    if !known && (!start || global_start) {
+                                        st.ready = false;
+                                        st.forward_epoch += 1;
+                                    }
                                 }
                             }
                             // A final response without a terminal state cannot prove the
@@ -2260,6 +2434,7 @@ async fn run(s: Settings) -> Result<()> {
         finalized: StdMutex::new(Finalized::default()),
         drained: StdMutex::new(Drained::default()),
         passive: StdMutex::new(HashMap::new()),
+        settled: StdMutex::new(Finalized::default()),
         control: tokio::sync::Mutex::new(()),
         capturing: tokio::sync::Mutex::new(()),
         routes_journal,

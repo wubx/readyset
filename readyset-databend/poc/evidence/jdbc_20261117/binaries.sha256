@@ -1,3 +1,4 @@
-e3cbfe3fdeabb7f2b014355006a6aa3cf5060ae42f27e6fe129201355e42b27b  /data1/vmbox/readyset/target/release/readyset-databend
+e3cbfe3fdeabb7f2b014355006a6aa3cf5060ae42f27e6fe129201355e42b27b  /data1/vmbox/readyset-jdbc3-release
+0ec4ddb6efcd087ba66029da4e61c45f71ff53d68fc296c5603e9dca9eefabd3  /data1/vmbox/readyset/target/release/readyset-databend
 274597a199f205b347e66db63b384e1846e5982b759c4d0f31abd5e74e82e2d3  /data1/vmbox/readyset-jdbc-compat/lib/databend-jdbc-0.4.8.jar
 openjdk version "17.0.21.0.3" 2026-10-24

@@ -288,6 +288,27 @@ public class JdbcCompatProbe {
             }
             return "FAIL never local within 30s";
         });
+        step("session_isolation_own_write", () -> {
+            // A writes; A must read its own write at once (from Databend), while another
+            // connection B keeps reading locally (possibly not yet seeing A's row).
+            long id = wid + 50;
+            try (Connection b = connect(gwUrl)) {
+                query(b, byId, p -> p.setLong(1, 1)); // B's first statement, establishes its session
+                Thread.sleep(2500);                  // let earlier fences clear
+                update(g, ins, p -> { row.bind(p); p.setLong(1, id); });
+                long[] c0 = counters();
+                List<String> other = query(b, byId, p -> p.setLong(1, id));
+                long[] c1 = counters();
+                List<String> mine = query(g, byId, p -> p.setLong(1, id));
+                long[] c2 = counters();
+                if (mine.size() != 2) return "FAIL writer does not see its own write";
+                if (c2[1] - c1[1] != 1) return "FAIL writer's read was not forwarded";
+                if (c1[0] - c0[0] != 1) return "FAIL other session was not served locally";
+                if (other.size() == 2 && !other.equals(mine)) return "FAIL other session saw a different row";
+                return "writer read own row from Databend; other session local ("
+                    + (other.size() == 2 ? "already synced" : "not yet visible") + ")";
+            }
+        });
         step("delete_then_read_own_write", () -> {
             int n = update(g, "DELETE FROM " + table + " WHERE id = ?", p -> p.setLong(1, wid));
             List<String> x = query(g, byId, p -> p.setLong(1, wid));
@@ -402,7 +423,7 @@ public class JdbcCompatProbe {
                 th.start(); ts.add(th);
             }
             // Optional writer on the same URL, as an application mixing reads and writes.
-            AtomicLong writes = new AtomicLong(), writeNanos = new AtomicLong();
+            AtomicLong writes = new AtomicLong(), writeNanos = new AtomicLong(), ryw = new AtomicLong(), rywChecks = new AtomicLong();
             Thread writer = null;
             if (writeEvery > 0) {
                 writer = new Thread(() -> {
@@ -410,9 +431,19 @@ public class JdbcCompatProbe {
                     try (Connection c = connect(loadUrl); PreparedStatement p = c.prepareStatement(ins)) {
                         while (System.nanoTime() < until) {
                             long s = System.nanoTime();
-                            row.bind(p); p.setLong(1, next); p.setString(2, "mix-" + next++);
+                            long id = next++;
+                            row.bind(p); p.setLong(1, id); p.setString(2, "mix-" + id);
                             p.executeUpdate();
                             writes.incrementAndGet();
+                            // Read-your-writes on the same connection, right after the insert
+                            // and after an update of the same row.
+                            List<String> got = query(c, byId, q -> q.setLong(1, id));
+                            if (got.size() != 2 || !got.get(1).contains("mix-" + id)) ryw.incrementAndGet();
+                            BigDecimal amount = new BigDecimal(id % 100000).movePointLeft(2);
+                            update(c, "UPDATE " + table + " SET amount = ? WHERE id = ?", q -> { q.setBigDecimal(1, amount); q.setLong(2, id); });
+                            got = query(c, byId, q -> q.setLong(1, id));
+                            if (got.size() != 2 || !got.get(1).contains("BigDecimal:" + amount + "|")) ryw.incrementAndGet();
+                            rywChecks.addAndGet(2);
                             writeNanos.addAndGet(System.nanoTime() - s);
                             long sleep = writeEvery - (System.nanoTime() - s) / 1_000_000;
                             if (sleep > 0) Thread.sleep(sleep);
@@ -427,10 +458,11 @@ public class JdbcCompatProbe {
             java.util.Collections.sort(s);
             double p50 = s.isEmpty() ? 0 : s.get(s.size() / 2) / 1e6, p99 = s.isEmpty() ? 0 : s.get((int) (s.size() * 0.99)) / 1e6;
             String detail = String.format("target " + (loadUrl == dbUrl ? "databend" : "gateway")
-                + (writeEvery > 0 ? String.format(", writes %d (every %d ms, avg %.1f ms)", writes.get(), writeEvery, writeNanos.get() / 1e6 / Math.max(1, writes.get())) : "")
+                + (writeEvery > 0 ? String.format(", writes %d (every %d ms, insert+2 reads+update avg %.1f ms), read-your-writes %d/%d failed",
+                    writes.get(), writeEvery, writeNanos.get() / 1e6 / Math.max(1, writes.get()), ryw.get(), rywChecks.get()) : "")
                 + ", threads %d, qps %.0f, ok %d, bad %d, avg %.2f ms, p50 %.2f ms, p99 %.2f ms, errors %s",
                 loadThreads, ok.get() / (double) loadSecs, ok.get(), bad.get(), lat.get() / 1e6 / Math.max(1, ok.get() + bad.get()), p50, p99, errors);
-            report("load_prepared_point_lookup", bad.get() == 0 && ok.get() > 0, before, detail);
+            report("load_prepared_point_lookup", bad.get() == 0 && ok.get() > 0 && ryw.get() == 0, before, detail);
         }
         ref.close();
         summary();
