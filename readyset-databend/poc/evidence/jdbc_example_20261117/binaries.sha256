@@ -1,0 +1,4 @@
+7aafdb122b7a8ce70b72757faedf413d63434af021bbce65465d0076bc3960a6  /data1/vmbox/readyset/target/release/readyset-databend
+274597a199f205b347e66db63b384e1846e5982b759c4d0f31abd5e74e82e2d3  /data1/vmbox/readyset-jdbc-compat/lib/databend-jdbc-0.4.8.jar
+2a688cdc769065f82f298dbf92092ffacf49d49f91408122555773759b12e861  /data1/vmbox/readyset-single-binary/readyset-databend/examples/jdbc/ReadOnlyExample.java
+openjdk version "17.0.21.0.3" 2026-10-24

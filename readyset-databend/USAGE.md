@@ -275,6 +275,8 @@ DROP CACHE customers_by_region;
 
 ### 4.1 用 databend-jdbc 连接（已验证 0.4.8）
 
+最小只读示例（连接配置、PreparedStatement 查询、判断是否命中本地缓存）见 `examples/jdbc/`。
+
 - **连接串：** `jdbc:databend://<本服务地址>:<端口>/<库名>`，用户名和密码用本服务配置的同一个账号。
 - **登录：** 驱动连接时调用 `/v1/session/login`，本服务转给 Databend，把版本号返回给驱动。
   - 本服务不签发 Databend session token。

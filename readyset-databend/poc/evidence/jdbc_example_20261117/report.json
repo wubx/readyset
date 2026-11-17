@@ -1,0 +1,100 @@
+{
+  "db": "readyset_gateway_jdbcex_20261117_160516_62fbd7",
+  "example": "/data1/vmbox/readyset-single-binary/readyset-databend/examples/jdbc/ReadOnlyExample.java",
+  "runs": [
+    {
+      "run": "matching",
+      "exit_code": 0,
+      "output": [
+        "row: id=42 status=paid amount=0.42",
+        "rows: 1",
+        "route: local cache (readyset)"
+      ],
+      "local": 1,
+      "forwarded": 0,
+      "forward_reasons": {},
+      "stderr": ""
+    },
+    {
+      "run": "missing",
+      "exit_code": 0,
+      "output": [
+        "rows: 0",
+        "route: local cache (readyset)"
+      ],
+      "local": 1,
+      "forwarded": 0,
+      "forward_reasons": {},
+      "stderr": ""
+    },
+    {
+      "run": "mismatch",
+      "exit_code": 0,
+      "output": [
+        "row: id=42 status=paid",
+        "rows: 1",
+        "route: forwarded to Databend; see counters.forward_reasons in http://127.0.0.1:18106/health"
+      ],
+      "local": 0,
+      "forwarded": 1,
+      "forward_reasons": {
+        "shape_not_matched": 1
+      },
+      "stderr": ""
+    }
+  ],
+  "checks": [
+    {
+      "check": "example compiles (javac --release 17 -Xlint:all -Werror)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "matching: exit 0",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "matching: row equals Databend",
+      "ok": true,
+      "detail": "['row: id=42 status=paid amount=0.42', 'rows: 1', 'route: local cache (readyset)'] vs row: id=42 status=paid amount=0.42"
+    },
+    {
+      "check": "matching: example reports local cache",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "matching: /health agrees (1 local, 0 forwarded)",
+      "ok": true,
+      "detail": "local=1 forwarded=0"
+    },
+    {
+      "check": "missing: no row, reported local",
+      "ok": true,
+      "detail": "['rows: 0', 'route: local cache (readyset)']"
+    },
+    {
+      "check": "missing: /health agrees",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "mismatch: row from Databend",
+      "ok": true,
+      "detail": "['row: id=42 status=paid', 'rows: 1', 'route: forwarded to Databend; see counters.forward_reasons in http://127.0.0.1:18106/health']"
+    },
+    {
+      "check": "mismatch: example reports forwarded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "mismatch: /health agrees (0 local, 1 forwarded, shape_not_matched)",
+      "ok": true,
+      "detail": "local=0 forwarded=1 reasons={'shape_not_matched': 1}"
+    }
+  ],
+  "exit_code": 0,
+  "passed": true
+}
