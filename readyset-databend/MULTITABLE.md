@@ -45,10 +45,12 @@ server.rs：现有 HTTP auth/session/分页/lifecycle/透明代理
   启动时只为缺失的来源创建 native DDL。
 - 上游位置只由每张表的 Databend Stream 记录。本地用一个**重启标记**说明本地行与 Stream 位置的关系，
   写在该基表自身的原生 replication offset 里（`src/restart_marker.rs`，不修改原生类型）：
-  `Applied(v)` 本地等于 Stream 版本 v；`Applying(p)` 在 p 之上有未完成批次；`Rebuilding` 快照加载中。
+  `Applied(v)` 本地等于 Stream 版本 v；`Applying(p)` 在 p 之上有未完成批次，COMMIT 未发出；
+  `Committing(p)` 本批写入全部确认，COMMIT 可能已发出；`Rebuilding` 快照加载中。
+  重启时只有 `Committing(p)` 遇到前进的 Stream 才续接；`Applying(p)` 遇到前进的 Stream 说明有别的消费者，整表重建。
   版本取 `system.streams.table_version`（源表 meta seq），并记录 `stream_id`：Stream 被删除重建后不信任旧位置，整表重建。
   标记和行走同一个有序 Table 通道，同步 WAL 落盘。
-- 每批：首行写入前记 `Applying`，全部 Table RPC 确认、reader fence 完成后 COMMIT，再读 Stream 版本记 `Applied`。
+- 每批：首行写入前记 `Applying`，全部 Table RPC 确认后记 `Committing`，reader fence 完成后 COMMIT，再读 Stream 版本记 `Applied`。
   空批次 ROLLBACK（不动 Stream 和标记），最多每 60s 提交一次空批次，让 Stream 位置跟上源表。
   同表批次顺序由 Table mutex 和进程内序号保证，不再读回原生 offset，因此 A 的 domain 故障不会拖住 B 的批次。
 - SharedEngine 选择 ReadySet 原生 `wal_flush_interval_seconds=0`：`PersistentState::write_to_db` 使用同步 RocksDB WAL，
@@ -79,8 +81,12 @@ server.rs：现有 HTTP auth/session/分页/lifecycle/透明代理
 2. AT Stream 固定快照分页写调用者的 Table，核对总行数，持久化后复核 schema。
 3. 消费前 DESCRIBE；BEGIN，完整消费 WHOLE Stream，不过滤、不 LIMIT。
 4. 逐页 parse_typed_changes + push；只按完整相同行取消等量 insert/delete，绝不去重。
-5. Pages.close 成功，复核 schema；本批所有 Table RPC 确认、`Applying` 标记已落盘、该表 reader fence 完成后才 COMMIT，
-   COMMIT 后读 Stream 版本写 `Applied` 标记。
+5. Pages.close 成功，复核 schema；在消费事务里读 `system.streams` 的版本（读 meta，不读事务内视图），
+   必须等于本地已应用的版本，否则 `stream consumed elsewhere`（空轮也检查）。本批所有 Table RPC 确认、
+   `Committing` 标记已落盘、该表 reader fence 完成后才 COMMIT；COMMIT 被 `StreamVersionMismatched` 拒绝也按别处消费处理。
+   COMMIT 后读 Stream 版本写 `Applied` 标记。第一次发现别处消费时整表重建，10 分钟内再次发现则该表停在失败状态。
+   已知盲区：另一个消费者恰好在本实例 COMMIT 之后、读 Stream 版本之前提交，这次漏掉的变更要等它下一次提交时才会被发现；
+   如果它在那之后再也不消费（例如被终止的旧进程），就不会被发现。部署上仍要保证一个 `instance_id` 只运行一个进程。
 6. COMMIT 后再复核 schema，才发布本轮可读状态。错误 abort/ROLLBACK；不确定提交不盲目重试。
 
 DESCRIBE 复核不是原子 DDL 订阅；外部 DDL 仍可在检查之间发生，不宣称强 DDL 协调。

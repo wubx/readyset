@@ -1,0 +1,107 @@
+{
+  "db": "readyset_gateway_dupid_20261118_104716_7999da",
+  "instance_id": "dupd68098",
+  "args": {
+    "endpoint": "http://127.0.0.1:8000",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-dupguard1-release/readyset-databend",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/dup_e2e3",
+    "ports": [
+      18107,
+      18108
+    ],
+    "duration": 30,
+    "tick": 0.3,
+    "rows": 5,
+    "restart_check": true,
+    "confirm_create": true
+  },
+  "instances": {
+    "A": {
+      "alive": true,
+      "ready": true,
+      "failed": null,
+      "local_rows": 1500,
+      "databend_rows": 1500,
+      "local_reads": 1500,
+      "forwarded_reads": 0,
+      "missing_rows": 0,
+      "stale_values": 0,
+      "missing_sample": [],
+      "stale_sample": [],
+      "detections": [],
+      "stopped": false,
+      "events": [
+        {
+          "event": "table_recovered",
+          "attempt": 1,
+          "recovery": "created"
+        }
+      ],
+      "event_count": 1
+    },
+    "B": {
+      "alive": true,
+      "ready": false,
+      "failed": "stopped: stream consumed elsewhere twice within 600s; make sure this instance_id runs exactly once, then restart. Last: recovery failed (attempt 2): first round after recovery: stream consumed elsewhere: expected version 125984627, found 125984663",
+      "local_rows": 1025,
+      "databend_rows": 1500,
+      "local_reads": 0,
+      "forwarded_reads": 1500,
+      "missing_rows": 0,
+      "stale_values": 0,
+      "missing_sample": [],
+      "stale_sample": [],
+      "detections": [
+        "rebuild",
+        "stopped"
+      ],
+      "stopped": true,
+      "events": [
+        {
+          "event": "table_recovered",
+          "attempt": 1,
+          "recovery": "created"
+        },
+        {
+          "event": "stream_consumed_elsewhere",
+          "attempt": 1,
+          "action": "rebuild",
+          "reason": "sync failure: stream consumed elsewhere: expected version 125984577, found 125984597"
+        },
+        {
+          "event": "table_sync_failed",
+          "attempt": 1,
+          "reason": "sync failure: stream consumed elsewhere: expected version 125984577, found 125984597"
+        },
+        {
+          "event": "stream_consumed_elsewhere",
+          "attempt": 2,
+          "action": "stopped",
+          "reason": "recovery failed (attempt 2): first round after recovery: stream consumed elsewhere: expected version 125984627, found 125984663"
+        },
+        {
+          "event": "table_stopped",
+          "attempt": 2,
+          "reason": "stream consumed elsewhere"
+        }
+      ],
+      "event_count": 5
+    }
+  },
+  "A_ready": true,
+  "B_ready": true,
+  "databend_rows": 1500,
+  "written_ids": 1500,
+  "updated_ids": 96,
+  "restart": {
+    "ready": true,
+    "failed": null,
+    "local_rows": 1600,
+    "databend_rows": 1600,
+    "ids": 1600,
+    "local_reads": 1600,
+    "wrong_local_answers": 0,
+    "recovery": "resumed"
+  }
+}

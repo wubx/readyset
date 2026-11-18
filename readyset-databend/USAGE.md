@@ -241,9 +241,13 @@ curl -s -u "readyset:$DATABEND_PASSWORD" http://127.0.0.1:8001/health \
   - **其他语句：** 包括 DDL、`BEGIN`/`COMMIT`、`REPLACE INTO`、`MERGE`、多表语句，以及带注释或解析不了的语句。
     执行期间和之后，所有会话、所有表的读都转发，直到每张表的下一轮同步。
   - **转发原因：** 写入会话自己的读转发时记为 `own_write_pending`；其他语句导致的转发记为 `forward_epoch` 或 `active_forward`。
-- **单实例：** 同一个 `instance_id` 任何时候只能运行一个进程。同一存储目录的第二个进程会因 RocksDB 文件锁启动失败；
-  但用不同存储卷同时运行两个相同 `instance_id` 的实例无法被检测，会互相消费 Stream、导致数据错误。
-  发布时用单副本和"先停后起"（Recreate）策略。
+- **单实例：** 同一个 `instance_id` 任何时候只能运行一个进程。同一存储目录的第二个进程会因 RocksDB 文件锁启动失败。
+  用不同存储卷同时运行两个相同 `instance_id` 的进程时，它们会互相消费同一个 Stream。每轮同步都会在消费事务里核对
+  Stream 位置，发现被别人消费后，这张表停止本地服务、读全部转发，并记 `stream_consumed_elsewhere` 事件：
+  - 第一次发现：自动重新加载这张表（`action: rebuild`），适用于短暂残留的旧进程；
+  - 10 分钟内再次发现：这张表停在失败状态（`action: stopped`，随后 `table_stopped`），不再自动重新加载，
+    读一直转发，直到确认只剩一个进程后重启本实例。
+  多实例部署时每个实例用不同的 `instance_id`（例如 StatefulSet 按序号派生，卷用 RWO）。发布时用"先停后起"（Recreate）策略。
 
 ## 4. 声明和使用缓存
 
@@ -314,6 +318,7 @@ DROP CACHE customers_by_region;
 |---|---|
 | 没有未完成的批次 | 直接续接 |
 | 批次写到一半，或 COMMIT 没有执行 | 只删除并重新加载这一张表 |
+| 批次写到一半，Stream 却前进了（只能是别的进程消费的） | 只删除并重新加载这一张表 |
 | COMMIT 已执行但没收到响应 | 直接续接，不重复应用 |
 | 首次快照没做完 | 重新加载这一张表 |
 | 表结构变了 | 重新加载这一张表，按新结构重建它的缓存，不再适用的缓存声明自动删除 |
@@ -327,7 +332,8 @@ DROP CACHE customers_by_region;
 连续健康 5 分钟后，退避时间重置。
 
 **位置判断依据：** 每张表的同步位置记录在原生基表自身的 replication offset 里，与数据一起写入 RocksDB，
-使用同步 WAL 落盘。COMMIT 只在本批所有写入都已确认之后才发出，因此 Stream 前进了就说明本批已完整写入本地。
+使用同步 WAL 落盘。本批所有写入都已确认之后，先记下"即将 COMMIT"，再发出 COMMIT。所以只有记下这一步之后
+Stream 前进了，才说明是本批的 COMMIT 生效；还没记下时 Stream 就前进了，说明有别的进程在消费，这张表重新加载。
 
 **需要人工处理的情况：**
 - **Stream 失效**（`system.streams.invalid_reason` 非空，例如停机时间超过 Databend 的快照保留期，偏移量所在的快照被清理）：
@@ -379,12 +385,14 @@ DROP CACHE customers_by_region;
 
 **事件日志：** 表失败（`table_sync_failed`、`table_recovery_failed`，附带 `retry_in_secs`）、恢复成功（`table_recovered`，附带恢复方式）、
 缓存 DDL（`cache_ddl`）、全局 fail-closed（`engine_failed_closed`）、结果无法确认的转发已确认结束（`upstream_resolved`）、
-确认时查询 Databend 失败（`upstream_resolve_failed`）、启动监听（`listening`）和退出（`stopped`），
+确认时查询 Databend 失败（`upstream_resolve_failed`）、Stream 被别的进程消费（`stream_consumed_elsewhere`，
+附带 `action`）、表因重复消费停在失败状态（`table_stopped`）、启动监听（`listening`）和退出（`stopped`），
 每条一行 JSON，同时写到 stderr（journald 或 `docker logs` 能看到）和 `runs/<启动时间>/events.jsonl`。
 
 建议告警：
 - 任一表 `failed` 持续非空（短暂非空是正在自动恢复）；
 - 进程频繁重启，或出现 `engine_failed_closed` 事件；
+- 出现任何 `stream_consumed_elsewhere` 或 `table_stopped` 事件：有两个进程在用同一个 `instance_id`，要立即处理；
 - `last_sync_age_ms` 持续超过 `max_staleness`；
 - `forward_reasons` 里需要处理的原因持续增长；`uncertain_upstream` 持续为真超过几分钟，或频繁出现 `upstream_resolve_failed`；
 - 进程 RSS 接近容器上限。

@@ -1,0 +1,65 @@
+{
+  "db": "readyset_gateway_dupid_20261118_100408_8bef48",
+  "cases": [
+    {
+      "case": "E1",
+      "expected_new_ids": 3,
+      "s1_rows": 0,
+      "s1_missed": 3,
+      "intruder_rows": 3,
+      "applied_before": 125975036,
+      "in_txn_version": 125975040,
+      "in_txn_equals_applied": false,
+      "s1_commit": "ok",
+      "version_after": 125975040,
+      "guard_would_abort": true,
+      "silent_loss_without_guard": true,
+      "silent_loss_with_guard": false
+    },
+    {
+      "case": "E2",
+      "expected_new_ids": 3,
+      "s1_rows": 0,
+      "s1_missed": 3,
+      "intruder_rows": 3,
+      "applied_before": 125975040,
+      "in_txn_version": 125975046,
+      "in_txn_equals_applied": false,
+      "s1_commit": "ok",
+      "version_after": 125975046,
+      "guard_would_abort": true,
+      "silent_loss_without_guard": true,
+      "silent_loss_with_guard": false
+    },
+    {
+      "case": "E3",
+      "expected_new_ids": 3,
+      "s1_rows": 3,
+      "s1_missed": 0,
+      "intruder_rows": 3,
+      "applied_before": 125975046,
+      "in_txn_version": 125975053,
+      "in_txn_equals_applied": false,
+      "s1_commit": "StreamVersionMismatched: 125975029 expect `== 125975050` but `125975055`  while `update_multi_table_meta`",
+      "version_after": 125975053,
+      "guard_would_abort": true,
+      "silent_loss_without_guard": false,
+      "silent_loss_with_guard": false
+    },
+    {
+      "case": "E4",
+      "expected_new_ids": 3,
+      "s1_rows": 3,
+      "s1_missed": 0,
+      "intruder_rows": null,
+      "applied_before": 125975053,
+      "in_txn_version": 125975053,
+      "in_txn_equals_applied": true,
+      "s1_commit": "ok",
+      "version_after": 125975057,
+      "guard_would_abort": false,
+      "silent_loss_without_guard": false,
+      "silent_loss_with_guard": false
+    }
+  ]
+}

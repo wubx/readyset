@@ -9,6 +9,54 @@ use readyset_databend::shared_engine::SharedEngine;
 /// at least this often so a quiet table's Stream offset keeps up with source snapshots.
 const EMPTY_COMMIT_INTERVAL: Duration = Duration::from_secs(60);
 
+/// A second "Stream consumed elsewhere" within this window stops the table (reads go to
+/// Databend) instead of rebuilding it again: another process with the same `instance_id`
+/// is still consuming, and repeated full reloads would only load Databend.
+const ELSEWHERE_WINDOW: Duration = Duration::from_secs(600);
+
+/// Another consumer advanced this table's Stream: changes it took never reach the local
+/// rows. Detected by the per-round Stream check or by Databend's Stream version CAS.
+#[derive(Debug)]
+struct ConsumedElsewhere {
+    expected: u64,
+    found: Option<u64>,
+}
+impl std::fmt::Display for ConsumedElsewhere {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.found {
+            Some(found) => write!(
+                f,
+                "stream consumed elsewhere: expected version {}, found {found}",
+                self.expected
+            ),
+            None => write!(
+                f,
+                "stream consumed elsewhere: COMMIT rejected by stream version check on top of {}",
+                self.expected
+            ),
+        }
+    }
+}
+impl std::error::Error for ConsumedElsewhere {}
+
+fn consumed_elsewhere(e: &anyhow::Error) -> bool {
+    // `downcast_ref` also finds it as a `.context(..)` value under further contexts.
+    e.downcast_ref::<ConsumedElsewhere>().is_some()
+        || e.chain().any(|c| c.is::<ConsumedElsewhere>())
+}
+
+/// Databend's `StreamVersionMismatched` (code 2734): the Stream moved after this
+/// transaction first read it, i.e. another consumer COMMITted in between.
+fn stream_version_conflict(e: &anyhow::Error) -> bool {
+    let text = format!("{e:#}");
+    text.contains("\"code\":2734") || text.contains("StreamVersionMismatched")
+}
+
+/// Whether a detection at `now` is the repeat that stops the table.
+fn stop_on_detection(last: Option<Instant>, now: Instant) -> bool {
+    last.is_some_and(|t| now.saturating_duration_since(t) <= ELSEWHERE_WINDOW)
+}
+
 pub(super) async fn run_shared(s: Settings) -> Result<()> {
     fs::create_dir_all(&s.run_dir)?;
     let journal = Journal::open(&s.run_dir.join("source_queries.jsonl"))?;
@@ -123,26 +171,32 @@ async fn table_worker(
     let mut stop = app.stop.subscribe();
     let mut backoff = app.s.retry_backoff;
     let mut attempt = 0u64;
+    // Last "consumed elsewhere" detection, and whether the next recovery must reload: a
+    // moved Stream after such a detection never proves this instance's COMMIT.
+    let mut last_elsewhere: Option<Instant> = None;
+    let mut force_rebuild = false;
     loop {
         if *stop.borrow() {
             return;
         }
         attempt += 1;
         let mut capture = new_capture();
-        let (healthy_since, event, reason) = match recover(
+        let (healthy_since, event, reason, elsewhere) = match recover(
             &app,
             &engine,
             &id,
             &mut capture,
             attempt,
+            force_rebuild,
         )
         .await
         {
             Ok(()) => {
+                force_rebuild = false;
                 let snapshot = app.tables[&id].lock().snapshot.clone();
                 app.event("table_recovered", Some(&id), snapshot);
                 let healthy_since = Instant::now();
-                let reason = loop {
+                let (reason, elsewhere) = loop {
                     tokio::select! { _=tokio::time::sleep(app.s.interval)=>{}, _=stop.changed()=>{} }
                     if *stop.borrow() {
                         return;
@@ -154,17 +208,49 @@ async fn table_worker(
                         None => sync_source(&app, &engine, &id, &mut capture).await,
                     };
                     if let Err(e) = result {
-                        break format!("sync failure: {e:#}");
+                        break (format!("sync failure: {e:#}"), consumed_elsewhere(&e));
                     }
                 };
-                (Some(healthy_since), "table_sync_failed", reason)
+                (Some(healthy_since), "table_sync_failed", reason, elsewhere)
             }
             Err(e) => (
                 None,
                 "table_recovery_failed",
                 format!("recovery failed (attempt {attempt}): {e:#}"),
+                consumed_elsewhere(&e),
             ),
         };
+        if elsewhere {
+            force_rebuild = true;
+            let now = Instant::now();
+            let stop_table = stop_on_detection(last_elsewhere, now);
+            let detail = json!({"attempt": attempt, "reason": reason,
+                "action": if stop_table { "stopped" } else { "rebuild" },
+                "window_secs": ELSEWHERE_WINDOW.as_secs(),
+                "previous_secs_ago": last_elsewhere.map(|t| now.saturating_duration_since(t).as_secs_f64()),
+                "hint": "another process consumes this table's Stream: check that this instance_id runs exactly once"});
+            app.event("stream_consumed_elsewhere", Some(&id), detail);
+            last_elsewhere = Some(now);
+            if stop_table {
+                // Stay failed (reads go to Databend) until restarted; no more reloads.
+                app.fail_source(
+                    &id,
+                    format!("stopped: stream consumed elsewhere twice within {}s; make sure this instance_id runs exactly once, then restart. Last: {reason}", ELSEWHERE_WINDOW.as_secs()),
+                );
+                app.write_status("status.json");
+                app.event(
+                    "table_stopped",
+                    Some(&id),
+                    json!({"attempt": attempt, "reason": "stream consumed elsewhere"}),
+                );
+                while !*stop.borrow() {
+                    if stop.changed().await.is_err() {
+                        return;
+                    }
+                }
+                return;
+            }
+        }
         app.fail_source(&id, reason.clone());
         app.write_status("status.json");
         if healthy_since.is_some_and(|t| t.elapsed() >= HEALTHY_RESET) {
@@ -190,6 +276,7 @@ async fn recover(
     id: &str,
     capture: &mut Replicator,
     attempt: u64,
+    force_rebuild: bool,
 ) -> Result<()> {
     let started = Instant::now();
     let schema = capture.prepare_schema().await?;
@@ -201,9 +288,14 @@ async fn recover(
     }
     engine.attach(schema).await?;
     let (stream, version) = capture.stream_version().await?;
-    let (rows, recovery) = match engine.decide(id, stream, version)? {
+    let decision = match engine.decide(id, stream, version)? {
+        Decision::Resume(_) if force_rebuild => Decision::Rebuild("stream consumed elsewhere"),
+        decision => decision,
+    };
+    let (rows, recovery) = match decision {
         Decision::Resume(version) => {
             engine.resume(id, stream, version).await?;
+            capture.position = Some((stream, version));
             (capture.resume().await?, "resumed".to_string())
         }
         decision => {
@@ -215,12 +307,15 @@ async fn recover(
             // The local table is rebuilt from scratch; only after a schema change must the
             // Stream first move past the DDL so the snapshot can read the new columns.
             // Crash after this and before the load: the old digest still forces a rebuild.
-            let stream = if decision == Decision::Rebuild("source schema changed") {
+            let (stream, version) = if decision == Decision::Rebuild("source schema changed") {
                 capture.fast_forward().await?;
-                capture.stream_version().await?.0
+                capture.stream_version().await?
             } else {
-                stream
+                (stream, version)
             };
+            // The snapshot reads AT the Stream offset pinned by its transaction; the first
+            // round's Stream check proves that offset is still this one.
+            capture.position = Some((stream, version));
             match engine.snapshot(id, capture, rebuild, stream).await {
                 Ok(rows) => (rows, reason),
                 Err(e) => return Err(capture.abort_capture(e).await),
@@ -334,6 +429,7 @@ async fn source_round(
     // Complete consuming read required, before native checkpoint/barrier and COMMIT.
     pages.close().await?;
     capture.check_schema().await?;
+    let expected = capture.position.context("stream position unknown")?;
     let (inserts, deletes, cancelled) = (writer.inserts, writer.deletes, writer.cancelled);
     let bootstrap = capture.bootstrap_started().is_some();
     let mut writer = writer;
@@ -343,14 +439,41 @@ async fn source_round(
         // Stream moved, the next start can tell the batch was complete.
         writer.mark_applying().await?;
     }
-    let finish = writer.finish().await?;
+    // Inside the consuming transaction, after its read: the Stream must still be where the
+    // local rows are. Its offset was pinned at this transaction's first read, so a consumer
+    // that COMMITted before that shows here, and one that COMMITs later fails our COMMIT.
+    // Every round, empty ones included: an empty read may be what another consumer left.
+    // The check overlaps the batch's reader fence; on a mismatch the marker is still
+    // `Applying`/`Applied`, so recovery reloads this table.
+    let (current, finish) = tokio::join!(capture.stream_version(), writer.finish());
+    let (current, finish) = (current?, finish?);
+    ensure!(current.0 == expected.0, "stream recreated during capture");
+    if current.1 != expected.1 {
+        return Err(ConsumedElsewhere {
+            expected: expected.1,
+            found: Some(current.1),
+        }
+        .into());
+    }
     if commit {
-        capture.commit_consumed(inserts, deletes).await?;
+        // Every native write ACKed and the check passed: from here a moved Stream proves
+        // this COMMIT ran.
+        engine.committing(id).await?;
+        if let Err(e) = capture.commit_consumed(inserts, deletes).await {
+            if stream_version_conflict(&e) {
+                return Err(e.context(ConsumedElsewhere {
+                    expected: expected.1,
+                    found: None,
+                }));
+            }
+            return Err(e);
+        }
     } else {
         capture.rollback_empty().await?;
     }
     if commit || bootstrap {
-        // Read-only and safe to retry; the Stream only moves by this instance's COMMITs.
+        // Read-only and safe to retry. Another consumer COMMITting between our COMMIT and
+        // this read goes unseen until its next COMMIT, which the next round detects.
         let mut attempt = 0;
         let (stream, version) = loop {
             match capture.stream_version().await {
@@ -363,10 +486,57 @@ async fn source_round(
             }
         };
         engine.committed(id, stream, version).await?;
+        capture.position = Some((stream, version));
     }
     capture.check_schema().await?;
     Ok(
         json!({"sequence":sequence,"changes":changes,"inserts":inserts,"deletes":deletes,"cancelled":cancelled,
         "committed":commit,"finish":finish,"total_ms":started.elapsed().as_secs_f64()*1000.0}),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_second_detection_within_the_window_stops_the_table() {
+        let now = Instant::now();
+        assert!(!stop_on_detection(None, now));
+        assert!(stop_on_detection(Some(now), now));
+        let earlier = now.checked_sub(ELSEWHERE_WINDOW).unwrap();
+        assert!(stop_on_detection(Some(earlier), now));
+        let long_ago = earlier.checked_sub(Duration::from_secs(1)).unwrap();
+        assert!(!stop_on_detection(Some(long_ago), now));
+    }
+
+    #[test]
+    fn detections_survive_error_context() {
+        let found = anyhow::Error::new(ConsumedElsewhere {
+            expected: 9,
+            found: Some(12),
+        })
+        .context("first round after recovery");
+        assert!(consumed_elsewhere(&found));
+        assert!(format!("{found:#}").contains("expected version 9, found 12"));
+        let cas = anyhow::anyhow!(
+            "Databend SQL error: {}",
+            json!({"code": 2734, "message": "StreamVersionMismatched: 1 expect `== 2` but `3`"})
+        );
+        assert!(stream_version_conflict(&cas));
+        let wrapped = cas.context(ConsumedElsewhere {
+            expected: 2,
+            found: None,
+        });
+        assert!(consumed_elsewhere(&wrapped));
+        let wrapped = wrapped
+            .context("rollback also failed: x")
+            .context("first round after recovery");
+        assert!(consumed_elsewhere(&wrapped));
+        let other = anyhow::anyhow!(
+            "Databend SQL error: {}",
+            json!({"code": 1025, "message": "x"})
+        );
+        assert!(!stream_version_conflict(&other) && !consumed_elsewhere(&other));
+    }
 }

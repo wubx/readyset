@@ -366,7 +366,10 @@ upquery_timeout_ms = 10000
                     return {'passed': True, 'checks': self.checks, 'expected_vulnerability_reproduced': True}
                 self.wait(lambda: self.states()[self.a]['failed'])
                 state = self.states()[self.a]
-                self.check('late COMMIT rejected by native Stream version CAS', '2734' in state['failed'])
+                # The per-round Stream check sees the old consumer's COMMIT before ours is sent;
+                # without it, Databend's Stream version CAS (2734) rejects our COMMIT.
+                self.check('conflicting bootstrap rejected by Stream check or Stream version CAS',
+                           'stream consumed elsewhere' in state['failed'] or '2734' in state['failed'])
                 self.check('A never ready after conflicting bootstrap', state['ready'], False)
                 self.query("SELECT id,val FROM " + self.a + " WHERE id='bag'", 'databend')
                 self.verify_b()

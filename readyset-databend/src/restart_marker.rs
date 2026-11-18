@@ -6,9 +6,11 @@
 //! the source table's meta seq at the Stream offset.
 //!
 //! - `Applied(v)`: local rows equal the source at Stream version `v`.
-//! - `Applying(p)`: local rows may contain an unfinished batch on top of version `p`. A batch
-//!   is COMMITted only after every native write ACKed, so if THE SAME Stream has moved past
-//!   `p` (only this instance consumes it) the batch is complete; otherwise it is not.
+//! - `Applying(p)`: local rows may contain an unfinished batch on top of version `p`, and its
+//!   COMMIT has not been sent. If the Stream moved past `p`, someone else consumed it.
+//! - `Committing(p)`: every native write of the batch on top of `p` ACKed and its COMMIT may
+//!   have been sent. If THE SAME Stream has moved past `p`, the batch is complete (our
+//!   COMMIT moved it; another consumer is caught by the per-round Stream check instead).
 //! - `Rebuilding`: a snapshot load is in progress; local rows are unusable.
 //!
 //! A recreated Stream (new `stream_id`) proves nothing about earlier COMMITs: rebuild.
@@ -25,6 +27,7 @@ use replication_offset::databend::DatabendPosition;
 pub enum Phase {
     Rebuilding,
     Applying(u64),
+    Committing(u64),
     Applied(u64),
 }
 
@@ -41,6 +44,7 @@ impl Marker {
         let phase = match self.phase {
             Phase::Rebuilding => "r".to_string(),
             Phase::Applying(v) => format!("p{v}"),
+            Phase::Committing(v) => format!("c{v}"),
             Phase::Applied(v) => format!("a{v}"),
         };
         Ok(ReplicationOffset::Databend(DatabendPosition::new(
@@ -66,6 +70,7 @@ impl Marker {
         let phase = match phase.split_at_checked(1) {
             Some(("r", "")) => Phase::Rebuilding,
             Some(("p", v)) => Phase::Applying(version(v)?),
+            Some(("c", v)) => Phase::Committing(version(v)?),
             Some(("a", v)) => Phase::Applied(version(v)?),
             _ => bail!("malformed restart marker phase"),
         };
@@ -89,7 +94,8 @@ pub enum Decision {
 }
 
 /// Restart decision for one table. `stream`/`stream_version` are read from Databend after
-/// the Stream is ensured to exist; nobody but this instance consumes that Stream.
+/// the Stream is ensured to exist. Only a `Committing` marker may resume on a moved Stream:
+/// an `Applying` batch never sent its COMMIT, so a move there is another consumer's.
 pub fn decide(
     table_exists: bool,
     marker: Option<&Marker>,
@@ -112,9 +118,14 @@ pub fn decide(
     match marker.phase {
         Phase::Applied(v) if v == stream_version => Decision::Resume(v),
         Phase::Applied(_) => Decision::Rebuild("stream moved without a local apply"),
+        Phase::Applying(p) if p != stream_version => {
+            Decision::Rebuild("stream moved by another consumer")
+        }
         // COMMIT only follows complete native ACKs, so a moved Stream proves completion.
-        Phase::Applying(p) if p != stream_version => Decision::Resume(stream_version),
-        Phase::Applying(_) => Decision::Rebuild("interrupted batch was not committed"),
+        Phase::Committing(p) if p != stream_version => Decision::Resume(stream_version),
+        Phase::Applying(_) | Phase::Committing(_) => {
+            Decision::Rebuild("interrupted batch was not committed")
+        }
         Phase::Rebuilding => Decision::Rebuild("interrupted snapshot load"),
     }
 }
@@ -137,6 +148,7 @@ mod tests {
         for phase in [
             Phase::Rebuilding,
             Phase::Applying(7),
+            Phase::Committing(8),
             Phase::Applied(u64::MAX),
         ] {
             let m = marker(phase, 42);
@@ -158,8 +170,9 @@ mod tests {
             ..m.clone()
         };
         let p = next(&a, Phase::Applying(10));
-        let back = next(&p, Phase::Applied(10));
-        for (old, new) in [(&a, &p), (&p, &back)] {
+        let c = next(&p, Phase::Committing(10));
+        let back = next(&c, Phase::Applied(10));
+        for (old, new) in [(&a, &p), (&p, &c), (&c, &back)] {
             let (old, new) = (old.offset().unwrap(), new.offset().unwrap());
             assert!(!matches!(new.try_partial_cmp(&old), Ok(o) if o.is_le()));
         }
@@ -195,14 +208,22 @@ mod tests {
             Decision::Rebuild(_)
         ));
         // Crash mid-batch, or COMMIT never executed: rebuild only this table.
-        assert!(matches!(
-            decide(true, Some(&marker(Phase::Applying(9), 1)), 9),
-            Decision::Rebuild(_)
-        ));
+        for phase in [Phase::Applying(9), Phase::Committing(9)] {
+            assert_eq!(
+                decide(true, Some(&marker(phase, 1)), 9),
+                Decision::Rebuild("interrupted batch was not committed")
+            );
+        }
         // COMMIT executed but its response or the applied marker was lost.
         assert_eq!(
-            decide(true, Some(&marker(Phase::Applying(8), 1)), 9),
+            decide(true, Some(&marker(Phase::Committing(8), 1)), 9),
             Decision::Resume(9)
+        );
+        // The batch never sent its COMMIT, yet the Stream moved: another consumer took
+        // changes this instance never applied.
+        assert_eq!(
+            decide(true, Some(&marker(Phase::Applying(8), 1)), 9),
+            Decision::Rebuild("stream moved by another consumer")
         );
         assert!(matches!(
             decide(true, Some(&marker(Phase::Rebuilding, 1)), 9),
@@ -214,7 +235,7 @@ mod tests {
     fn recreated_stream_never_resumes_an_interrupted_batch() {
         // Crash mid-batch at version 8, then the Stream is dropped and recreated (new id,
         // new version). The moved version must NOT be read as "our COMMIT happened".
-        let m = marker(Phase::Applying(8), 3);
+        let m = marker(Phase::Committing(8), 3);
         assert_eq!(
             decide(true, Some(&m), "0123456789ab", 78, 9),
             Decision::Rebuild("stream recreated")

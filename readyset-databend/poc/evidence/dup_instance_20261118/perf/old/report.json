@@ -1,0 +1,390 @@
+{
+  "db": "readyset_gateway_jdbc_20261118_111514_0e72ed",
+  "args": {
+    "endpoint": "http://127.0.0.1:8000",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-sticky1-release",
+    "jdbc_classpath": "/data1/vmbox/readyset-jdbc-compat/lib/databend-jdbc-0.4.8.jar",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/perf_old",
+    "rows": 100000,
+    "port": 18104,
+    "partial": false,
+    "load_secs": 30,
+    "load_threads": 64,
+    "load_target": "gateway",
+    "write_interval_ms": 100,
+    "confirm_create": true
+  },
+  "steps": [
+    {
+      "step": "connect",
+      "ok": true,
+      "local": 0,
+      "forwarded": 1,
+      "detail": "driver 0.4.8, server Databend Query v1.2.962-652b12b49c(rust-1.101.0-nightly-2026-11-11T15:53:38.032513176Z)"
+    },
+    {
+      "step": "pk_lookup_prepared_reused",
+      "ok": true,
+      "local": 8,
+      "forwarded": 0,
+      "detail": "8 keys equal"
+    },
+    {
+      "step": "ext_lookup_setString",
+      "ok": true,
+      "local": 5,
+      "forwarded": 0,
+      "detail": "4 keys + quoted missing key equal"
+    },
+    {
+      "step": "typed_getters",
+      "ok": true,
+      "local": 2,
+      "forwarded": 0,
+      "detail": "2,ext-2,0(null),2,false,0.02,null(null); 3,ext-3,3,3,true,0.03,它's \"q\" \\ 😀 ext-3; "
+    },
+    {
+      "step": "statement_literal",
+      "ok": true,
+      "local": 1,
+      "forwarded": 0,
+      "detail": "equal"
+    },
+    {
+      "step": "uncached_aggregate",
+      "ok": true,
+      "local": 0,
+      "forwarded": 1,
+      "detail": "equal"
+    },
+    {
+      "step": "database_metadata",
+      "ok": true,
+      "local": 0,
+      "forwarded": 1,
+      "detail": "columns 7"
+    },
+    {
+      "step": "connect_per_query_x50",
+      "ok": true,
+      "local": 50,
+      "forwarded": 0,
+      "detail": "avg 7.4 ms per connect+query"
+    },
+    {
+      "step": "arrow_format_requested_falls_back_to_json",
+      "ok": true,
+      "local": 1,
+      "forwarded": 0,
+      "detail": "equal, served locally"
+    },
+    {
+      "step": "insert_then_read_own_write",
+      "ok": true,
+      "local": 0,
+      "forwarded": 2,
+      "detail": "visible at once"
+    },
+    {
+      "step": "update_then_read_own_write",
+      "ok": true,
+      "local": 0,
+      "forwarded": 2,
+      "detail": "visible at once"
+    },
+    {
+      "step": "local_after_sync",
+      "ok": true,
+      "local": 1,
+      "forwarded": 8,
+      "detail": "local and equal after 1.01s"
+    },
+    {
+      "step": "session_isolation_own_write",
+      "ok": true,
+      "local": 2,
+      "forwarded": 2,
+      "detail": "writer read own row from Databend; other session local (not yet visible)"
+    },
+    {
+      "step": "delete_then_read_own_write",
+      "ok": true,
+      "local": 0,
+      "forwarded": 2,
+      "detail": "gone at once (deleted 1)"
+    },
+    {
+      "step": "auto_commit_false_matches_databend",
+      "ok": true,
+      "local": 0,
+      "forwarded": 3,
+      "detail": "statement autocommitted, same as Databend"
+    },
+    {
+      "step": "explicit_begin_commit",
+      "ok": true,
+      "local": 0,
+      "forwarded": 5,
+      "detail": "own row visible in txn, isolated, visible after commit"
+    },
+    {
+      "step": "explicit_begin_rollback",
+      "ok": true,
+      "local": 0,
+      "forwarded": 4,
+      "detail": "rolled back"
+    },
+    {
+      "step": "read_in_txn_is_forwarded_and_equal",
+      "ok": true,
+      "local": 0,
+      "forwarded": 3,
+      "detail": "forwarded and equal"
+    },
+    {
+      "step": "temp_table_shadows_cached_table",
+      "ok": true,
+      "local": 0,
+      "forwarded": 4,
+      "detail": "temp row seen in its session; other sessions still see the cached row"
+    },
+    {
+      "step": "batch_insert",
+      "ok": true,
+      "local": 0,
+      "forwarded": 3,
+      "detail": "3 rows, counts [1, 1, 1]"
+    },
+    {
+      "step": "close",
+      "ok": true,
+      "local": 0,
+      "forwarded": 0,
+      "detail": "closed"
+    },
+    {
+      "step": "load_prepared_point_lookup",
+      "ok": true,
+      "local": 160030,
+      "forwarded": 2708,
+      "detail": "target gateway, writes 93 (every 100 ms, insert+2 reads+update avg 323.3 ms), read-your-writes 0/186 failed, threads 64, qps 5412, ok 162366, bad 0, avg 11.81 ms, p50 10.21 ms, p99 125.03 ms, errors []"
+    }
+  ],
+  "summary": {
+    "passed": 22,
+    "failed": 0
+  },
+  "probe_exit": 0,
+  "final": {
+    "local_rows": 100099,
+    "databend_rows": 100099,
+    "max_id": 2064535,
+    "ready": true,
+    "failed": null,
+    "sample_keys": 45,
+    "sample_local": 45,
+    "sample_mismatch": []
+  },
+  "health": {
+    "counters": {
+      "cache_ddl": 2,
+      "databend": 2749,
+      "empty_local": 3,
+      "forward_reasons": {
+        "forward_epoch": 561,
+        "not_cached_table": 201,
+        "own_write_pending": 187,
+        "source_applying": 1790,
+        "unsafe_session": 10
+      },
+      "readyset": 160145,
+      "resolved": 0,
+      "sync_batches": 32,
+      "unresolved": 0
+    },
+    "rows": 100099,
+    "failed": null
+  },
+  "exit_code": 0,
+  "events": [
+    {
+      "attempt": 1,
+      "event": "table_recovered",
+      "instance_id": "jdbcd17306",
+      "previous_failure": null,
+      "recovery": "created",
+      "rows": 100000,
+      "table": "readyset_gateway_jdbc_20261118_111514_0e72ed.a",
+      "total_secs": 0.640392482,
+      "utc": 1794971716.2047493
+    }
+  ],
+  "route_shapes": [
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "status": 200,
+      "route": "readyset",
+      "headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "count": 160047
+    },
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "status": 200,
+      "route": "databend",
+      "headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "count": 2673
+    },
+    {
+      "method": "POST",
+      "path": "/v1/session/login",
+      "status": 200,
+      "route": "databend",
+      "headers": [],
+      "session_keys": [],
+      "count": 119
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "route": null,
+      "headers": [],
+      "session_keys": [],
+      "count": 75
+    },
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "status": 200,
+      "route": "databend",
+      "headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "database",
+        "need_keep_alive",
+        "need_sticky",
+        "settings",
+        "txn_state"
+      ],
+      "count": 67
+    },
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "status": 200,
+      "route": "readyset",
+      "headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "database",
+        "need_keep_alive",
+        "need_sticky",
+        "settings",
+        "txn_state"
+      ],
+      "count": 53
+    },
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "status": 200,
+      "route": "readyset",
+      "headers": [],
+      "session_keys": [],
+      "count": 47
+    },
+    {
+      "method": "GET",
+      "path": "/v1/query/<id>/final",
+      "status": 200,
+      "route": "readyset",
+      "headers": [],
+      "session_keys": [],
+      "count": 47
+    },
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "status": 200,
+      "route": "databend",
+      "headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint",
+        "x-databend-sticky-node"
+      ],
+      "session_keys": [
+        "autoCommit",
+        "catalog",
+        "database",
+        "internal",
+        "need_keep_alive",
+        "need_sticky",
+        "role",
+        "settings",
+        "txn_state"
+      ],
+      "count": 9
+    },
+    {
+      "method": "GET",
+      "path": "/v1/query/<id>/final",
+      "status": 200,
+      "route": "databend",
+      "headers": [
+        "x-databend-query-id",
+        "x-databend-route-hint"
+      ],
+      "session_keys": [],
+      "count": 2
+    },
+    {
+      "method": "POST",
+      "path": "/v1/session/logout",
+      "status": 200,
+      "route": "databend",
+      "headers": [
+        "x-databend-route-hint",
+        "x-databend-sticky-node"
+      ],
+      "session_keys": [],
+      "count": 1
+    }
+  ]
+}

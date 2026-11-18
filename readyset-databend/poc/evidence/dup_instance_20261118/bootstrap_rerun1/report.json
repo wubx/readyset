@@ -1,0 +1,1958 @@
+{
+  "passed": true,
+  "checks": 180,
+  "cases": [
+    {
+      "passed": true,
+      "mode": "full",
+      "fault": "late_commit",
+      "databases": [
+        "readyset_gateway_boundary_e3b51a25491e_a",
+        "readyset_gateway_boundary_e3b51a25491e_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old consumer read whole Stream before delayed COMMIT",
+          "actual": [
+            [
+              "100008"
+            ]
+          ],
+          "expected": [
+            [
+              "100008"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old real COMMIT advanced Stream before new snapshot returned",
+          "actual": [
+            [
+              "0"
+            ]
+          ],
+          "expected": [
+            [
+              "0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "conflicting bootstrap rejected by Stream check or Stream version CAS",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "A never ready after conflicting bootstrap",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_e3b51a25491e_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_e3b51a25491e_a.",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_e3b51a25491e_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_e3b51a25491e_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_e3b51a25491e_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_e3b51a25491e_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh generation reconstructs complete A duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A row count exact after rebuild",
+          "actual": 50004,
+          "expected": 50004,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_e3b51a25491e_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_e3b51a25491e_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "full",
+      "fault": "commit_reply_lost",
+      "databases": [
+        "readyset_gateway_boundary_3d119ac45d5c_a",
+        "readyset_gateway_boundary_3d119ac45d5c_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "lost COMMIT reply fails A closed",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "COMMIT executed once without SQL retry",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "real Stream advanced despite discarded reply",
+          "actual": [
+            [
+              "0"
+            ]
+          ],
+          "expected": [
+            [
+              "0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_3d119ac45d5c_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_3d119ac45d5c_a.",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_3d119ac45d5c_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_3d119ac45d5c_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_3d119ac45d5c_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_3d119ac45d5c_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh generation reconstructs complete A duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A row count exact after rebuild",
+          "actual": 50004,
+          "expected": 50004,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_3d119ac45d5c_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_3d119ac45d5c_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "full",
+      "fault": "crash_before_commit",
+      "databases": [
+        "readyset_gateway_boundary_a5f75918dd47_a",
+        "readyset_gateway_boundary_a5f75918dd47_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "Stream unconsumed before withheld COMMIT",
+          "actual": [
+            [
+              "100008"
+            ]
+          ],
+          "expected": [
+            [
+              "100008"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "SIGKILL before COMMIT retained complete Stream delta",
+          "actual": [
+            [
+              "100008"
+            ]
+          ],
+          "expected": [
+            [
+              "100008"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_a5f75918dd47_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_a5f75918dd47_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh generation reconstructs complete A duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A row count exact after rebuild",
+          "actual": 50004,
+          "expected": 50004,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_a5f75918dd47_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_a5f75918dd47_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "full",
+      "fault": "slow_bootstrap",
+      "databases": [
+        "readyset_gateway_boundary_9222c370a5c6_a",
+        "readyset_gateway_boundary_9222c370a5c6_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fresh post-bootstrap consume held separately",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "aged pinned bootstrap not reported fresh",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_9222c370a5c6_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_9222c370a5c6_a.",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_after_slow_snapshot FROM SELECT id,val FROM r",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_after_slow_snapshot FROM SELECT id,val FROM r",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_9222c370a5c6_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_9222c370a5c6_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh next round catches post-pin writes",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_9222c370a5c6_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_9222c370a5c6_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "late_commit",
+      "databases": [
+        "readyset_gateway_boundary_eb1fd01eb4d5_a",
+        "readyset_gateway_boundary_eb1fd01eb4d5_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old consumer read whole Stream before delayed COMMIT",
+          "actual": [
+            [
+              "100008"
+            ]
+          ],
+          "expected": [
+            [
+              "100008"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "old real COMMIT advanced Stream before new snapshot returned",
+          "actual": [
+            [
+              "0"
+            ]
+          ],
+          "expected": [
+            [
+              "0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "conflicting bootstrap rejected by Stream check or Stream version CAS",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "A never ready after conflicting bootstrap",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_eb1fd01eb4d5_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_eb1fd01eb4d5_a.",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_eb1fd01eb4d5_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_eb1fd01eb4d5_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_eb1fd01eb4d5_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_eb1fd01eb4d5_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh generation reconstructs complete A duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A row count exact after rebuild",
+          "actual": 50004,
+          "expected": 50004,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_eb1fd01eb4d5_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_eb1fd01eb4d5_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "commit_reply_lost",
+      "databases": [
+        "readyset_gateway_boundary_ef2dababf7b3_a",
+        "readyset_gateway_boundary_ef2dababf7b3_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "lost COMMIT reply fails A closed",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "COMMIT executed once without SQL retry",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "real Stream advanced despite discarded reply",
+          "actual": [
+            [
+              "0"
+            ]
+          ],
+          "expected": [
+            [
+              "0"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_ef2dababf7b3_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_ef2dababf7b3_a.",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_ef2dababf7b3_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_ef2dababf7b3_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_ef2dababf7b3_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_ef2dababf7b3_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh generation reconstructs complete A duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A row count exact after rebuild",
+          "actual": 50004,
+          "expected": 50004,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_ef2dababf7b3_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_ef2dababf7b3_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "crash_before_commit",
+      "databases": [
+        "readyset_gateway_boundary_32f345f3bf07_a",
+        "readyset_gateway_boundary_32f345f3bf07_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "Stream unconsumed before withheld COMMIT",
+          "actual": [
+            [
+              "100008"
+            ]
+          ],
+          "expected": [
+            [
+              "100008"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "SIGKILL before COMMIT retained complete Stream delta",
+          "actual": [
+            [
+              "100008"
+            ]
+          ],
+          "expected": [
+            [
+              "100008"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_recovered FROM SELECT id,val FROM readyset_ga",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_32f345f3bf07_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_32f345f3bf07_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh generation reconstructs complete A duplicate bag",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "A row count exact after rebuild",
+          "actual": 50004,
+          "expected": 50004,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_2 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_32f345f3bf07_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_32f345f3bf07_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "passed": true,
+      "mode": "partial",
+      "fault": "slow_bootstrap",
+      "databases": [
+        "readyset_gateway_boundary_cb1a95ad4526_a",
+        "readyset_gateway_boundary_cb1a95ad4526_b"
+      ],
+      "checks": [
+        {
+          "name": "real Databend available",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fault hook reached only owned A transaction",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "fresh post-bootstrap consume held separately",
+          "actual": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "name": "aged pinned bootstrap not reported fresh",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_cb1a95ad4526_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_cb1a95ad4526_a.",
+          "actual": "databend",
+          "expected": "databend",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE a_after_slow_snapshot FROM SELECT id,val FROM r",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE a_after_slow_snapshot FROM SELECT id,val FROM r",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,val FROM readyset_gateway_boundary_cb1a95ad4526_a.",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,val FROM readyset_gateway_boundary_cb1a95ad4526_a.",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "fresh next round catches post-pin writes",
+          "actual": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "expected": [
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ],
+            [
+              "bag",
+              "new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: CREATE CACHE b_id_1 FROM SELECT id,label FROM readyset_gatew",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "query HTTP success: SELECT id,label FROM readyset_gateway_boundary_cb1a95ad4526_",
+          "actual": 200,
+          "expected": 200,
+          "passed": true
+        },
+        {
+          "name": "query route: SELECT id,label FROM readyset_gateway_boundary_cb1a95ad4526_",
+          "actual": "readyset",
+          "expected": "readyset",
+          "passed": true
+        },
+        {
+          "name": "B duplicate update independently local and fresh",
+          "actual": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "expected": [
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ],
+            [
+              "18446744073709551615",
+              "b-new"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "one native server for both tables",
+          "actual": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "name": "no global native failure",
+          "actual": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "name": "exactly one retained Stream per table",
+          "actual": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              [
+                "1"
+              ]
+            ],
+            [
+              [
+                "1"
+              ]
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "error": null
+    }
+  ]
+}

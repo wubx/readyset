@@ -194,6 +194,9 @@ pub struct Replicator {
     capture_failed: bool,
     /// Last successful Stream COMMIT (also set at resume/snapshot start for pacing).
     committed_at: Instant,
+    /// (`stream_id`, `table_version`) the local rows equal: set at resume, before a
+    /// snapshot, and after every COMMIT. Each round checks the Stream is still there.
+    pub position: Option<(u64, u64)>,
 }
 
 const EXPECTED_SCHEMA: [(&str, &str, &str); 4] = [
@@ -219,6 +222,7 @@ impl Replicator {
             bootstrap_started: None,
             capture_failed: false,
             committed_at: Instant::now(),
+            position: None,
         }
     }
 
@@ -232,8 +236,9 @@ impl Replicator {
     }
 
     /// The Stream's identity and offset: (`system.streams.stream_id`, `table_version` = the
-    /// source table's meta seq). Only this instance consumes the Stream, so between our own
-    /// COMMITs both are stable; a dropped and recreated Stream has a new id.
+    /// source table's meta seq). Read from meta, never from a transaction's pinned view, so
+    /// inside a consuming transaction it shows another consumer's COMMIT. Only this
+    /// instance should consume the Stream; a dropped and recreated Stream has a new id.
     pub async fn stream_version(&mut self) -> Result<(u64, u64)> {
         let (database, stream) = self
             .names

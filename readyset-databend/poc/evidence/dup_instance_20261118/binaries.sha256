@@ -1,0 +1,8 @@
+# 被测（最终）
+d94883243c52647518cfc13d200e45be44f485c20dc27a81869cdc0f5f478dbf  /data1/vmbox/readyset-dupguard2-release/readyset-databend
+# 第一版候选（未采用）
+f17acff7bd2b67be17fc6036e335aed78511e9caf68010aa49ea825a16bded4a  /data1/vmbox/readyset-dupguard1-release/readyset-databend
+# 最终回归重新构建，与被测一致
+d94883243c52647518cfc13d200e45be44f485c20dc27a81869cdc0f5f478dbf  /data1/vmbox/readyset/target/release/readyset-databend
+# 修复前（07e93442，多节点修复版）
+07e934422471eaa7abd09bee35a2c21065e9181247737a782e079f9603c3c7b4  /data1/vmbox/readyset-sticky1-release

@@ -1,0 +1,131 @@
+{
+  "db": "readyset_gateway_dupid_20261118_100459_74dbfe",
+  "instance_id": "dup36a566",
+  "args": {
+    "endpoint": "http://127.0.0.1:8000",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset/target/release/readyset-databend",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/dup_e2e1",
+    "ports": [
+      18107,
+      18108
+    ],
+    "duration": 30,
+    "tick": 0.3,
+    "rows": 5,
+    "confirm_create": true
+  },
+  "instances": {
+    "A": {
+      "alive": true,
+      "ready": true,
+      "failed": null,
+      "local_rows": 1415,
+      "databend_rows": 1495,
+      "local_reads": 1495,
+      "forwarded_reads": 0,
+      "missing_rows": 285,
+      "stale_values": 58,
+      "missing_sample": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007,
+        1008,
+        1009
+      ],
+      "stale_sample": [
+        2,
+        20,
+        32,
+        74,
+        87,
+        93,
+        120,
+        125,
+        132,
+        168
+      ],
+      "events": [
+        {
+          "event": "table_recovered",
+          "attempt": 1,
+          "recovery": "created",
+          "reason": null
+        },
+        {
+          "event": "table_sync_failed",
+          "attempt": 1,
+          "recovery": null,
+          "reason": "sync failure: Failed to manipulate table rs_source_58b6985157153c141dd78a07: Error during RPC (Table::input): Client was dropped: Error during RPC (Table::input): Client was dropped: Client was dropped"
+        },
+        {
+          "event": "table_recovery_failed",
+          "attempt": 2,
+          "recovery": null,
+          "reason": "recovery failed (attempt 2): first round after recovery: Failed to manipulate table rs_source_58b6985157153c141dd78a07: Error during RPC (Table::input): Client was dropped: Error during RPC (Table::input): Client was dropped: Client was dropped"
+        },
+        {
+          "event": "table_recovered",
+          "attempt": 3,
+          "recovery": "resumed",
+          "reason": null
+        }
+      ],
+      "event_count": 4
+    },
+    "B": {
+      "alive": true,
+      "ready": true,
+      "failed": null,
+      "local_rows": 1285,
+      "databend_rows": 1495,
+      "local_reads": 1495,
+      "forwarded_reads": 0,
+      "missing_rows": 210,
+      "stale_values": 36,
+      "missing_sample": [
+        1010,
+        1011,
+        1012,
+        1013,
+        1014,
+        1015,
+        1016,
+        1017,
+        1018,
+        1019
+      ],
+      "stale_sample": [
+        55,
+        62,
+        90,
+        150,
+        162,
+        172,
+        193,
+        234,
+        237,
+        330
+      ],
+      "events": [
+        {
+          "event": "table_recovered",
+          "attempt": 1,
+          "recovery": "created",
+          "reason": null
+        }
+      ],
+      "event_count": 1
+    }
+  },
+  "A_ready": true,
+  "B_ready": true,
+  "databend_rows": 1495,
+  "written_ids": 1495,
+  "updated_ids": 94
+}

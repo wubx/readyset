@@ -376,6 +376,23 @@ impl SharedEngine {
         }
         Ok(())
     }
+    /// Record `Committing(last applied version)` after the batch finished (every native
+    /// write ACKed) and its Stream check passed, before its COMMIT is sent. Only this phase
+    /// may resume on a moved Stream: an `Applying` batch never sent its COMMIT, so a move
+    /// then is another consumer's. A `Rebuilding` marker stays: a crash reloads anyway.
+    pub async fn committing(&self, id: &str) -> Result<()> {
+        self.alive()?;
+        let source = self.source(id)?;
+        let mut table = source.table.lock().await;
+        if let Some(marker) = source.marker()
+            && let Phase::Applying(version) = marker.phase
+        {
+            source
+                .write_marker(&mut table, marker.stream, Phase::Committing(version))
+                .await?;
+        }
+        Ok(())
+    }
     pub fn marker_phase(&self, id: &str) -> Option<Phase> {
         self.source(id).ok()?.marker().map(|m| m.phase)
     }

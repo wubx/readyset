@@ -119,9 +119,13 @@ async fn restart_child() {
             engine.resume("a.items", 77, 11).await.unwrap();
             assert_eq!(local_rows(&engine, SQL).await, kept());
             assert_eq!(engine.listing()["caches"], json!(["by_id"]));
-            // Crash mid-batch: a row reaches the base, then the process dies hard.
-            let _batch = insert(&engine, 2, &[("8", "partial")]).await;
+            // Crash during COMMIT: the batch's rows ACKed and `Committing` was recorded,
+            // then the process dies hard. Whether COMMIT ran is decided by the Stream.
+            let batch = insert(&engine, 2, &[("8", "partial")]).await;
             assert_eq!(engine.marker_phase("a.items"), Some(Phase::Applying(11)));
+            batch.finish().await.unwrap();
+            engine.committing("a.items").await.unwrap();
+            assert_eq!(engine.marker_phase("a.items"), Some(Phase::Committing(11)));
             println!("CRASH_POINT_REACHED");
             std::process::abort();
         }
