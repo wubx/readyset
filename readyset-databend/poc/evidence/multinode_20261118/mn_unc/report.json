@@ -1,0 +1,228 @@
+{
+  "db": "readyset_gateway_unc_20261118_093222_d60ef4",
+  "args": {
+    "endpoint": "http://127.0.0.1:8022",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-sticky1-release",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/mn_unc",
+    "port": 18105,
+    "heavy_rows": 60000000000,
+    "confirm_create": true
+  },
+  "scenarios": {
+    "rejected": {
+      "status": 200,
+      "error": {
+        "code": 2206,
+        "message": "Invalid role no_such_role for current session, user: 'root'@'%', available: account_admin,part1_role,part2_role,public,wubx_admin"
+      }
+    },
+    "timeout": {
+      "gateway_status": 502,
+      "gateway_answer_secs": 5.0,
+      "response_state": null,
+      "response_error": "gateway/upstream failure; SQL was not retried",
+      "uncertain_after_answer": true,
+      "unresolved_after_answer": 1,
+      "inflight_after_answer": 0,
+      "commit_secs_after_send": 13.75,
+      "local_again_secs_after_commit": 4.27,
+      "reads": 72,
+      "reads_local": 14,
+      "reads_after_commit_missing_row": 0,
+      "local_reads_while_unresolved": 0,
+      "read_errors": 0,
+      "uncertain_at_end": false,
+      "unresolved_at_end": 0,
+      "inflight_at_end": 0,
+      "counters": {
+        "unresolved": 1,
+        "resolved": 1
+      }
+    },
+    "abandoned": {
+      "gateway_status": 200,
+      "gateway_answer_secs": 1.01,
+      "response_state": "Running",
+      "response_error": null,
+      "uncertain_after_answer": false,
+      "unresolved_after_answer": 0,
+      "inflight_after_answer": 1,
+      "commit_secs_after_send": 10.04,
+      "local_again_secs_after_commit": 3.97,
+      "reads": 61,
+      "reads_local": 11,
+      "reads_after_commit_missing_row": 0,
+      "local_reads_while_unresolved": 0,
+      "read_errors": 0,
+      "uncertain_at_end": false,
+      "unresolved_at_end": 0,
+      "inflight_at_end": 0,
+      "counters": {
+        "unresolved": 1,
+        "resolved": 2
+      }
+    }
+  },
+  "checks": [
+    {
+      "check": "create cache",
+      "ok": true,
+      "detail": "null"
+    },
+    {
+      "check": "baseline read is local",
+      "ok": true,
+      "detail": "[['42', 'v42']]"
+    },
+    {
+      "check": "rejected start passes Databend error through",
+      "ok": true,
+      "detail": "{\"code\": 2206, \"message\": \"Invalid role no_such_role for current session, user: 'root'@'%', available: account_admin,part1_role,part2_role,public,wubx_admin\"}"
+    },
+    {
+      "check": "rejected start is not uncertain",
+      "ok": true,
+      "detail": "uncertain=False unresolved=0"
+    },
+    {
+      "check": "local reads continue after a rejected start",
+      "ok": true,
+      "detail": "[['42', 'v42']]"
+    },
+    {
+      "check": "timeout: gateway answers 502 after forward_timeout",
+      "ok": true,
+      "detail": "502 after 5.0s"
+    },
+    {
+      "check": "timeout: outcome recorded as unresolved",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "timeout: the write commits after the gateway gave up",
+      "ok": true,
+      "detail": "commit after 13.75s"
+    },
+    {
+      "check": "timeout: no local read while unresolved",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "timeout: no read misses the committed row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "timeout: local reads return after the write finished",
+      "ok": true,
+      "detail": "4.27s after commit"
+    },
+    {
+      "check": "timeout: resolved at the end",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "timeout: no read errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "abandoned: first answer is Running",
+      "ok": true,
+      "detail": "Running"
+    },
+    {
+      "check": "abandoned: tracked as in flight",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "abandoned: no local read before the write finished",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "abandoned: no read misses the committed row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "abandoned: local reads return after the write finished",
+      "ok": true,
+      "detail": "3.97s after commit"
+    },
+    {
+      "check": "abandoned: nothing left in flight or unresolved",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "abandoned: no read errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "final read of 20000001 is local and equal",
+      "ok": true,
+      "detail": "readyset [['20000001', 'slow20000001']]"
+    },
+    {
+      "check": "final read of 20000002 is local and equal",
+      "ok": true,
+      "detail": "readyset [['20000002', 'slow20000002']]"
+    },
+    {
+      "check": "final read of 42 is local and equal",
+      "ok": true,
+      "detail": "readyset [['42', 'v42']]"
+    },
+    {
+      "check": "local rows equal Databend",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "health": {
+    "counters": {
+      "cache_ddl": 1,
+      "databend": 114,
+      "empty_local": 1,
+      "forward_reasons": {
+        "forward_epoch": 13,
+        "not_cached_table": 2,
+        "own_write_pending": 21,
+        "source_applying": 2,
+        "uncertain_upstream": 36,
+        "unsafe_session": 1,
+        "upstream_inflight": 40
+      },
+      "readyset": 30,
+      "resolved": 2,
+      "sync_batches": 23,
+      "unresolved": 1
+    },
+    "rows": 10002
+  },
+  "exit_code": 0,
+  "events": [
+    {
+      "event": "upstream_resolved",
+      "instance_id": "uncb26cb8",
+      "resolved": 1,
+      "still_running": 0,
+      "utc": 1794965563.203097
+    },
+    {
+      "event": "upstream_resolved",
+      "instance_id": "uncb26cb8",
+      "resolved": 1,
+      "still_running": 0,
+      "utc": 1794965579.3261755
+    }
+  ],
+  "passed": true
+}

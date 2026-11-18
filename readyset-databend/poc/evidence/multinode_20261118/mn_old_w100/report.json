@@ -1,0 +1,96 @@
+{
+  "db": "readyset_gateway_jdbc_20261118_092241_fcc768",
+  "args": {
+    "endpoint": "http://127.0.0.1:8022",
+    "user": "root",
+    "gateway_binary": "/data1/vmbox/readyset-unc1-release",
+    "jdbc_classpath": "/data1/vmbox/readyset-jdbc-compat/lib/databend-jdbc-0.4.8.jar",
+    "output": "/data1/vmbox/readyset-base-20261116-181705/mn_old_w100",
+    "rows": 100000,
+    "port": 18104,
+    "partial": false,
+    "load_secs": 30,
+    "load_threads": 64,
+    "load_target": "gateway",
+    "write_interval_ms": 100,
+    "confirm_create": true
+  },
+  "steps": [],
+  "exit_code": 0,
+  "events": [
+    {
+      "attempt": 1,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 1): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec3fba8c74a09536974c175500d6 not found on node r1sdIwtRlnelxPOOWjURt5\"}}",
+      "retry_in_secs": 5.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794964962.040678
+    },
+    {
+      "attempt": 2,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 2): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec3fce827ea0a66a00ada83126f1 not found on node luPWsb0WlQszpcnciFa705\"}}",
+      "retry_in_secs": 10.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794964967.1430564
+    },
+    {
+      "attempt": 3,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 3): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec3ff5f878019e9b78f136050a3d not found on node r1sdIwtRlnelxPOOWjURt5\"}}",
+      "retry_in_secs": 20.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794964977.2468297
+    },
+    {
+      "attempt": 4,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 4): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec4044817e50bc2578f704077ca6 not found on node luPWsb0WlQszpcnciFa705\"}}",
+      "retry_in_secs": 40.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794964997.348938
+    },
+    {
+      "attempt": 5,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 5): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec40e1267ef19853a2aa9b50df0a not found on node r1sdIwtRlnelxPOOWjURt5\"}}",
+      "retry_in_secs": 80.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794965037.4499595
+    },
+    {
+      "attempt": 6,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 6): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec421a0b7e63b476090574e58569 not found on node luPWsb0WlQszpcnciFa705\"}}",
+      "retry_in_secs": 160.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794965117.5540454
+    },
+    {
+      "attempt": 7,
+      "event": "table_recovery_failed",
+      "instance_id": "jdbc9d1ad4",
+      "reason": "recovery failed (attempt 7): Databend HTTP 404 Not Found: {\"error\":{\"code\":404,\"message\":\"Query ID 01a1ec448b7474b19030862d33b8239b not found on node r1sdIwtRlnelxPOOWjURt5\"}}",
+      "retry_in_secs": 300.0,
+      "table": "readyset_gateway_jdbc_20261118_092241_fcc768.a",
+      "utc": 1794965277.658881
+    }
+  ],
+  "route_shapes": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "route": null,
+      "headers": [],
+      "session_keys": [],
+      "count": 948
+    }
+  ]
+}

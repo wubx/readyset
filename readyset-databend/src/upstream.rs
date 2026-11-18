@@ -167,8 +167,14 @@ impl DatabendClient {
         .header(reqwest::header::AUTHORIZATION, &self.auth)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .timeout(timeout);
+        // Databend serves `/v1/query/{id}/...` (page, final, kill, state) only on the node that
+        // runs the query; behind several access nodes such a request reaches it only through
+        // the sticky header, else it is answered 404. `node` is the `node_id` of the latest
+        // response, which is the current query's. A new statement is pinned only while the
+        // session needs it (an active transaction or temporary tables).
+        let continuation = path != "/v1/query";
         if let Some(node) = &self.node
-            && self.session.get("need_sticky") == Some(&Value::Bool(true))
+            && (continuation || self.session.get("need_sticky") == Some(&Value::Bool(true)))
         {
             request = request.header("X-DATABEND-STICKY-NODE", node);
         }
@@ -513,5 +519,143 @@ impl Pages<'_> {
 impl Drop for Pages<'_> {
     fn drop(&mut self) {
         self.stop_heartbeat();
+    }
+}
+
+#[cfg(test)]
+mod sticky_tests {
+    use super::*;
+    use axum::http::HeaderMap;
+    use axum::routing::{get, post};
+    use axum::{Json, Router};
+    use std::sync::Mutex;
+
+    type Seen = Arc<Mutex<Vec<(String, Option<String>)>>>;
+
+    fn record(seen: &Seen, path: &str, headers: &HeaderMap) {
+        let node = headers
+            .get("x-databend-sticky-node")
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned);
+        seen.lock().unwrap().push((path.to_owned(), node));
+    }
+
+    /// A mock of one Databend access node answering for queries that ran on node `n2`. With
+    /// `txn`, BEGIN leaves the session in an active transaction (need_sticky).
+    async fn server(seen: Seen) -> (String, tokio::task::JoinHandle<()>) {
+        let start = {
+            let seen = Arc::clone(&seen);
+            move |headers: HeaderMap, Json(body): Json<Value>| {
+                let seen = Arc::clone(&seen);
+                async move {
+                    record(&seen, "/v1/query", &headers);
+                    let sql = body["sql"].as_str().unwrap_or_default().to_owned();
+                    let txn = sql == "BEGIN" || sql.starts_with("SELECT 2");
+                    let id = format!("q{}", seen.lock().unwrap().len());
+                    let next = if sql.starts_with("SELECT 3") {
+                        format!("/v1/query/{id}/page/1")
+                    } else {
+                        format!("/v1/query/{id}/final")
+                    };
+                    Json(
+                        json!({"id": id, "node_id": "n2", "state": "Succeeded", "error": null,
+                        "data": [["1"]], "next_uri": next,
+                        "session": {"txn_state": if txn {"Active"} else {"AutoCommit"},
+                                    "need_sticky": txn}}),
+                    )
+                }
+            }
+        };
+        let follow = {
+            let seen = Arc::clone(&seen);
+            move |headers: HeaderMap, uri: axum::http::Uri| {
+                let seen = Arc::clone(&seen);
+                async move {
+                    record(&seen, uri.path(), &headers);
+                    let next = if uri.path().contains("/page/") {
+                        json!(uri.path().replace("page/1", "final"))
+                    } else {
+                        Value::Null
+                    };
+                    Json(
+                        json!({"id": "x", "node_id": "n2", "state": "Succeeded", "error": null,
+                        "data": [], "next_uri": next}),
+                    )
+                }
+            }
+        };
+        let app = Router::new()
+            .route("/v1/query", post(start))
+            .route("/v1/query/{id}/final", get(follow.clone()))
+            .route("/v1/query/{id}/page/{n}", get(follow));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let origin = format!("http://{}", listener.local_addr().unwrap());
+        (
+            origin,
+            tokio::spawn(async move { axum::serve(listener, app).await.unwrap() }),
+        )
+    }
+
+    #[tokio::test]
+    async fn continuations_are_pinned_to_the_query_node_in_autocommit_too() {
+        let seen: Seen = Arc::default();
+        let (origin, task) = server(Arc::clone(&seen)).await;
+        let mut c = DatabendClient::new(
+            http_client().unwrap(),
+            &origin,
+            &basic_auth("u", ""),
+            "t",
+            None,
+        );
+        // Autocommit statement (DESCRIBE / system.streams / COMMIT in production): its /final
+        // must carry the node, the first statement start cannot.
+        c.sql("SELECT 1").await.unwrap();
+        // Multi-page autocommit read: every page and the final are pinned.
+        c.sql("SELECT 3").await.unwrap();
+        // Streamed read.
+        let mut pages = c.pages("SELECT 3", 10).await.unwrap();
+        while pages.next().await.unwrap().is_some() {}
+        pages.close().await.unwrap();
+        let seen = seen.lock().unwrap().clone();
+        task.abort();
+        assert_eq!(
+            seen[0],
+            ("/v1/query".into(), None),
+            "first start knows no node yet"
+        );
+        for (path, node) in &seen {
+            if path != "/v1/query" {
+                assert_eq!(node.as_deref(), Some("n2"), "{path} not pinned: {seen:?}");
+            } else {
+                // Autocommit session: new statements may go to any access node.
+                assert_eq!(node, &None, "autocommit start pinned: {seen:?}");
+            }
+        }
+        assert!(seen.iter().filter(|(p, _)| p.ends_with("/final")).count() == 3);
+        assert!(seen.iter().any(|(p, _)| p.contains("/page/1")));
+    }
+
+    #[tokio::test]
+    async fn statements_in_a_transaction_are_pinned() {
+        let seen: Seen = Arc::default();
+        let (origin, task) = server(Arc::clone(&seen)).await;
+        let mut c = DatabendClient::new(
+            http_client().unwrap(),
+            &origin,
+            &basic_auth("u", ""),
+            "t",
+            None,
+        );
+        c.sql("BEGIN").await.unwrap();
+        c.sql("SELECT 2").await.unwrap();
+        let seen = seen.lock().unwrap().clone();
+        task.abort();
+        let starts: Vec<_> = seen.iter().filter(|(p, _)| p == "/v1/query").collect();
+        assert_eq!(starts[0].1, None);
+        assert_eq!(
+            starts[1].1.as_deref(),
+            Some("n2"),
+            "statement in a transaction not pinned"
+        );
     }
 }

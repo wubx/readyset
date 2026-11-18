@@ -49,10 +49,14 @@ def main():
     up = args.endpoint
     report = {'db': db, 'args': vars(args), 'scenarios': {}, 'checks': []}
 
-    def http(origin, method, path, body=None, timeout=120):
+    def http(origin, method, path, body=None, timeout=120, node=None):
+        # `node`: the query's node_id, so continuations reach it behind several access nodes.
+        headers = {'Authorization': auth, 'Content-Type': 'application/json'}
+        if node:
+            headers['X-DATABEND-STICKY-NODE'] = node
         req = urllib.request.Request(origin + path, method=method,
                                      data=None if body is None else json.dumps(body).encode(),
-                                     headers={'Authorization': auth, 'Content-Type': 'application/json'})
+                                     headers=headers)
         try:
             r = urllib.request.urlopen(req, timeout=timeout)
         except urllib.error.HTTPError as e:
@@ -68,9 +72,10 @@ def main():
     def sql(origin, text, extra=None, timeout=120):
         status, route, resp = http(origin, 'POST', '/v1/query', {'sql': text, **(extra or {})}, timeout)
         rows = list(resp.get('data') or [])
+        node = resp.get('node_id') or None
         while resp.get('next_uri') and not resp.get('error'):
             uri = resp['next_uri']
-            _, _, resp = http(origin, 'GET', uri, timeout=timeout)
+            _, _, resp = http(origin, 'GET', uri, timeout=timeout, node=node)
             if uri.endswith('/final'):
                 break
             rows += resp.get('data') or []

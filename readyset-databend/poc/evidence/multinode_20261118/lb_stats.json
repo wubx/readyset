@@ -1,0 +1,1 @@
+{"requests": [4499, 4499], "errors": [1, 0], "by_path_kind": {"/v1/query": 7220, "lifecycle": 1287, "/v1/session/login": 483, "/v1/session/logout": 8}}

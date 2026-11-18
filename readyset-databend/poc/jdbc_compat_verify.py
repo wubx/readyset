@@ -49,10 +49,14 @@ def main():
     gw = f'http://127.0.0.1:{args.port}'
     report = {'db': db, 'args': vars(args), 'steps': []}
 
-    def http(origin, method, path, body=None, timeout=600):
+    def http(origin, method, path, body=None, timeout=600, node=None):
+        # `node`: the query's node_id, so continuations reach it behind several access nodes.
+        headers = {'Authorization': auth, 'Content-Type': 'application/json'}
+        if node:
+            headers['X-DATABEND-STICKY-NODE'] = node
         req = urllib.request.Request(origin + path, method=method,
                                      data=None if body is None else json.dumps(body).encode(),
-                                     headers={'Authorization': auth, 'Content-Type': 'application/json'})
+                                     headers=headers)
         try:
             r = urllib.request.urlopen(req, timeout=timeout)
         except urllib.error.HTTPError as e:
@@ -63,9 +67,10 @@ def main():
     def sql(origin, text):
         status, resp = http(origin, 'POST', '/v1/query', {'sql': text})
         rows = list(resp.get('data') or [])
+        node = resp.get('node_id') or None
         while resp.get('next_uri') and not resp.get('error'):
             uri = resp['next_uri']
-            _, resp = http(origin, 'GET', uri)
+            _, resp = http(origin, 'GET', uri, node=node)
             if uri.endswith('/final'):
                 break
             rows += resp.get('data') or []
@@ -139,7 +144,34 @@ partial = {'true' if args.partial else 'false'}
             elif line.startswith('SUMMARY '):
                 report['summary'] = json.loads(line[8:])
         report['probe_exit'] = probe.returncode
+        # Sync correctness after every write the probe made: local row count and a sample of
+        # old and newly written keys, read through the gateway, must equal Databend.
+        deadline = time.time() + 60
+        while time.time() < deadline:
+            h = health()
+            t = h['tables'][0]
+            want = int(sql(up, f'SELECT count(*) FROM {a}')[0][0])
+            if t['ready'] and t['rows'] == want:
+                break
+            time.sleep(1)
+        top = int(sql(up, f'SELECT max(id) FROM {a}')[0][0])
+        keys = [1, 2, 3, 42, args.rows - 1] + [int(r[0]) for r in sql(up, f'SELECT id FROM {a} WHERE id >= {args.rows} ORDER BY id DESC LIMIT 40')]
+        mismatch, local = [], 0
+        for k in keys:
+            q = f'SELECT {cols} FROM {a} WHERE id = {k}'
+            status, resp = http(gw, 'POST', '/v1/query', {'sql': q})
+            got = list(resp.get('data') or [])
+            uri = resp.get('next_uri')
+            if uri:
+                http(gw, 'GET', uri, node=resp.get('node_id') or None)
+            local += 1 if resp.get('id', '').startswith('rs_local_') else 0
+            if got != sql(up, q):
+                mismatch.append(k)
         h = health()
+        report['final'] = {'local_rows': h['tables'][0]['rows'], 'databend_rows': want, 'max_id': top,
+                           'ready': h['tables'][0]['ready'], 'failed': h['tables'][0]['failed'],
+                           'sample_keys': len(keys), 'sample_local': local, 'sample_mismatch': mismatch}
+        print('FINAL ' + json.dumps(report['final']), flush=True)
         report['health'] = {'counters': h['counters'], 'rows': h['tables'][0]['rows'], 'failed': h['tables'][0]['failed']}
     finally:
         server.send_signal(signal.SIGTERM)
@@ -149,6 +181,10 @@ partial = {'true' if args.partial else 'false'}
             server.kill()
             report['exit_code'] = 'killed'
         log.close()
+        events = sorted((out / 'storage' / 'runs').glob('*/events.jsonl'))
+        if events:
+            report['events'] = [json.loads(l) for l in events[-1].read_text().splitlines()
+                                if json.loads(l)['event'] not in ('listening', 'cache_ddl', 'stopped')]
         runs = sorted((out / 'storage' / 'runs').glob('*/routes.jsonl'))
         if runs:
             seen = {}
